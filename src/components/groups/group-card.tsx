@@ -16,24 +16,17 @@ type GroupCardProps = {
 export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
   if (view === 'grid') {
     return (
-      <a href={group.link} target="_blank" rel="noopener noreferrer" className="block rounded-lg overflow-hidden group border shadow-sm hover:shadow-lg transition-shadow duration-300">
-        <Card className="h-full flex flex-col">
-            <div className="relative aspect-square w-full">
-                <Image
-                    src={group.imageUrl}
-                    alt={`Preview for ${group.title}`}
-                    fill
-                    data-ai-hint={group.imageHint}
-                    className="object-cover"
-                />
-                 <div className="absolute bottom-1 right-1 flex items-center gap-1 text-xs text-white bg-black/50 px-1.5 py-0.5 rounded">
-                    <span className='capitalize'>{group.country}</span>
-                 </div>
-            </div>
-            <div className="p-2 border-t">
-              <h3 className="font-semibold text-sm line-clamp-2">{group.title}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{group.category}</p>
-            </div>
+      <a href={group.link} target="_blank" rel="noopener noreferrer" className="block group">
+        <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{group.category}</Badge>
+            <Avatar className="h-24 w-24 text-primary border-2 border-primary/20">
+                <AvatarImage src={group.imageUrl} alt={`Preview for ${group.title}`} />
+                <AvatarFallback>
+                    <MessagesSquare className="h-10 w-10"/>
+                </AvatarFallback>
+            </Avatar>
+            <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
+            <Badge variant="outline" className="absolute bottom-2 right-2 text-xs capitalize">{group.country}</Badge>
         </Card>
       </a>
     );
