@@ -16,14 +16,18 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   useEffect(() => {
     // This function attempts to create a reliable Date object from various formats
     const getSafeDate = (createdAt: any): Date => {
-      if (!createdAt) return new Date(0); // Oldest possible date for sorting
+      if (!createdAt) return new Date(0); // For items with no date
       if (createdAt instanceof Date) return createdAt;
-      if (typeof createdAt === 'string') return new Date(createdAt);
-      // Handle Firestore Timestamp-like objects from server { _seconds, _nanoseconds }
-      if (createdAt && typeof createdAt.seconds === 'number' && typeof createdAt.nanoseconds === 'number') {
-        return new Date(createdAt.seconds * 1000);
+      if (typeof createdAt === 'string') {
+        const d = new Date(createdAt);
+        if (!isNaN(d.getTime())) return d;
       }
-      return new Date(0);
+      // Handle Firestore Timestamp-like objects from server { _seconds, _nanoseconds } or { seconds, nanoseconds }
+      if (createdAt && (typeof createdAt.seconds === 'number' || typeof createdAt._seconds === 'number')) {
+        const seconds = 'seconds' in createdAt ? createdAt.seconds : createdAt._seconds;
+        return new Date(seconds * 1000);
+      }
+      return new Date(0); // Fallback for any other unexpected format
     };
 
     const sortedGroups = [...initialGroups].sort((a, b) => {
@@ -36,14 +40,20 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
     setGroups(prevGroups => {
+        // Add the new group and re-sort immediately
         const updatedGroups = [newGroup, ...prevGroups];
-        // No need to re-sort here as it's already at the top.
-        return updatedGroups;
+        const getSafeDate = (createdAt: any): Date => {
+            if (!createdAt) return new Date(0);
+            if (createdAt instanceof Date) return createdAt;
+            if (typeof createdAt === 'string') return new Date(createdAt);
+            if (createdAt && (typeof createdAt.seconds === 'number' || typeof createdAt._seconds === 'number')) {
+              const seconds = 'seconds' in createdAt ? createdAt.seconds : createdAt._seconds;
+              return new Date(seconds * 1000);
+            }
+            return new Date(0);
+        };
+        return updatedGroups.sort((a, b) => getSafeDate(b.createdAt).getTime() - getSafeDate(a.createdAt).getTime());
     });
-    // If the view is full, add one to the visible count to show the new item
-    if (visibleCount % GROUPS_PER_PAGE === 0) {
-      setVisibleCount(prev => prev + 1);
-    }
   };
 
   const handleLoadMore = () => {

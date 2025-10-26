@@ -9,19 +9,13 @@ type FirebaseInstances = {
   auth: Auth;
 };
 
-// This function is now designed to be called separately on the client and server
-// to ensure a valid Firebase instance is always available.
+// This function follows the recommended pattern for Next.js:
+// Reuse the existing app instance on the client and in server-side environments
+// to avoid re-initialization errors.
 export function initializeFirebase(): FirebaseInstances {
-  // On the server, we always want a new instance.
-  // On the client, we want to reuse the existing instance.
-  if (typeof window !== 'undefined' && getApps().length > 0) {
-    const app = getApp();
-    const firestore = getFirestore(app);
-    const auth = getAuth(app);
-    return { app, firestore, auth };
-  }
-
-  const app = initializeApp(firebaseConfig);
+  const apps = getApps();
+  const app = apps.length > 0 ? getApp() : initializeApp(firebaseConfig);
+  
   const firestore = getFirestore(app);
   const auth = getAuth(app);
 
