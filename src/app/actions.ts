@@ -3,7 +3,8 @@
 import { z } from 'zod';
 import type { GroupLink } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { sampleGroupLinks } from '@/lib/data';
+import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
 
 const submitGroupSchema = z.object({
   link: z.string().url('Please enter a valid WhatsApp group link'),
@@ -81,8 +82,10 @@ export async function submitGroup(
   const { link, title, description, category, country, tags, imageUrl } = validatedFields.data;
 
   try {
-    const newGroup: GroupLink = {
-      id: `${new Date().toISOString()}-${Math.random()}`,
+    const { firestore } = initializeFirebase();
+    const groupsCollection = collection(firestore, 'groups');
+
+    const newGroupData = {
       title,
       description,
       link,
@@ -91,10 +94,16 @@ export async function submitGroup(
       category,
       country,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+      createdAt: serverTimestamp(),
     };
-    
-    // Add the new group to our "database"
-    sampleGroupLinks.unshift(newGroup);
+
+    const docRef = await addDoc(groupsCollection, newGroupData);
+
+    const newGroup: GroupLink = {
+      ...newGroupData,
+      id: docRef.id,
+      createdAt: new Date().toISOString(), // Use client-side date for immediate feedback
+    };
 
     return {
       message: 'Group submitted successfully!',

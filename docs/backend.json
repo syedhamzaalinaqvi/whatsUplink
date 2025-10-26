@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "group": {
+      "title": "Group",
+      "description": "A WhatsApp group link submission.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the group."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the group."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the group."
+        },
+        "link": {
+          "type": "string",
+          "description": "The WhatsApp group invite link."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL for the group's preview image."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category the group belongs to."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country associated with the group."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for the group."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the group was created."
+        }
+      },
+      "required": ["title", "link", "category", "country", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/groups/{groupId}": {
+      "schema": {
+        "$ref": "#/entities/group"
+      },
+      "description": "Stores all the WhatsApp group link documents."
+    }
+  }
+}
