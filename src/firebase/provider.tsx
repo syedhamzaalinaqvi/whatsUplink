@@ -1,16 +1,19 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { Auth } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
-import { app, auth as clientAuth, firestore as clientFirestore } from './client';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { firebaseConfig } from './config';
 
 interface FirebaseContextType {
+  app: FirebaseApp | null;
   auth: Auth | null;
   firestore: Firestore | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType>({
+  app: null,
   auth: null,
   firestore: null,
 });
@@ -18,12 +21,26 @@ const FirebaseContext = createContext<FirebaseContextType>({
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [services, setServices] = useState<FirebaseContextType>({ auth: null, firestore: null });
-
-  useEffect(() => {
-    // The instances are initialized in client.ts, so we can just set them here.
-    // This ensures they are only accessed on the client-side.
-    setServices({ auth: clientAuth, firestore: clientFirestore });
+  const services = useMemo(() => {
+    try {
+      if (getApps().length === 0) {
+        console.log('Initializing Firebase...');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const firestore = getFirestore(app);
+        console.log('Firebase initialized successfully.');
+        return { app, auth, firestore };
+      } else {
+        console.log('Using existing Firebase app.');
+        const app = getApp();
+        const auth = getAuth(app);
+        const firestore = getFirestore(app);
+        return { app, auth, firestore };
+      }
+    } catch (e) {
+        console.error("Firebase initialization error:", e);
+        return { app: null, auth: null, firestore: null };
+    }
   }, []);
 
   return (
@@ -31,6 +48,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </FirebaseContext.Provider>
   );
+};
+
+export const useFirebase = () => {
+  const context = useContext(FirebaseContext);
+  if (context === undefined) {
+    throw new Error('useFirebase must be used within a FirebaseProvider');
+  }
+  return context;
 };
 
 export const useFirestore = () => {

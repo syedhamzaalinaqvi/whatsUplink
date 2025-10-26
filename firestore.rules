@@ -1,36 +1,21 @@
 /**
- * @fileoverview Firestore Security Rules for WhatsApp Group Link Submissions
- *
- * Core Philosophy:
- * This ruleset prioritizes public read access to group information while strictly controlling write access.
- * Only authenticated users can create, update, or delete groups.
- *
- * Data Structure:
- * The database stores group information in the `/groups/{groupId}` collection.
- *
- * Key Security Decisions:
- * - Group listings are public to facilitate discovery.
- * - Only authenticated users can create, update, and delete group information.
- *
- * Denormalization for Authorization:
- *  - The `Group` entity needs an `ownerId` field to properly control write access.  The current schema lacks this.
+ * @file Firestore Security Rules
+ * @core_philosophy This ruleset defaults to locked-down access. All reads and writes are explicitly denied unless
+ *                  allowed by a specific rule.  Since no data entities or structure are defined in the input,
+ *                  the ruleset provides a basic template that prevents all access.
+ * @data_structure No data structure has been defined.
+ * @key_security_decisions All access is denied by default due to the lack of defined entities.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Controls read and write access to the /groups/{groupId} collection.
-     * @path /groups/{groupId}
-     * @allow (get, list): Any user can read any group's information.
-     * @allow (create): Only an authenticated user can create a group, if `request.auth.uid` matches `request.resource.data.ownerId`.  The schema lacks the ownerId field, therefore this rule cannot be adequately implemented.
-     * @deny (update, delete):  All updates and deletes are denied.  The schema lacks the ownerId field, therefore this rule cannot be adequately implemented.
-     * @principle Public read, owner-only writes.
-     */
-    match /groups/{groupId} {
-      allow get, list: if true;
-      // CRITICAL: Cannot implement owner-only writes. The 'Group' entity is missing an 'ownerId' or 'authorId' field.
-      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    // Default: Prevent all access. Replace with more specific rules.
+    match /{document=**} {
+      allow read: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }
