@@ -1,5 +1,5 @@
 import { initializeFirebase } from '@/firebase';
-import { getDoc, doc, collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp } from 'firebase/firestore';
 
 export type GroupLink = {
   id: string;
@@ -13,6 +13,20 @@ export type GroupLink = {
   tags: string[];
   createdAt: string;
 };
+
+function safeGetDate(createdAt: any): string {
+    if (createdAt instanceof Timestamp) {
+      return createdAt.toDate().toISOString();
+    }
+    if (createdAt && typeof createdAt.toDate === 'function') {
+      return createdAt.toDate().toISOString();
+    }
+    if (createdAt) {
+      return new Date(createdAt).toISOString();
+    }
+    return new Date().toISOString();
+}
+
 
 export async function getGroupById(id: string | undefined): Promise<GroupLink | undefined> {
     if (!id) return undefined;
@@ -34,7 +48,7 @@ export async function getGroupById(id: string | undefined): Promise<GroupLink | 
                 category: data.category,
                 country: data.country,
                 tags: data.tags || [],
-                createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+                createdAt: safeGetDate(data.createdAt),
             } as GroupLink;
         } else {
             console.log("No such document!");
@@ -72,7 +86,7 @@ export async function getRelatedGroups(currentGroup: GroupLink | undefined) {
                 category: data.category,
                 country: data.country,
                 tags: data.tags || [],
-                createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+                createdAt: safeGetDate(data.createdAt),
             } as GroupLink;
         });
     } catch (error) {

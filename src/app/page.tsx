@@ -8,7 +8,7 @@ import { GroupListControls } from '@/components/groups/group-list-controls';
 import { SubmitGroupDialogContent } from '@/components/groups/submit-group-dialog';
 import type { GroupLink } from '@/lib/data';
 import { initializeFirebase } from '@/firebase';
-import { collection, getDocs, orderBy, query as firestoreQuery } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query as firestoreQuery, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
@@ -28,8 +28,22 @@ export default function Home() {
         const groupsCollection = collection(firestore, 'groups');
         const q = firestoreQuery(groupsCollection, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
+        
+        console.log(`Found ${querySnapshot.docs.length} documents.`);
+
         const groupsData = querySnapshot.docs.map(doc => {
           const data = doc.data();
+          
+          let createdAt: string;
+          if (data.createdAt instanceof Timestamp) {
+            createdAt = data.createdAt.toDate().toISOString();
+          } else if (data.createdAt) {
+            // Fallback for string or other formats - this may need adjustment
+            createdAt = new Date(data.createdAt).toISOString();
+          } else {
+            createdAt = new Date().toISOString();
+          }
+
           return {
             id: doc.id,
             title: data.title,
@@ -40,10 +54,13 @@ export default function Home() {
             category: data.category,
             country: data.country,
             tags: data.tags || [],
-            createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+            createdAt: createdAt,
           } as GroupLink;
         });
+        
+        console.log("Mapped groups data:", groupsData);
         setGroups(groupsData);
+
       } catch (error) {
         console.error("Error fetching groups from Firestore:", error);
       } finally {
