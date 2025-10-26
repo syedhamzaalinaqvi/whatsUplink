@@ -1,13 +1,17 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Rules for the 'groups' collection
     match /groups/{groupId} {
-      // Allow anyone to read the list of groups
-      allow read: if true;
-      // Allow anyone to submit a new group
-      allow create: if true;
-      // Disallow updates and deletes for now for security
+      // Allow anyone to read and create group documents.
+      // This is suitable for a public directory where content is user-submitted
+      // and publicly visible.
+      allow read, create: if true;
+
+      // Only allow updates or deletes in a more secure, future version.
+      // For now, updates and deletes are disallowed to prevent malicious behavior.
       allow update, delete: if false;
     }
   }
