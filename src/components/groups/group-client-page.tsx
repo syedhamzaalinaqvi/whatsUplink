@@ -19,7 +19,6 @@ type GroupClientPageProps = {
 };
 
 export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore, isGroupLoading }: GroupClientPageProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
@@ -57,7 +56,7 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
             submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} />}
         />
         
-        {isLoading ? (
+        {isGroupLoading ? (
              <div 
                 className={`transition-all duration-500 ${
                 view === 'grid'
@@ -86,19 +85,11 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
                     <div className="mt-10 flex justify-center">
                         <Button
                             onClick={onLoadMore}
-                            disabled={isGroupLoading}
                             variant="default"
                             size="lg"
                             className="transition-all hover:scale-105 active:scale-95"
                         >
-                            {isGroupLoading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Loading...
-                                </>
-                            ) : (
-                                'Load More Groups'
-                            )}
+                            Load More Groups
                         </Button>
                     </div>
                 )}

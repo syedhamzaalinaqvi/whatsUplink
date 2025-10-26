@@ -5,64 +5,45 @@ import { useState, useEffect } from 'react';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
+import { initializeFirebase } from '@/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
-  const [groups, setGroups] = useState<GroupLink[]>([]);
+  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
   const [visibleCount, setVisibleCount] = useState(GROUPS_PER_PAGE);
-  const [isGroupLoading, setIsGroupLoading] = useState(false);
+  const [isGroupLoading, setIsGroupLoading] = useState(true);
 
   useEffect(() => {
-    // This function attempts to create a reliable Date object from various formats
-    const getSafeDate = (createdAt: any): Date => {
-      if (!createdAt) return new Date(0); // For items with no date
-      if (createdAt instanceof Date) return createdAt;
-      if (typeof createdAt === 'string') {
-        const d = new Date(createdAt);
-        if (!isNaN(d.getTime())) return d;
-      }
-      // Handle Firestore Timestamp-like objects from server { _seconds, _nanoseconds } or { seconds, nanoseconds }
-      if (createdAt && (typeof createdAt.seconds === 'number' || typeof createdAt._seconds === 'number')) {
-        const seconds = 'seconds' in createdAt ? createdAt.seconds : createdAt._seconds;
-        return new Date(seconds * 1000);
-      }
-      return new Date(0); // Fallback for any other unexpected format
-    };
+    const { firestore } = initializeFirebase();
+    const groupsCollection = collection(firestore, 'groups');
+    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
 
-    const sortedGroups = [...initialGroups].sort((a, b) => {
-      const dateA = getSafeDate(a.createdAt).getTime();
-      const dateB = getSafeDate(b.createdAt).getTime();
-      return dateB - dateA; // Sort descending (newest first)
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
+      setGroups(groupsData);
+      setIsGroupLoading(false);
+    }, (error) => {
+      console.error("Error fetching real-time groups:", error);
+      setIsGroupLoading(false);
     });
-    setGroups(sortedGroups);
-  }, [initialGroups]);
+
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
+  }, []);
+
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    setGroups(prevGroups => {
-        // Add the new group and re-sort immediately
-        const updatedGroups = [newGroup, ...prevGroups];
-        const getSafeDate = (createdAt: any): Date => {
-            if (!createdAt) return new Date(0);
-            if (createdAt instanceof Date) return createdAt;
-            if (typeof createdAt === 'string') return new Date(createdAt);
-            if (createdAt && (typeof createdAt.seconds === 'number' || typeof createdAt._seconds === 'number')) {
-              const seconds = 'seconds' in createdAt ? createdAt.seconds : createdAt._seconds;
-              return new Date(seconds * 1000);
-            }
-            return new Date(0);
-        };
-        return updatedGroups.sort((a, b) => getSafeDate(b.createdAt).getTime() - getSafeDate(a.createdAt).getTime());
-    });
+    // No longer need to manually add to state.
+    // The real-time listener will automatically update the `groups` state.
+    // We can scroll to the top or give some other feedback if desired.
   };
 
   const handleLoadMore = () => {
-    setIsGroupLoading(true);
-    // Simulate a short delay to show loading animation
-    setTimeout(() => {
-      setVisibleCount(prevCount => prevCount + GROUPS_PER_PAGE);
-      setIsGroupLoading(false);
-    }, 500);
+    // We show a loading spinner, but the real loading is handled by the state update
+    setVisibleCount(prevCount => prevCount + GROUPS_PER_PAGE);
   };
 
   const visibleGroups = groups.slice(0, visibleCount);
@@ -77,7 +58,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
             onGroupSubmitted={handleGroupSubmitted}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
-            isGroupLoading={isGroupLoading}
+            isGroupLoading={isGroupLoading && groups.length === 0} // Show skeleton only on initial load
         />
       </main>
       <footer className="border-t bg-background">

@@ -14,25 +14,28 @@ export type GroupLink = {
   createdAt: string | null; // Always a string or null
 };
 
+// This function now robustly handles Timestamps from the server
+// and ensures a serializable string is always returned.
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     const data = doc.data();
     let createdAt: string | null = null;
+    const docCreatedAt = data.createdAt;
 
-    if (data.createdAt) {
-      // Handle Firestore Timestamp object (from server-side fetch)
-      if (typeof data.createdAt.toDate === 'function') {
-        createdAt = data.createdAt.toDate().toISOString();
+    if (docCreatedAt) {
+      // Handle Firestore Timestamp object (from server-side fetch or real-time listener)
+      if (docCreatedAt instanceof Timestamp) {
+        createdAt = docCreatedAt.toDate().toISOString();
       } 
       // Handle existing date string (from client-side submission or already converted)
-      else if (typeof data.createdAt === 'string') {
-        const date = new Date(data.createdAt);
+      else if (typeof docCreatedAt === 'string') {
+        const date = new Date(docCreatedAt);
         if (!isNaN(date.getTime())) {
           createdAt = date.toISOString();
         }
       }
-      // Fallback for other unexpected formats (like plain objects after serialization)
-      else if (data.createdAt.seconds) {
-        createdAt = new Date(data.createdAt.seconds * 1000).toISOString();
+      // Fallback for other unexpected formats (like plain objects after serialization if that ever happens)
+      else if (docCreatedAt.seconds) {
+        createdAt = new Date(docCreatedAt.seconds * 1000).toISOString();
       }
     }
 
