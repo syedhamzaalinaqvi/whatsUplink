@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import { getGroupById, getRelatedGroups } from '@/lib/data';
 import { GroupDetailView } from '@/components/groups/group-detail-view';
