@@ -13,17 +13,14 @@ import { GroupClientPage } from '@/components/groups/group-client-page';
  */
 function getSafeDate(createdAt: any): number {
   if (!createdAt) {
-    return 0; // Puts items without a date at the very end when sorting descending
+    return 0; 
   }
-  // Case 1: Already a Date object or a valid date string
+  // Case 1: Already a Date object or a valid date string from server/client
   const date = new Date(createdAt);
   if (!isNaN(date.getTime())) {
     return date.getTime();
   }
-  // Case 2: Firestore-like object from server-side rendering (e.g., { _seconds: ..., _nanoseconds: ... })
-  if (createdAt && typeof createdAt === 'object' && createdAt._seconds !== undefined) {
-    return new Date(createdAt._seconds * 1000).getTime();
-  }
+  
   return 0;
 }
 

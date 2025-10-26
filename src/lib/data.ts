@@ -21,6 +21,22 @@ export function safeGetDate(createdAt: any): any {
 
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     const data = doc.data();
+    let createdAt = null;
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+      // Handle Firestore Timestamp object
+      createdAt = data.createdAt.toDate().toISOString();
+    } else if (data.createdAt) {
+      // Handle cases where it might already be a string or other format
+      try {
+        const date = new Date(data.createdAt);
+        if (!isNaN(date.getTime())) {
+          createdAt = date.toISOString();
+        }
+      } catch (e) {
+        // Ignore invalid date formats
+      }
+    }
+
     return {
         id: doc.id,
         title: data.title || 'Untitled',
@@ -31,7 +47,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         category: data.category || 'uncategorized',
         country: data.country || 'unknown',
         tags: data.tags || [],
-        createdAt: data.createdAt || null, // Pass raw timestamp object or null
+        createdAt: createdAt, // Pass serializable ISO string or null
     };
 }
 
@@ -56,7 +72,7 @@ export async function getGroupById(firestore: Firestore, id: string | undefined)
                 category: data.category || 'uncategorized',
                 country: data.country || 'unknown',
                 tags: data.tags || [],
-                createdAt: data.createdAt ? new Timestamp(data.createdAt._seconds, data.createdAt._nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
+                createdAt: data.createdAt ? new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
             };
         } else {
             console.log("No such document!");
@@ -94,7 +110,7 @@ imageUrl: data.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
                 category: data.category || 'uncategorized',
                 country: data.country || 'unknown',
                 tags: data.tags || [],
-                createdAt: data.createdAt ? new Timestamp(data.createdAt._seconds, data.createdAt._nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
+                createdAt: data.createdAt ? new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
             }
         });
     } catch (error) {
