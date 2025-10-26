@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/generate-group-link-preview.ts';
+import '@/ai/flows/extract-group-info-from-link';

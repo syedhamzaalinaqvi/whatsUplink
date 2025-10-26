@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { submitGroup, type FormState } from '@/app/actions';
 import type { GroupLink } from '@/lib/data';
@@ -31,7 +30,7 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Submitting...
+          Processing...
         </>
       ) : (
         'Submit Group'
@@ -69,29 +68,19 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
       <DialogHeader>
         <DialogTitle>Submit a New Group</DialogTitle>
         <DialogDescription>
-          Share a WhatsApp group with the community. Please provide a clear title and description.
+          Paste a WhatsApp group link. Our AI will automatically generate the title, description, and a preview image.
         </DialogDescription>
       </DialogHeader>
-      <form ref={formRef} action={formAction} className="grid grid-cols-2 gap-4">
+      <form ref={formRef} action={formAction} className="grid grid-cols-2 gap-4 py-4">
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="title">Group Title</Label>
-          <Input id="title" name="title" placeholder="e.g., 'React Developers'" required />
-          {state.errors?.title && <p className="text-sm text-destructive">{state.errors.title.join(', ')}</p>}
-        </div>
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="A brief description of the group's purpose."
-            required
-          />
-          {state.errors?.description && <p className="text-sm text-destructive">{state.errors.description.join(', ')}</p>}
+          <Label htmlFor="link">Group Link</Label>          
+          <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required />
+          {state.errors?.link && <p className="text-sm text-destructive">{state.errors.link.join(', ')}</p>}
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
-          <Select name="country">
+          <Select name="country" required>
             <SelectTrigger id="country">
               <SelectValue placeholder="Select a country" />
             </SelectTrigger>
@@ -106,7 +95,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
 
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <Select name="category">
+          <Select name="category" required>
             <SelectTrigger id="category">
               <SelectValue placeholder="Select a category" />
             </SelectTrigger>
@@ -118,12 +107,14 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
           </Select>
           {state.errors?.category && <p className="text-sm text-destructive">{state.errors.category.join(', ')}</p>}
         </div>
-
+        
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="link">Group Link</Label>          
-          <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required />
-          {state.errors?.link && <p className="text-sm text-destructive">{state.errors.link.join(', ')}</p>}
+          <Label htmlFor="tags">Tags</Label>
+          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" />
+          <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
+          {state.errors?.tags && <p className="text-sm text-destructive">{state.errors.tags.join(', ')}</p>}
         </div>
+
         <DialogFooter className="col-span-2">
           <SubmitButton />
         </DialogFooter>

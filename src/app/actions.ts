@@ -1,26 +1,24 @@
 'use server';
 
 import { z } from 'zod';
-import { generateGroupLinkPreview } from '@/ai/flows/generate-group-link-preview';
+import { extractGroupInfoFromLink } from '@/ai/flows/extract-group-info-from-link';
 import type { GroupLink } from '@/lib/data';
 
 const submitGroupSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
   link: z.string().url('Please enter a valid WhatsApp group link'),
   category: z.string().min(1, 'Please select a category'),
   country: z.string().min(1, 'Please select a country'),
+  tags: z.string().optional(),
 });
 
 export type FormState = {
   message: string;
   group?: GroupLink;
   errors?: {
-    title?: string[];
-    description?: string[];
     link?: string[];
     category?: string[];
     country?: string[];
+    tags?: string[];
   };
 };
 
@@ -29,11 +27,10 @@ export async function submitGroup(
   formData: FormData
 ): Promise<FormState> {
   const validatedFields = submitGroupSchema.safeParse({
-    title: formData.get('title'),
-    description: formData.get('description'),
     link: formData.get('link'),
     category: formData.get('category'),
     country: formData.get('country'),
+    tags: formData.get('tags'),
   });
 
   if (!validatedFields.success) {
@@ -43,12 +40,11 @@ export async function submitGroup(
     };
   }
 
-  const { title, description, link, category, country } = validatedFields.data;
+  const { link, category, country, tags } = validatedFields.data;
 
   try {
-    const { previewImage } = await generateGroupLinkPreview({
-      groupLinkTitle: title,
-      groupLinkDescription: description,
+    const { title, description, previewImage } = await extractGroupInfoFromLink({
+      groupLink: link,
     });
 
     const newGroup: GroupLink = {
@@ -60,6 +56,7 @@ export async function submitGroup(
       imageHint: 'AI generated',
       category,
       country,
+      tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
     };
 
     // Here you would save the `newGroup` to Firestore.
@@ -70,7 +67,7 @@ export async function submitGroup(
     };
 
   } catch (error) {
-    console.error('AI generation failed:', error);
-    return { message: 'Failed to generate preview image. Please try again.' };
+    console.error('AI processing failed:', error);
+    return { message: 'Failed to process group link. Please check the link and try again.' };
   }
 }

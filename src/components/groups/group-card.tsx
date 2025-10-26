@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Tag } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,13 +28,23 @@ export function GroupCard({ group, view }: GroupCardProps) {
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-lg font-semibold">{group.title}</CardTitle>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 flex-shrink-0">
                 <Badge variant="secondary" className="whitespace-nowrap">{group.category}</Badge>
                 <Badge variant="outline" className="whitespace-nowrap capitalize">{group.country}</Badge>
             </div>
           </div>
           <CardDescription className="pt-2 line-clamp-3">{group.description}</CardDescription>
         </CardHeader>
+        <CardContent>
+          {group.tags && group.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                {group.tags.map(tag => (
+                    <Badge key={tag} variant="outline" className="font-normal">{tag}</Badge>
+                ))}
+            </div>
+          )}
+        </CardContent>
         <CardFooter>
           <Button asChild className="w-full" variant="secondary">
             <a href={group.link} target="_blank" rel="noopener noreferrer">

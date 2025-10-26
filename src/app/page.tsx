@@ -23,7 +23,11 @@ export default function Home() {
 
   const filteredGroups = useMemo(() => {
     return groups.filter(group => {
-      const searchMatch = !searchQuery || group.title.toLowerCase().includes(searchQuery.toLowerCase()) || group.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const searchLower = searchQuery.toLowerCase();
+      const searchMatch = !searchQuery || 
+        group.title.toLowerCase().includes(searchLower) || 
+        group.description.toLowerCase().includes(searchLower) ||
+        group.tags?.some(tag => tag.toLowerCase().includes(searchLower));
       const countryMatch = selectedCountry === 'all' || group.country === selectedCountry;
       const categoryMatch = selectedCategory === 'all' || group.category.toLowerCase() === selectedCategory.toLowerCase();
       return searchMatch && countryMatch && categoryMatch;
