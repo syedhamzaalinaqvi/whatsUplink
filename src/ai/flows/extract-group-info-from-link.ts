@@ -1,63 +1,14 @@
 'use server';
-
-/**
- * @fileOverview Generates a preview image based on a group's title and description.
- *
- * - extractGroupInfoFromLink - A function that orchestrates the image generation.
- * - ExtractGroupInfoInput - The input type for the function.
- * - ExtractGroupInfoOutput - The return type for the function.
- */
-
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const ExtractGroupInfoInputSchema = z.object({
-  title: z.string().describe('The title of the group.'),
-  description: z.string().describe('The description of the group.'),
-});
-export type ExtractGroupInfoInput = z.infer<
-  typeof ExtractGroupInfoInputSchema
->;
-
-const ExtractGroupInfoOutputSchema = z.object({
-  previewImage: z
-    .string()
-    .describe(
-      'A preview image for the WhatsApp group, as a data URI that must include a MIME type and use Base64 encoding. Expected format: data:<mimetype>;base64,<encoded_data>.'
-    ),
-});
-export type ExtractGroupInfoOutput = z.infer<
-  typeof ExtractGroupInfoOutputSchema
->;
+// This file is no longer used and is kept to avoid breaking imports.
+// The functionality has been moved to a server action that uses the link-preview-js library.
 
 export async function extractGroupInfoFromLink(
-  input: ExtractGroupInfoInput
-): Promise<ExtractGroupInfoOutput> {
-  return extractGroupInfoFlow(input);
+  input: any
+): Promise<any> {
+  // This function is deprecated.
+  // The new logic is in `src/app/actions.ts` using `getLinkPreview`.
+  console.warn("`extractGroupInfoFromLink` is deprecated.");
+  return {
+    previewImage: 'https://picsum.photos/seed/deprecated/512/512'
+  };
 }
-
-const extractGroupInfoFlow = ai.defineFlow(
-  {
-    name: 'extractGroupInfoFlow',
-    inputSchema: ExtractGroupInfoInputSchema,
-    outputSchema: ExtractGroupInfoOutputSchema,
-  },
-  async input => {
-    const imageGenerationPrompt = `A 512x512 square, visually appealing, and family-friendly image for a WhatsApp group.
-Group Title: ${input.title}
-Group Description: ${input.description}`;
-
-    const {media} = await ai.generate({
-      prompt: imageGenerationPrompt,
-      model: 'googleai/imagen-4.0-fast-generate-001',
-    });
-
-    if (!media?.url) {
-      throw new Error('Failed to generate preview image.');
-    }
-
-    return {
-      previewImage: media.url,
-    };
-  }
-);

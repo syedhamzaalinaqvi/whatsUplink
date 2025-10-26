@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/extract-group-info-from-link';
+// Intentionally left blank.
+// Genkit flows are no longer used for this functionality.
