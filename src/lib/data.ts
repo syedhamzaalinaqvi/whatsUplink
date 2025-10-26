@@ -1,4 +1,4 @@
-import { initializeFirebase } from '@/firebase';
+
 import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore } from 'firebase/firestore';
 
 export type GroupLink = {
@@ -14,15 +14,26 @@ export type GroupLink = {
   createdAt: string;
 };
 
+// Helper function to safely convert Firestore Timestamps or other date formats to ISO strings
 function safeGetDate(createdAt: any): string {
+    if (!createdAt) {
+        return new Date().toISOString(); // Fallback for missing timestamps
+    }
     if (createdAt instanceof Timestamp) {
       return createdAt.toDate().toISOString();
     }
-    if (createdAt && typeof createdAt.toDate === 'function') {
-      return createdAt.toDate().toISOString();
+    // Handle cases where it might be a plain object from server-side rendering
+    if (typeof createdAt === 'object' && createdAt.seconds) {
+      return new Date(createdAt.seconds * 1000).toISOString();
     }
-    if (createdAt) {
-      return new Date(createdAt).toISOString();
+    // Fallback for string or number formats
+    try {
+        const date = new Date(createdAt);
+        if (!isNaN(date.getTime())) {
+            return date.toISOString();
+        }
+    } catch (e) {
+        // Ignore parsing errors and fall back
     }
     return new Date().toISOString();
 }
