@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { ExternalLink, Tag } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,10 +17,10 @@ type GroupCardProps = {
 export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
   if (view === 'grid') {
     return (
-      <a href={group.link} target="_blank" rel="noopener noreferrer" className="block group">
-        <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-            <Badge className="absolute top-2 left-2 text-xs capitalize bg-accent text-accent-foreground hover:bg-accent/80">{group.country}</Badge>
-            <Badge className="absolute top-2 right-2 text-xs bg-primary text-primary-foreground hover:bg-primary/80">{group.category}</Badge>
+      <Link href={`/group/invite/${group.id}`} className="block group">
+        <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-muted/30">
+            <Badge className="absolute top-2 left-2 text-xs capitalize bg-primary text-primary-foreground hover:bg-primary/80">{group.country}</Badge>
+            <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground hover:bg-accent/80">{group.category}</Badge>
             <Avatar className="h-24 w-24 text-primary border-2 border-primary/20">
                 <AvatarImage src={group.imageUrl} alt={`Preview for ${group.title}`} />
                 <AvatarFallback>
@@ -28,7 +29,7 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             </Avatar>
             <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
         </Card>
-      </a>
+      </Link>
     );
   }
 
@@ -68,10 +69,10 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
         </CardContent>
         <CardFooter>
           <Button asChild className="w-full" variant="secondary">
-            <a href={group.link} target="_blank" rel="noopener noreferrer">
-              Join Group
+            <Link href={`/group/invite/${group.id}`}>
+              View Details
               <ExternalLink className="ml-2 h-4 w-4" />
-            </a>
+            </Link>
           </Button>
         </CardFooter>
       </div>
