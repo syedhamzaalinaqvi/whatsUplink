@@ -11,31 +11,12 @@ export type GroupLink = {
   category: string;
   country: string;
   tags: string[];
-  createdAt: string;
+  createdAt: any; // Pass the raw value to the client
 };
 
-// Helper function to safely convert Firestore Timestamps or other date formats to ISO strings
-export function safeGetDate(createdAt: any): string {
-    if (!createdAt) {
-        return new Date(0).toISOString(); // Fallback for missing timestamps to sort them to the end
-    }
-    if (createdAt instanceof Timestamp) {
-      return createdAt.toDate().toISOString();
-    }
-    // Handle cases where it might be a plain object from server-side rendering
-    if (typeof createdAt === 'object' && createdAt.seconds !== undefined && createdAt.nanoseconds !== undefined) {
-      return new Date(createdAt.seconds * 1000).toISOString();
-    }
-    // Fallback for string or number formats, which new submissions will have
-    try {
-        const date = new Date(createdAt);
-        if (!isNaN(date.getTime())) {
-            return date.toISOString();
-        }
-    } catch (e) {
-        // Ignore parsing errors and fall back
-    }
-    return new Date(0).toISOString();
+// This function is no longer needed here, parsing will be done on the client.
+export function safeGetDate(createdAt: any): any {
+    return createdAt || null;
 }
 
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
@@ -50,7 +31,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         category: data.category || 'uncategorized',
         country: data.country || 'unknown',
         tags: data.tags || [],
-        createdAt: safeGetDate(data.createdAt),
+        createdAt: data.createdAt || null, // Pass raw timestamp object or null
     };
 }
 
@@ -63,7 +44,20 @@ export async function getGroupById(firestore: Firestore, id: string | undefined)
         const docSnap = await getDoc(groupDocRef);
 
         if (docSnap.exists()) {
-            return mapDocToGroupLink(docSnap);
+            // Use a temporary mapping to convert for the detail page
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                title: data.title || 'Untitled',
+                description: data.description || 'No description',
+                link: data.link || '',
+                imageUrl: data.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
+                imageHint: data.imageHint || '',
+                category: data.category || 'uncategorized',
+                country: data.country || 'unknown',
+                tags: data.tags || [],
+                createdAt: data.createdAt ? new Timestamp(data.createdAt._seconds, data.createdAt._nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
+            };
         } else {
             console.log("No such document!");
             return undefined;
@@ -87,7 +81,22 @@ export async function getRelatedGroups(firestore: Firestore, currentGroup: Group
         );
 
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(mapDocToGroupLink);
+        // Map related groups, ensuring createdAt is a string
+        return querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                title: data.title || 'Untitled',
+                description: data.description || 'No description',
+                link: data.link || '',
+imageUrl: data.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
+                imageHint: data.imageHint || '',
+                category: data.category || 'uncategorized',
+                country: data.country || 'unknown',
+                tags: data.tags || [],
+                createdAt: data.createdAt ? new Timestamp(data.createdAt._seconds, data.createdAt._nanoseconds).toDate().toISOString() : new Date(0).toISOString(),
+            }
+        });
     } catch (error) {
         console.error("Error fetching related groups:", error);
         return [];
