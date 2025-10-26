@@ -18,7 +18,8 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
     return (
       <a href={group.link} target="_blank" rel="noopener noreferrer" className="block group">
         <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-            <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{group.category}</Badge>
+            <Badge className="absolute top-2 left-2 text-xs capitalize bg-accent text-accent-foreground hover:bg-accent/80">{group.country}</Badge>
+            <Badge className="absolute top-2 right-2 text-xs bg-primary text-primary-foreground hover:bg-primary/80">{group.category}</Badge>
             <Avatar className="h-24 w-24 text-primary border-2 border-primary/20">
                 <AvatarImage src={group.imageUrl} alt={`Preview for ${group.title}`} />
                 <AvatarFallback>
@@ -26,7 +27,6 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
                 </AvatarFallback>
             </Avatar>
             <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
-            <Badge variant="outline" className="absolute bottom-2 right-2 text-xs capitalize">{group.country}</Badge>
         </Card>
       </a>
     );
