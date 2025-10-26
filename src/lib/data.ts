@@ -38,17 +38,17 @@ export function safeGetDate(createdAt: any): string {
     return new Date().toISOString();
 }
 
-function mapDocToGroupLink(doc: DocumentData): GroupLink {
+export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     const data = doc.data();
     return {
         id: doc.id,
-        title: data.title,
-        description: data.description,
-        link: data.link,
-        imageUrl: data.imageUrl,
+        title: data.title || 'Untitled',
+        description: data.description || 'No description',
+        link: data.link || '',
+        imageUrl: data.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
         imageHint: data.imageHint || '',
-        category: data.category,
-        country: data.country,
+        category: data.category || 'uncategorized',
+        country: data.country || 'unknown',
         tags: data.tags || [],
         createdAt: safeGetDate(data.createdAt),
     };

@@ -1,23 +1,24 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
 import type { GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
+import { SubmitGroup } from './submit-group';
 
-export function GroupClientPage({ initialGroups, isLoading }: { initialGroups: GroupLink[], isLoading: boolean }) {
-  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+type GroupClientPageProps = {
+    groups: GroupLink[];
+    onGroupSubmitted: (group: GroupLink) => void;
+};
+
+export function GroupClientPage({ groups, onGroupSubmitted }: GroupClientPageProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // When initialGroups changes (e.g., on re-navigation or initial fetch), update the state.
-  useEffect(() => {
-    setGroups(initialGroups);
-  }, [initialGroups]);
 
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);
@@ -48,6 +49,7 @@ export function GroupClientPage({ initialGroups, isLoading }: { initialGroups: G
             onCountryChange={setSelectedCountry}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
+            submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} />}
         />
         
         {isLoading ? (

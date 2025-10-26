@@ -16,6 +16,7 @@ type GroupListControlsProps = {
   onCategoryChange: (category: string) => void;
   selectedCountry: string;
   onCountryChange: (country: string) => void;
+  submitButton: React.ReactNode;
 };
 
 export function GroupListControls({
@@ -27,6 +28,7 @@ export function GroupListControls({
   onCategoryChange,
   selectedCountry,
   onCountryChange,
+  submitButton,
 }: GroupListControlsProps) {
   return (
     <div className="mb-8 flex flex-col gap-4">
@@ -64,6 +66,7 @@ export function GroupListControls({
             </Select>
         </div>
         <div className="flex items-center justify-end gap-2">
+          {submitButton}
           <ToggleGroup 
             type="single" 
             value={view} 
