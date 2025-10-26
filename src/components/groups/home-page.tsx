@@ -14,7 +14,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
     const sortedGroups = [...initialGroups].sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA; // Sort descending
+      return dateB - dateA; // Sort descending (newest first)
     });
     setGroups(sortedGroups);
   }, [initialGroups]);
@@ -26,7 +26,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
         return updatedGroups.sort((a, b) => {
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA; // Sort descending
+            return dateB - dateA; // Sort descending (newest first)
         });
     });
   };
