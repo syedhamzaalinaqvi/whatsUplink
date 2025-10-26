@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "group-1",
+      "description": "A group for tech enthusiasts",
+      "imageUrl": "https://images.unsplash.com/photo-1632251141959-40b21a6c118c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dGVjaG5vbG9neSUyMGNvZGV8ZW58MHx8fHwxNzYxNDU1OTkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "technology code"
+    },
+    {
+      "id": "group-2",
+      "description": "Gamers unite group",
+      "imageUrl": "https://images.unsplash.com/photo-1580327332925-a10e6cb11baa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2FtaW5nJTIwY29udHJvbGxlcnxlbnwwfHx8fDE3NjE0NDY4NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gaming controller"
+    },
+    {
+      "id": "group-3",
+      "description": "A group for food lovers",
+      "imageUrl": "https://images.unsplash.com/photo-1570352412018-d4ad8dd88b75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkZWxpY2lvdXMlMjBmb29kfGVufDB8fHx8MTc2MTM4OTgyMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "delicious food"
+    },
+    {
+      "id": "group-4",
+      "description": "Travel and adventure group",
+      "imageUrl": "https://images.unsplash.com/photo-1612441804231-77a36b284856?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtb3VudGFpbiUyMGxhbmRzY2FwZXxlbnwwfHx8fDE3NjE0NTY1NDl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mountain landscape"
+    },
+    {
+      "id": "group-5",
+      "description": "Book club for avid readers",
+      "imageUrl": "https://images.unsplash.com/photo-1709924168698-620ea32c3488?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxib29rcyUyMGxpYnJhcnl8ZW58MHx8fHwxNzYxNDM1Nzg1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "books library"
+    },
+    {
+      "id": "group-6",
+      "description": "Fitness and workout buddies",
+      "imageUrl": "https://images.unsplash.com/photo-1599058917212-d750089bc07e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxneW0lMjB3b3Jrb3V0fGVufDB8fHx8MTc2MTQ0OTc5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gym workout"
+    }
+  ]
 }
