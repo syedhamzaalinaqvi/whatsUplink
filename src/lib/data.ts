@@ -17,7 +17,7 @@ export type GroupLink = {
 // Helper function to safely convert Firestore Timestamps or other date formats to ISO strings
 export function safeGetDate(createdAt: any): string {
     if (!createdAt) {
-        return new Date().toISOString(); // Fallback for missing timestamps
+        return new Date(0).toISOString(); // Fallback for missing timestamps to sort them to the end
     }
     if (createdAt instanceof Timestamp) {
       return createdAt.toDate().toISOString();
@@ -26,7 +26,7 @@ export function safeGetDate(createdAt: any): string {
     if (typeof createdAt === 'object' && createdAt.seconds) {
       return new Date(createdAt.seconds * 1000).toISOString();
     }
-    // Fallback for string or number formats
+    // Fallback for string or number formats, which new submissions will have
     try {
         const date = new Date(createdAt);
         if (!isNaN(date.getTime())) {
@@ -35,7 +35,7 @@ export function safeGetDate(createdAt: any): string {
     } catch (e) {
         // Ignore parsing errors and fall back
     }
-    return new Date().toISOString();
+    return new Date(0).toISOString();
 }
 
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {

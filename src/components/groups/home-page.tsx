@@ -12,8 +12,8 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   useEffect(() => {
     // Sort the initial groups when the component mounts
     const sortedGroups = [...initialGroups].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA; // Sort descending (newest first)
     });
     setGroups(sortedGroups);
@@ -24,8 +24,8 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
     setGroups(prevGroups => {
         const updatedGroups = [newGroup, ...prevGroups];
         return updatedGroups.sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
             return dateB - dateA; // Sort descending (newest first)
         });
     });
