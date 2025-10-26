@@ -9,17 +9,21 @@ type FirebaseInstances = {
   auth: Auth;
 };
 
-let firebaseInstances: FirebaseInstances | null = null;
-
+// This function is now designed to be called separately on the client and server
+// to ensure a valid Firebase instance is always available.
 export function initializeFirebase(): FirebaseInstances {
-  if (firebaseInstances) {
-    return firebaseInstances;
+  // On the server, we always want a new instance.
+  // On the client, we want to reuse the existing instance.
+  if (typeof window !== 'undefined' && getApps().length > 0) {
+    const app = getApp();
+    const firestore = getFirestore(app);
+    const auth = getAuth(app);
+    return { app, firestore, auth };
   }
 
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const app = initializeApp(firebaseConfig);
   const firestore = getFirestore(app);
   const auth = getAuth(app);
 
-  firebaseInstances = { app, firestore, auth };
-  return firebaseInstances;
+  return { app, firestore, auth };
 }
