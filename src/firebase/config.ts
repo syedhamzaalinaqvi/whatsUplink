@@ -1,10 +1,11 @@
-// TODO: Replace with your actual Firebase project configuration
-// This is a placeholder and will not work.
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
-  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
-  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_YOUR_APP_ID_HERE"
-};
+    apiKey: "AIzaSyDLQyYe9Zv1cT_E4O_djxuDEHi_fLXPbXg",
+    authDomain: "whatsapp-group-hub-4d4df.firebaseapp.com",
+    projectId: "whatsapp-group-hub-4d4df",
+    storageBucket: "whatsapp-group-hub-4d4df.appspot.com",
+    messagingSenderId: "1069919260036",
+    appId: "1:1069919260036:web:59867163df32cd0be4a1d1",
+    measurementId: "G-SX5BBDHNR1"
+  };

@@ -21,7 +21,13 @@ const FirebaseContext = createContext<FirebaseContextType>({
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const services = useMemo(() => {
+  const [services, setServices] = useState<FirebaseContextType>({
+    app: null,
+    auth: null,
+    firestore: null,
+  });
+
+  useEffect(() => {
     try {
       if (getApps().length === 0) {
         console.log('Initializing Firebase...');
@@ -29,17 +35,17 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
         const auth = getAuth(app);
         const firestore = getFirestore(app);
         console.log('Firebase initialized successfully.');
-        return { app, auth, firestore };
+        setServices({ app, auth, firestore });
       } else {
         console.log('Using existing Firebase app.');
         const app = getApp();
         const auth = getAuth(app);
         const firestore = getFirestore(app);
-        return { app, auth, firestore };
+        setServices({ app, auth, firestore });
       }
     } catch (e) {
         console.error("Firebase initialization error:", e);
-        return { app: null, auth: null, firestore: null };
+        setServices({ app: null, auth: null, firestore: null });
     }
   }, []);
 
