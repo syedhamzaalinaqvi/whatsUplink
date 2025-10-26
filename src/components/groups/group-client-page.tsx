@@ -40,8 +40,6 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
     });
   }, [groups, searchQuery, selectedCountry, selectedCategory]);
 
-  const showLoadingSkeleton = isGroupLoading && groups.length === 0;
-
   return (
     <section className="container py-8 md:py-12">
         <div className="mx-auto max-w-5xl">
@@ -57,7 +55,7 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
             submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} />}
         />
         
-        {showLoadingSkeleton ? (
+        {isGroupLoading ? (
              <div 
                 className={`transition-all duration-500 ${
                 view === 'grid'
