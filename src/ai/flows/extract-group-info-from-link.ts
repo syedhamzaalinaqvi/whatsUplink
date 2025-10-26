@@ -68,20 +68,12 @@ const extractGroupInfoFlow = ai.defineFlow(
       throw new Error('Failed to extract group info.');
     }
 
-    const imageGenerationPrompt = `You are an AI that generates preview images for WhatsApp group links.
-
-Create a visually appealing and informative image that represents the group link based on its title and description.
-The image should be relevant to the group's purpose.
+    const imageGenerationPrompt = `Create a visually appealing and informative image that represents a WhatsApp group based on its title and description.
 
 Group Title: ${info.title}
 Group Description: ${info.description}
 
-Output the image as a data URI.
-The image should be a square with a resolution of 512x512 pixels.
-Include the group name in the image. Add some effects to make it look attractive.
-Make sure it is family friendly.
-Avoid any depictions of violence.
-Return just the url.`;
+The image should be a square with a resolution of 512x512 pixels. It should be relevant, attractive, and family-friendly.`;
 
     const {media} = await ai.generate({
       prompt: imageGenerationPrompt,
