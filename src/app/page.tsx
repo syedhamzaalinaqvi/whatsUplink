@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, orderBy, query as firestoreQuery, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, QuerySnapshot, DocumentData, Timestamp, query as firestoreQuery } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
@@ -34,6 +34,7 @@ function safeGetDate(createdAt: any): string {
     return new Date().toISOString();
 }
 
+
 export default function Home() {
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,13 +45,15 @@ export default function Home() {
       try {
         const { firestore } = initializeFirebase();
         const groupsCollection = collection(firestore, 'groups');
-        const q = firestoreQuery(groupsCollection, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
+        // Removed orderBy for robustness. The query will now fetch all documents without sorting.
+        const q = firestoreQuery(groupsCollection);
+        const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
 
         if (querySnapshot.empty) {
             console.log("No documents found in 'groups' collection.");
             setGroups([]);
         } else {
+            console.log(`Found ${querySnapshot.size} documents. Processing...`);
             const groupsData = querySnapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
@@ -67,6 +70,7 @@ export default function Home() {
                 } as GroupLink;
             });
             setGroups(groupsData);
+            console.log("Groups loaded successfully:", groupsData);
         }
       } catch (error) {
         console.error("Error fetching groups from Firestore:", error);
