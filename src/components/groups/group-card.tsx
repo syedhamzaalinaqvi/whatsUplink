@@ -8,9 +8,10 @@ import type { GroupLink } from '@/lib/data';
 type GroupCardProps = {
   group: GroupLink;
   view: 'grid' | 'list';
+  onTagClick: (tag: string) => void;
 };
 
-export function GroupCard({ group, view }: GroupCardProps) {
+export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
   const isListView = view === 'list';
 
   return (
@@ -40,7 +41,9 @@ export function GroupCard({ group, view }: GroupCardProps) {
             <div className="flex flex-wrap gap-2 items-center">
                 <Tag className="h-4 w-4 text-muted-foreground" />
                 {group.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="font-normal">{tag}</Badge>
+                    <button key={tag} onClick={() => onTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                        <Badge variant="default" className="cursor-pointer">{tag}</Badge>
+                    </button>
                 ))}
             </div>
           )}

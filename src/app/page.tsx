@@ -21,6 +21,10 @@ export default function Home() {
     setIsSubmitDialogOpen(false);
   };
 
+  const handleTagClick = (tag: string) => {
+    setSearchQuery(tag);
+  };
+
   const filteredGroups = useMemo(() => {
     return groups.filter(group => {
       const searchLower = searchQuery.toLowerCase();
@@ -60,7 +64,7 @@ export default function Home() {
                 }`}
               >
                 {filteredGroups.map(group => (
-                  <GroupCard key={group.id} group={group} view={view} />
+                  <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} />
                 ))}
               </div>
 

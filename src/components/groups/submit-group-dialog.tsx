@@ -120,7 +120,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Group Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required defaultValue={preview?.description} readOnly={!!preview?.description} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required defaultValue={preview?.description} />
         </div>
         
         <input type="hidden" name="imageUrl" value={preview?.image || ''} />
@@ -160,13 +160,18 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
         </div>
 
         <DialogFooter className="col-span-2">
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
             {isSubmitting ? (
                 <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Processing...
                 </>
-            ) : (
+            ) : isFetchingPreview ? (
+                <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Fetching...
+                </>
+            ): (
                 'Submit Group'
             )}
             </Button>
