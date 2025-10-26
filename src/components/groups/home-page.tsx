@@ -5,12 +5,12 @@ import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { initializeFirebase } from '@/firebase';
-import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
 
-// Initialize Firebase ONCE outside of the component.
+// Initialize Firebase ONCE outside of the component to prevent re-initialization.
 const { firestore } = initializeFirebase();
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
@@ -26,7 +26,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
       
-      // Sort on the client-side
+      // Sort on the client-side to handle all date formats robustly
       groupsData.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -46,7 +46,8 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    // The real-time listener will automatically update the `groups` state.
+    // The real-time listener will automatically update the `groups` state,
+    // so no manual addition to the state is needed here.
   };
 
   const handleLoadMore = () => {
