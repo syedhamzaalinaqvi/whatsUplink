@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, Tag } from 'lucide-react';
@@ -6,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { GroupLink } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessagesSquare } from 'lucide-react';
+import { MessagesSquare, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+
 
 type GroupCardProps = {
   group: GroupLink;
@@ -15,6 +18,8 @@ type GroupCardProps = {
 };
 
 export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
+  const timeAgo = formatDistanceToNow(new Date(group.createdAt), { addSuffix: true });
+
   if (view === 'grid') {
     return (
       <Link href={`/group/invite/${group.id}`} className="block group">
@@ -28,6 +33,9 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
                 </AvatarFallback>
             </Avatar>
             <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <Clock className="h-3 w-3" /> {timeAgo}
+            </p>
         </Card>
       </Link>
     );
@@ -67,8 +75,11 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             </div>
           )}
         </CardContent>
-        <CardFooter>
-          <Button asChild className="w-full" variant="secondary">
+        <CardFooter className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Clock className="h-3 w-3" /> Submitted {timeAgo}
+          </p>
+          <Button asChild className="w-full sm:w-auto" variant="secondary">
             <Link href={`/group/invite/${group.id}`}>
               View Details
               <ExternalLink className="ml-2 h-4 w-4" />
