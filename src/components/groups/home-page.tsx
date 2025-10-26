@@ -5,16 +5,33 @@ import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { initializeFirebase } from '@/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
 
-const getSafeDate = (date: string | Date | null | undefined): Date => {
-  if (!date) return new Date(0); // Return epoch for null/undefined to sort them last
-  const d = new Date(date);
-  return isNaN(d.getTime()) ? new Date(0) : d;
+const getSafeDate = (date: any): Date => {
+  if (!date) return new Date(0);
+  if (date instanceof Date) return date;
+  if (date instanceof Timestamp) return date.toDate();
+  if (typeof date === 'string') {
+    const parsedDate = new Date(date);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+  }
+  // Handle Firestore Timestamps serialized on the server
+  if (typeof date === 'object' && date.seconds) {
+    return new Date(date.seconds * 1000);
+  }
+  // Handle older serialization format
+  if (typeof date === 'object' && date._seconds) {
+    return new Date(date._seconds * 1000);
+  }
+
+  return new Date(0); // Fallback for unrecognized formats
 };
+
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
@@ -30,7 +47,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
       
-      // Sort on the client-side to handle missing dates correctly
+      // Sort on the client-side to handle missing/various date formats correctly
       groupsData.sort((a, b) => {
         const dateA = getSafeDate(a.createdAt).getTime();
         const dateB = getSafeDate(b.createdAt).getTime();
@@ -70,7 +87,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
             onGroupSubmitted={handleGroupSubmitted}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
-            isGroupLoading={isGroupLoading && groups.length === 0}
+            isGroupLoading={isGroupLoading}
         />
       </main>
       <footer className="border-t bg-background">
