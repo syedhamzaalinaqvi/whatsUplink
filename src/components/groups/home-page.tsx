@@ -13,8 +13,8 @@ const GROUPS_PER_PAGE = 20;
 // Initialize Firebase ONCE outside of the component to prevent re-initialization.
 const { firestore } = initializeFirebase();
 
-export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
-  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+export function HomePage() {
+  const [groups, setGroups] = useState<GroupLink[]>([]);
   const [visibleCount, setVisibleCount] = useState(GROUPS_PER_PAGE);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
 

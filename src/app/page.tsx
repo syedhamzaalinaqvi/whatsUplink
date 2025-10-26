@@ -1,7 +1,7 @@
 
 import { HomePage } from '@/components/groups/home-page';
 
-export default async function Home() {
-  // initialGroups will now be fetched on the client side in real-time
-  return <HomePage initialGroups={[]} />;
+export default function Home() {
+  // HomePage is a client component that will fetch its own data in real-time.
+  return <HomePage />;
 }
