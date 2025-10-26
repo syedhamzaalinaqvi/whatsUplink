@@ -39,6 +39,8 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
     });
   }, [groups, searchQuery, selectedCountry, selectedCategory]);
 
+  const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
+
   return (
     <section className="container py-8 md:py-12">
         <div className="mx-auto max-w-5xl">
@@ -55,26 +57,14 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
         />
         
         {isGroupLoading ? (
-             <div 
-                className={`transition-all duration-500 ${
-                view === 'grid'
-                    ? 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4'
-                    : 'flex flex-col gap-6'
-                }`}
-            >
+            <div className={gridClass}>
                 {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />
                 ))}
             </div>
         ) : filteredGroups.length > 0 ? (
             <>
-                <div 
-                    className={`transition-all duration-500 ${
-                    view === 'grid'
-                        ? 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4'
-                        : 'flex flex-col gap-6'
-                    }`}
-                >
+                <div className={gridClass}>
                     {filteredGroups.map(group => (
                     <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} />
                     ))}
