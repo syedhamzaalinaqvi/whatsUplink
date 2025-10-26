@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
@@ -12,8 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GroupCard } from '@/components/groups/group-card';
 import { Separator } from '@/components/ui/separator';
-import { Dialog } from '@/components/ui/dialog';
-import { SubmitGroupDialogContent } from '@/components/groups/submit-group-dialog';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -21,22 +18,18 @@ type GroupDetailViewProps = {
 };
 
 export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) {
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   // We need a dummy onTagClick for the GroupCard since it's required,
   // but there's no filtering on the detail page.
   const handleTagClick = () => {};
 
-  // This handler is just for closing the dialog, we don't add the group here.
-  const handleGroupSubmitted = () => {
-    setIsSubmitDialogOpen(false);
-  };
+  // This handler is just for showing new groups on the homepage after submission.
+  const handleGroupSubmitted = () => {};
 
 
   return (
-    <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
         <div className="flex min-h-screen w-full flex-col">
-          <Header />
+          <Header onGroupSubmitted={handleGroupSubmitted} />
           <main className="flex-1">
             <div className="container py-8 md:py-12">
                 <div className="mb-8">
@@ -128,7 +121,5 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
               </div>
           </footer>
         </div>
-        <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmitted} />
-    </Dialog>
   );
 }

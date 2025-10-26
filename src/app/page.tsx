@@ -7,8 +7,6 @@ import { initializeFirebase } from '@/firebase';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
-import { Dialog } from '@/components/ui/dialog';
-import { SubmitGroupDialogContent } from '@/components/groups/submit-group-dialog';
 
 // Helper function to safely convert Firestore Timestamps or other date formats to ISO strings
 function safeGetDate(createdAt: any): string {
@@ -38,7 +36,6 @@ function safeGetDate(createdAt: any): string {
 export default function Home() {
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchGroups() {
@@ -85,23 +82,19 @@ export default function Home() {
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
     setGroups(prev => [newGroup, ...prev]);
-    setIsSubmitDialogOpen(false);
   };
 
   return (
-    <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-      <div className="flex min-h-screen w-full flex-col">
-        <Header />
-        <main className="flex-1">
-          <GroupClientPage initialGroups={groups} isLoading={isLoading} />
-        </main>
-        <footer className="border-t bg-background">
-          <div className="container py-6 text-center text-sm text-muted-foreground">
-            Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-          </div>
-        </footer>
-      </div>
-      <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmitted} />
-    </Dialog>
+    <div className="flex min-h-screen w-full flex-col">
+      <Header onGroupSubmitted={handleGroupSubmitted} />
+      <main className="flex-1">
+        <GroupClientPage initialGroups={groups} isLoading={isLoading} />
+      </main>
+      <footer className="border-t bg-background">
+        <div className="container py-6 text-center text-sm text-muted-foreground">
+          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
+        </div>
+      </footer>
+    </div>
   );
 }

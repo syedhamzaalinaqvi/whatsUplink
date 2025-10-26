@@ -1,8 +1,8 @@
-import { MessageCirclePlus, MessagesSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DialogTrigger } from '@/components/ui/dialog';
+import type { GroupLink } from '@/lib/data';
+import { MessagesSquare } from 'lucide-react';
+import { SubmitGroup } from '@/components/groups/submit-group';
 
-export function Header() {
+export function Header({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void }) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center justify-between">
@@ -12,12 +12,7 @@ export function Header() {
             WhatsUp<span className="text-primary">Link</span>
           </h1>
         </div>
-        <DialogTrigger asChild>
-          <Button>
-            <MessageCirclePlus className="mr-2 h-4 w-4" />
-            Submit Group
-          </Button>
-        </DialogTrigger>
+        <SubmitGroup onGroupSubmitted={onGroupSubmitted} />
       </div>
     </header>
   );
