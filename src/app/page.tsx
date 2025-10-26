@@ -37,10 +37,14 @@ export default function Home() {
           let createdAt: string;
           if (data.createdAt instanceof Timestamp) {
             createdAt = data.createdAt.toDate().toISOString();
+          } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            // Handle cases where it's a Timestamp-like object from a different context
+            createdAt = data.createdAt.toDate().toISOString();
           } else if (data.createdAt) {
-            // Fallback for string or other formats - this may need adjustment
+            // Fallback for string or number formats - this may need adjustment
             createdAt = new Date(data.createdAt).toISOString();
           } else {
+            // If createdAt is missing, use current time as a fallback
             createdAt = new Date().toISOString();
           }
 

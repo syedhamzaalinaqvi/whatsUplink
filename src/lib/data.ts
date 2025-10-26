@@ -1,5 +1,5 @@
 import { initializeFirebase } from '@/firebase';
-import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp } from 'firebase/firestore';
+import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore } from 'firebase/firestore';
 
 export type GroupLink = {
   id: string;
@@ -28,11 +28,10 @@ function safeGetDate(createdAt: any): string {
 }
 
 
-export async function getGroupById(id: string | undefined): Promise<GroupLink | undefined> {
+export async function getGroupById(firestore: Firestore, id: string | undefined): Promise<GroupLink | undefined> {
     if (!id) return undefined;
     
     try {
-        const { firestore } = initializeFirebase();
         const groupDocRef = doc(firestore, 'groups', id);
         const docSnap = await getDoc(groupDocRef);
 
@@ -60,11 +59,10 @@ export async function getGroupById(id: string | undefined): Promise<GroupLink | 
     }
 }
 
-export async function getRelatedGroups(currentGroup: GroupLink | undefined) {
+export async function getRelatedGroups(firestore: Firestore, currentGroup: GroupLink | undefined) {
     if (!currentGroup) return [];
 
     try {
-        const { firestore } = initializeFirebase();
         const groupsCollection = collection(firestore, 'groups');
         const q = query(
             groupsCollection,
