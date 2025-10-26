@@ -6,6 +6,8 @@ import type { GroupLink } from '@/lib/data';
 
 const submitGroupSchema = z.object({
   link: z.string().url('Please enter a valid WhatsApp group link'),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
   country: z.string().min(1, 'Please select a country'),
   tags: z.string().optional(),
@@ -16,6 +18,8 @@ export type FormState = {
   group?: GroupLink;
   errors?: {
     link?: string[];
+    title?: string[];
+    description?: string[];
     category?: string[];
     country?: string[];
     tags?: string[];
@@ -28,6 +32,8 @@ export async function submitGroup(
 ): Promise<FormState> {
   const validatedFields = submitGroupSchema.safeParse({
     link: formData.get('link'),
+    title: formData.get('title'),
+    description: formData.get('description'),
     category: formData.get('category'),
     country: formData.get('country'),
     tags: formData.get('tags'),
@@ -40,11 +46,12 @@ export async function submitGroup(
     };
   }
 
-  const { link, category, country, tags } = validatedFields.data;
+  const { link, title, description, category, country, tags } = validatedFields.data;
 
   try {
-    const { title, description, previewImage } = await extractGroupInfoFromLink({
-      groupLink: link,
+    const { previewImage } = await extractGroupInfoFromLink({
+      title,
+      description,
     });
 
     const newGroup: GroupLink = {
@@ -68,6 +75,6 @@ export async function submitGroup(
 
   } catch (error) {
     console.error('AI processing failed:', error);
-    return { message: 'Failed to process group link. Please check the link and try again.' };
+    return { message: 'Failed to generate preview image. Please try again.' };
   }
 }

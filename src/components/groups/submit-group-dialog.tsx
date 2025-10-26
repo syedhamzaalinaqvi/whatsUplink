@@ -18,6 +18,7 @@ import { submitGroup, type FormState } from '@/app/actions';
 import type { GroupLink } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES, COUNTRIES } from '@/lib/constants';
+import { Textarea } from '../ui/textarea';
 
 const initialState: FormState = {
   message: '',
@@ -68,7 +69,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
       <DialogHeader>
         <DialogTitle>Submit a New Group</DialogTitle>
         <DialogDescription>
-          Paste a WhatsApp group link. Our AI will automatically generate the title, description, and a preview image.
+          Provide the group details. Our AI will generate a preview image based on the title and description.
         </DialogDescription>
       </DialogHeader>
       <form ref={formRef} action={formAction} className="grid grid-cols-2 gap-4 py-4">
@@ -78,6 +79,18 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
           {state.errors?.link && <p className="text-sm text-destructive">{state.errors.link.join(', ')}</p>}
         </div>
         
+        <div className="space-y-2 col-span-2">
+          <Label htmlFor="title">Group Title</Label>
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required />
+          {state.errors?.title && <p className="text-sm text-destructive">{state.errors.title.join(', ')}</p>}
+        </div>
+
+        <div className="space-y-2 col-span-2">
+          <Label htmlFor="description">Group Description</Label>
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required />
+          {state.errors?.description && <p className="text-sm text-destructive">{state.errors.description.join(', ')}</p>}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
           <Select name="country" required>
