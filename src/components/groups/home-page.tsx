@@ -7,14 +7,28 @@ import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
-  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+  const [groups, setGroups] = useState<GroupLink[]>([]);
 
   useEffect(() => {
-    setGroups(initialGroups);
+    // Sort the initial groups when the component mounts
+    const sortedGroups = [...initialGroups].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // Sort descending
+    });
+    setGroups(sortedGroups);
   }, [initialGroups]);
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    setGroups(prevGroups => [newGroup, ...prevGroups]);
+    // Add the new group to the top and re-sort
+    setGroups(prevGroups => {
+        const updatedGroups = [newGroup, ...prevGroups];
+        return updatedGroups.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA; // Sort descending
+        });
+    });
   };
 
   return (

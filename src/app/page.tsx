@@ -1,5 +1,5 @@
 
-import { collection, getDocs, QuerySnapshot, DocumentData, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, QuerySnapshot, DocumentData, query } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import type { GroupLink } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
@@ -9,7 +9,8 @@ async function getGroups(): Promise<GroupLink[]> {
   try {
     const { firestore } = initializeFirebase();
     const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
+    // Removed the orderBy clause to fetch all documents
+    const q = query(groupsCollection);
     const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
 
     if (querySnapshot.empty) {
