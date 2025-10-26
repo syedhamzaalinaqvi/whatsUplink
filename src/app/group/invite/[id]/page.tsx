@@ -1,12 +1,10 @@
-'use client'
-
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { getGroupById, getRelatedGroups, type GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GroupCard } from '@/components/groups/group-card';
@@ -19,6 +17,10 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
   if (!group) {
     notFound();
   }
+
+  // We need a dummy onTagClick for the GroupCard since it's required, 
+  // but there's no filtering on the detail page.
+  const handleTagClick = () => {};
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -93,7 +95,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                     <div className="flex flex-col gap-4">
                         {relatedGroups.length > 0 ? (
                              relatedGroups.map(relatedGroup => (
-                                <GroupCard key={relatedGroup.id} group={relatedGroup} view="list" onTagClick={() => {}} />
+                                <GroupCard key={relatedGroup.id} group={relatedGroup} view="list" onTagClick={handleTagClick} />
                             ))
                         ) : (
                             <p className="text-muted-foreground">No related groups found.</p>
