@@ -8,6 +8,8 @@ const submitGroupSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   link: z.string().url('Please enter a valid WhatsApp group link'),
+  category: z.string().min(1, 'Please select a category'),
+  country: z.string().min(1, 'Please select a country'),
 });
 
 export type FormState = {
@@ -17,6 +19,8 @@ export type FormState = {
     title?: string[];
     description?: string[];
     link?: string[];
+    category?: string[];
+    country?: string[];
   };
 };
 
@@ -28,6 +32,8 @@ export async function submitGroup(
     title: formData.get('title'),
     description: formData.get('description'),
     link: formData.get('link'),
+    category: formData.get('category'),
+    country: formData.get('country'),
   });
 
   if (!validatedFields.success) {
@@ -37,7 +43,7 @@ export async function submitGroup(
     };
   }
 
-  const { title, description, link } = validatedFields.data;
+  const { title, description, link, category, country } = validatedFields.data;
 
   try {
     const { previewImage } = await generateGroupLinkPreview({
@@ -52,7 +58,8 @@ export async function submitGroup(
       link,
       imageUrl: previewImage,
       imageHint: 'AI generated',
-      category: 'New' // Category could be another form field or AI-inferred
+      category,
+      country,
     };
 
     // Here you would save the `newGroup` to Firestore.

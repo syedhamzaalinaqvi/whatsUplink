@@ -12,6 +12,8 @@ export default function Home() {
   const [groups, setGroups] = useState<GroupLink[]>(sampleGroupLinks);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
@@ -20,15 +22,13 @@ export default function Home() {
   };
 
   const filteredGroups = useMemo(() => {
-    if (!searchQuery) {
-      return groups;
-    }
-    return groups.filter(group => 
-      group.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      group.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      group.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [groups, searchQuery]);
+    return groups.filter(group => {
+      const searchMatch = !searchQuery || group.title.toLowerCase().includes(searchQuery.toLowerCase()) || group.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const countryMatch = selectedCountry === 'all' || group.country === selectedCountry;
+      const categoryMatch = selectedCategory === 'all' || group.category.toLowerCase() === selectedCategory.toLowerCase();
+      return searchMatch && countryMatch && categoryMatch;
+    });
+  }, [groups, searchQuery, selectedCountry, selectedCategory]);
 
   return (
     <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
@@ -42,6 +42,10 @@ export default function Home() {
                 onViewChange={setView}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                selectedCountry={selectedCountry}
+                onCountryChange={setSelectedCountry}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
               />
               
               <div 
@@ -59,7 +63,7 @@ export default function Home() {
               {filteredGroups.length === 0 && (
                 <div className="mt-16 text-center text-muted-foreground">
                   <h3 className="text-xl font-semibold">No groups found</h3>
-                  <p>Try adjusting your search or submit a new group!</p>
+                  <p>Try adjusting your filters or submit a new group!</p>
                 </div>
               )}
             </div>

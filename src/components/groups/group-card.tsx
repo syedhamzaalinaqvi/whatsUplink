@@ -28,7 +28,10 @@ export function GroupCard({ group, view }: GroupCardProps) {
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-lg font-semibold">{group.title}</CardTitle>
-            <Badge variant="secondary" className="whitespace-nowrap">{group.category}</Badge>
+            <div className="flex flex-col items-end gap-2">
+                <Badge variant="secondary" className="whitespace-nowrap">{group.category}</Badge>
+                <Badge variant="outline" className="whitespace-nowrap capitalize">{group.country}</Badge>
+            </div>
           </div>
           <CardDescription className="pt-2 line-clamp-3">{group.description}</CardDescription>
         </CardHeader>

@@ -8,6 +8,7 @@ export type GroupLink = {
   imageUrl: string;
   imageHint: string;
   category: string;
+  country: string;
 };
 
 const placeholderImageMap = new Map(PlaceHolderImages.map(p => [p.id, p]));
@@ -21,6 +22,7 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-1')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-1')?.imageHint || 'technology code',
     category: 'Technology',
+    country: 'usa',
   },
   {
     id: '2',
@@ -30,6 +32,7 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-2')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-2')?.imageHint || 'gaming controller',
     category: 'Gaming',
+    country: 'india',
   },
   {
     id: '3',
@@ -39,6 +42,7 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-3')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-3')?.imageHint || 'delicious food',
     category: 'Food',
+    country: 'pakistan',
   },
   {
     id: '4',
@@ -48,6 +52,7 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-4')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-4')?.imageHint || 'mountain landscape',
     category: 'Travel',
+    country: 'usa',
   },
   {
     id: '5',
@@ -57,6 +62,7 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-5')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-5')?.imageHint || 'books library',
     category: 'Hobbies',
+    country: 'india',
   },
   {
     id: '6',
@@ -66,5 +72,6 @@ export const sampleGroupLinks: GroupLink[] = [
     imageUrl: placeholderImageMap.get('group-6')?.imageUrl || '',
     imageHint: placeholderImageMap.get('group-6')?.imageHint || 'gym workout',
     category: 'Health & Fitness',
+    country: 'pakistan',
   },
 ];
