@@ -23,7 +23,7 @@ export function safeGetDate(createdAt: any): string {
       return createdAt.toDate().toISOString();
     }
     // Handle cases where it might be a plain object from server-side rendering
-    if (typeof createdAt === 'object' && createdAt.seconds) {
+    if (typeof createdAt === 'object' && createdAt.seconds !== undefined && createdAt.nanoseconds !== undefined) {
       return new Date(createdAt.seconds * 1000).toISOString();
     }
     // Fallback for string or number formats, which new submissions will have
