@@ -1,4 +1,5 @@
-import { collection, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
+
+import { collection, getDocs, QuerySnapshot, DocumentData, query, orderBy } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import type { GroupLink } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
@@ -8,7 +9,8 @@ async function getGroups(): Promise<GroupLink[]> {
   try {
     const { firestore } = initializeFirebase();
     const groupsCollection = collection(firestore, 'groups');
-    const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(groupsCollection);
+    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
 
     if (querySnapshot.empty) {
       console.warn("No documents found in 'groups' collection.");
