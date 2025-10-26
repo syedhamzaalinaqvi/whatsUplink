@@ -1,21 +1,22 @@
 /**
- * @file Firestore Security Rules
- * @core_philosophy This ruleset defaults to locked-down access. All reads and writes are explicitly denied unless
- *                  allowed by a specific rule.  Since no data entities or structure are defined in the input,
- *                  the ruleset provides a basic template that prevents all access.
- * @data_structure No data structure has been defined.
- * @key_security_decisions All access is denied by default due to the lack of defined entities.
+ * @description This ruleset provides a basic secure starting point for a Firestore database.
+ * It enforces that all users must be signed in to access any data.
+ * @dataStructure The database has no defined structure. All paths require authentication.
+ * @keySecurityDecisions All read and write operations require a valid authentication token.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default: Prevent all access. Replace with more specific rules.
+    // Function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Secure all paths by default, requiring authentication
     match /{document=**} {
-      allow read: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }
