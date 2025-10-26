@@ -1,15 +1,43 @@
-
+/**
+ * @fileoverview Firestore Security Rules for the WhatsApp Group Link Submission app.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes open access for reading group information while restricting write access to authenticated users.
+ * All group data is stored in a top-level `/groups` collection.
+ *
+ * Data Structure:
+ * - /groups/{groupId}: Each document represents a WhatsApp group with metadata like title, link, category, and country.
+ *
+ * Key Security Decisions:
+ * - Public Read Access:  All users can read group information.
+ * - Authenticated Writes: Only authenticated users can create, update, or delete groups. No ownership validation is enforced.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to the groups collection
-    // and allow anyone to create a new group document.
-    match /groups/{groupId} {
-      allow read, create: if true;
 
-      // Restrict update and delete operations for now.
-      allow update, delete: if false;
+    /**
+     * @description Controls access to the /groups/{groupId} collection.
+     * @path /groups/{groupId}
+     * @allow (get, list): Any user can read group data.
+     * @allow (create): An authenticated user can create a group.
+     * @allow (update, delete): An authenticated user can update or delete a group.
+     * @deny (create): An unauthenticated user cannot create a group.
+     * @deny (update, delete): An unauthenticated user cannot update or delete a group.
+     * @principle Allows public read access while restricting writes to authenticated users.
+     */
+    match /groups/{groupId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    // Helper function to check if a user is signed in.
+    function isSignedIn() {
+      return request.auth != null;
     }
   }
 }
