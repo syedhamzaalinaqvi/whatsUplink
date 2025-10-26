@@ -4,29 +4,31 @@ import { useState, useEffect } from 'react';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
-import { initializeFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
 
-// Initialize Firebase ONCE outside of the component to prevent re-initialization.
-const { firestore } = initializeFirebase();
-
 export function HomePage() {
+  const { firestore } = useFirestore();
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [visibleCount, setVisibleCount] = useState(GROUPS_PER_PAGE);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
 
   useEffect(() => {
-    // This effect runs only once on component mount.
+    if (!firestore) {
+      console.log("Firestore not available yet...");
+      return;
+    }
+    
+    setIsGroupLoading(true);
     const groupsCollection = collection(firestore, 'groups');
     const q = query(groupsCollection);
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
       
-      // Sort on the client-side to handle all date formats robustly
       groupsData.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -34,15 +36,14 @@ export function HomePage() {
       });
 
       setGroups(groupsData);
-      setIsGroupLoading(false); // Set loading to false after the first data snapshot
+      setIsGroupLoading(false);
     }, (error) => {
       console.error("Error fetching real-time groups:", error);
-      setIsGroupLoading(false); // Also stop loading on error
+      setIsGroupLoading(false);
     });
 
-    // Cleanup the listener when the component unmounts
     return () => unsubscribe();
-  }, []); // Empty dependency array ensures this runs only once.
+  }, [firestore]);
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {

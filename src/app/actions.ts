@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { GroupLink } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { getFirestoreInstance } from '@/firebase/client';
 
 const submitGroupSchema = z.object({
   link: z.string().url('Please enter a valid WhatsApp group link'),
@@ -82,7 +82,7 @@ export async function submitGroup(
   const { link, title, description, category, country, tags, imageUrl } = validatedFields.data;
 
   try {
-    const { firestore } = initializeFirebase();
+    const firestore = await getFirestoreInstance();
     const groupsCollection = collection(firestore, 'groups');
 
     const newGroupData = {

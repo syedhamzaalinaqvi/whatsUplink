@@ -1,43 +1,36 @@
 /**
- * @fileoverview Firestore Security Rules for the WhatsApp Group Link Submission app.
+ * @fileoverview Firestore Security Rules for WhatsApp Group Link Submissions
  *
  * Core Philosophy:
- * This ruleset prioritizes open access for reading group information while restricting write access to authenticated users.
- * All group data is stored in a top-level `/groups` collection.
+ * This ruleset prioritizes public read access to group information while strictly controlling write access.
+ * Only authenticated users can create, update, or delete groups.
  *
  * Data Structure:
- * - /groups/{groupId}: Each document represents a WhatsApp group with metadata like title, link, category, and country.
+ * The database stores group information in the `/groups/{groupId}` collection.
  *
  * Key Security Decisions:
- * - Public Read Access:  All users can read group information.
- * - Authenticated Writes: Only authenticated users can create, update, or delete groups. No ownership validation is enforced.
+ * - Group listings are public to facilitate discovery.
+ * - Only authenticated users can create, update, and delete group information.
+ *
+ * Denormalization for Authorization:
+ *  - The `Group` entity needs an `ownerId` field to properly control write access.  The current schema lacks this.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to the /groups/{groupId} collection.
+     * @description Controls read and write access to the /groups/{groupId} collection.
      * @path /groups/{groupId}
-     * @allow (get, list): Any user can read group data.
-     * @allow (create): An authenticated user can create a group.
-     * @allow (update, delete): An authenticated user can update or delete a group.
-     * @deny (create): An unauthenticated user cannot create a group.
-     * @deny (update, delete): An unauthenticated user cannot update or delete a group.
-     * @principle Allows public read access while restricting writes to authenticated users.
+     * @allow (get, list): Any user can read any group's information.
+     * @allow (create): Only an authenticated user can create a group, if `request.auth.uid` matches `request.resource.data.ownerId`.  The schema lacks the ownerId field, therefore this rule cannot be adequately implemented.
+     * @deny (update, delete):  All updates and deletes are denied.  The schema lacks the ownerId field, therefore this rule cannot be adequately implemented.
+     * @principle Public read, owner-only writes.
      */
     match /groups/{groupId} {
-      allow get: if true;
-      allow list: if true;
-
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
-    }
-
-    // Helper function to check if a user is signed in.
-    function isSignedIn() {
-      return request.auth != null;
+      allow get, list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'Group' entity is missing an 'ownerId' or 'authorId' field.
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
     }
   }
 }

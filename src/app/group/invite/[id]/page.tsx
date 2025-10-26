@@ -2,10 +2,10 @@
 import { notFound } from 'next/navigation';
 import { getGroupById, getRelatedGroups } from '@/lib/data';
 import { GroupDetailView } from '@/components/groups/group-detail-view';
-import { initializeFirebase } from '@/firebase';
+import { getFirestoreInstance } from '@/firebase/client';
 
 export default async function GroupDetailPage({ params }: { params: { id: string } }) {
-  const { firestore } = initializeFirebase();
+  const firestore = await getFirestoreInstance();
   const group = await getGroupById(firestore, params.id);
   
   if (!group) {
