@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, QuerySnapshot, DocumentData, Timestamp, query as firestoreQuery } from 'firebase/firestore';
+import { collection, getDocs, QuerySnapshot, DocumentData, Timestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
@@ -39,15 +39,15 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchGroups() {
+      console.log("Initializing Firebase and fetching groups...");
       try {
         const { firestore } = initializeFirebase();
         const groupsCollection = collection(firestore, 'groups');
-        // Removed orderBy for robustness. The query will now fetch all documents without sorting.
-        const q = firestoreQuery(groupsCollection);
-        const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+        // A simple query without sorting to maximize chances of success
+        const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(groupsCollection);
 
         if (querySnapshot.empty) {
-            console.log("No documents found in 'groups' collection.");
+            console.warn("No documents found in 'groups' collection.");
             setGroups([]);
         } else {
             console.log(`Found ${querySnapshot.size} documents. Processing...`);

@@ -5,7 +5,6 @@ import { useState } from 'react';
 import type { GroupLink } from '@/lib/data';
 import {
   Dialog,
-  DialogContent,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';

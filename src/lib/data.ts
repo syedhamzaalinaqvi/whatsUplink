@@ -1,5 +1,5 @@
 
-import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore } from 'firebase/firestore';
+import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore, DocumentData } from 'firebase/firestore';
 
 export type GroupLink = {
   id: string;
@@ -15,7 +15,7 @@ export type GroupLink = {
 };
 
 // Helper function to safely convert Firestore Timestamps or other date formats to ISO strings
-function safeGetDate(createdAt: any): string {
+export function safeGetDate(createdAt: any): string {
     if (!createdAt) {
         return new Date().toISOString(); // Fallback for missing timestamps
     }
@@ -38,6 +38,22 @@ function safeGetDate(createdAt: any): string {
     return new Date().toISOString();
 }
 
+function mapDocToGroupLink(doc: DocumentData): GroupLink {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        title: data.title,
+        description: data.description,
+        link: data.link,
+        imageUrl: data.imageUrl,
+        imageHint: data.imageHint || '',
+        category: data.category,
+        country: data.country,
+        tags: data.tags || [],
+        createdAt: safeGetDate(data.createdAt),
+    };
+}
+
 
 export async function getGroupById(firestore: Firestore, id: string | undefined): Promise<GroupLink | undefined> {
     if (!id) return undefined;
@@ -47,19 +63,7 @@ export async function getGroupById(firestore: Firestore, id: string | undefined)
         const docSnap = await getDoc(groupDocRef);
 
         if (docSnap.exists()) {
-            const data = docSnap.data();
-            return {
-                id: docSnap.id,
-                title: data.title,
-                description: data.description,
-                link: data.link,
-                imageUrl: data.imageUrl,
-                imageHint: data.imageHint || '',
-                category: data.category,
-                country: data.country,
-                tags: data.tags || [],
-                createdAt: safeGetDate(data.createdAt),
-            } as GroupLink;
+            return mapDocToGroupLink(docSnap);
         } else {
             console.log("No such document!");
             return undefined;
@@ -83,21 +87,7 @@ export async function getRelatedGroups(firestore: Firestore, currentGroup: Group
         );
 
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                title: data.title,
-                description: data.description,
-                link: data.link,
-                imageUrl: data.imageUrl,
-                imageHint: data.imageHint || '',
-                category: data.category,
-                country: data.country,
-                tags: data.tags || [],
-                createdAt: safeGetDate(data.createdAt),
-            } as GroupLink;
-        });
+        return querySnapshot.docs.map(mapDocToGroupLink);
     } catch (error) {
         console.error("Error fetching related groups:", error);
         return [];
