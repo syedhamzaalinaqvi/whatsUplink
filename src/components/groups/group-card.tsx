@@ -12,11 +12,36 @@ type GroupCardProps = {
 };
 
 export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
-  const isListView = view === 'list';
+  if (view === 'grid') {
+    return (
+      <a href={group.link} target="_blank" rel="noopener noreferrer" className="block rounded-lg overflow-hidden relative group border shadow-sm hover:shadow-xl transition-shadow duration-300">
+        <Card className="h-full">
+            <div className="relative aspect-[3/4] w-full">
+                <Image
+                    src={group.imageUrl}
+                    alt={`Preview for ${group.title}`}
+                    fill
+                    data-ai-hint={group.imageHint}
+                    className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                    <h3 className="font-bold text-sm line-clamp-2">{group.title}</h3>
+                    <div className="flex justify-between items-center text-xs opacity-80 mt-1">
+                        <span>{group.category}</span>
+                        <span className="capitalize">{group.country}</span>
+                    </div>
+                </div>
+            </div>
+        </Card>
+      </a>
+    );
+  }
 
+  // List View
   return (
-    <Card className={`transition-all duration-300 hover:shadow-xl overflow-hidden ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
-      <div className={`relative ${isListView ? 'h-48 sm:h-auto sm:w-48 flex-shrink-0' : 'h-48 w-full'}`}>
+    <Card className="transition-all duration-300 hover:shadow-xl overflow-hidden flex flex-col sm:flex-row">
+      <div className="relative h-48 sm:h-auto sm:w-48 flex-shrink-0">
         <Image
           src={group.imageUrl}
           alt={`Preview for ${group.title}`}
@@ -42,7 +67,7 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
                 <Tag className="h-4 w-4 text-muted-foreground" />
                 {group.tags.map(tag => (
                     <button key={tag} onClick={() => onTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
-                        <Badge variant="default" className="cursor-pointer">{tag}</Badge>
+                        <Badge variant="default" className="cursor-pointer bg-primary hover:bg-primary/80">{tag}</Badge>
                     </button>
                 ))}
             </div>
