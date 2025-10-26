@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import type { GroupLink } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 
 const submitGroupSchema = z.object({

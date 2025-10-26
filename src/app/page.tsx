@@ -22,6 +22,7 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchGroups() {
+      setIsLoading(true);
       try {
         const { firestore } = initializeFirebase();
         const groupsCollection = collection(firestore, 'groups');
