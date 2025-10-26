@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,10 +5,16 @@ import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { initializeFirebase } from '@/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
+
+const getSafeDate = (date: string | Date | null | undefined): Date => {
+  if (!date) return new Date(0); // Return epoch for null/undefined to sort them last
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? new Date(0) : d;
+};
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
@@ -19,10 +24,19 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   useEffect(() => {
     const { firestore } = initializeFirebase();
     const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
+    // Fetch all groups without ordering at the DB level
+    const q = query(groupsCollection);
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
+      
+      // Sort on the client-side to handle missing dates correctly
+      groupsData.sort((a, b) => {
+        const dateA = getSafeDate(a.createdAt).getTime();
+        const dateB = getSafeDate(b.createdAt).getTime();
+        return dateB - dateA; // Newest first
+      });
+
       setGroups(groupsData);
       setIsGroupLoading(false);
     }, (error) => {
@@ -38,11 +52,9 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   const handleGroupSubmitted = (newGroup: GroupLink) => {
     // No longer need to manually add to state.
     // The real-time listener will automatically update the `groups` state.
-    // We can scroll to the top or give some other feedback if desired.
   };
 
   const handleLoadMore = () => {
-    // We show a loading spinner, but the real loading is handled by the state update
     setVisibleCount(prevCount => prevCount + GROUPS_PER_PAGE);
   };
 
@@ -58,7 +70,7 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
             onGroupSubmitted={handleGroupSubmitted}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
-            isGroupLoading={isGroupLoading && groups.length === 0} // Show skeleton only on initial load
+            isGroupLoading={isGroupLoading && groups.length === 0}
         />
       </main>
       <footer className="border-t bg-background">
