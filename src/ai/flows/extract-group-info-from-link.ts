@@ -43,12 +43,9 @@ const extractGroupInfoFlow = ai.defineFlow(
     outputSchema: ExtractGroupInfoOutputSchema,
   },
   async input => {
-    const imageGenerationPrompt = `Create a visually appealing and informative image that represents a WhatsApp group based on its title and description.
-
+    const imageGenerationPrompt = `A 512x512 square, visually appealing, and family-friendly image for a WhatsApp group.
 Group Title: ${input.title}
-Group Description: ${input.description}
-
-The image should be a square with a resolution of 512x512 pixels. It should be relevant, attractive, and family-friendly.`;
+Group Description: ${input.description}`;
 
     const {media} = await ai.generate({
       prompt: imageGenerationPrompt,
