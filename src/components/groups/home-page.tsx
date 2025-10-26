@@ -10,28 +10,8 @@ import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
 
-const getSafeDate = (date: any): Date => {
-  if (!date) return new Date(0);
-  if (date instanceof Date) return date;
-  if (date instanceof Timestamp) return date.toDate();
-  if (typeof date === 'string') {
-    const parsedDate = new Date(date);
-    if (!isNaN(parsedDate.getTime())) {
-      return parsedDate;
-    }
-  }
-  // Handle Firestore Timestamps serialized on the server
-  if (typeof date === 'object' && date.seconds) {
-    return new Date(date.seconds * 1000);
-  }
-  // Handle older serialization format
-  if (typeof date === 'object' && date._seconds) {
-    return new Date(date._seconds * 1000);
-  }
-
-  return new Date(0); // Fallback for unrecognized formats
-};
-
+// Initialize Firebase ONCE outside of the component.
+const { firestore } = initializeFirebase();
 
 export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
@@ -39,35 +19,33 @@ export function HomePage({ initialGroups }: { initialGroups: GroupLink[] }) {
   const [isGroupLoading, setIsGroupLoading] = useState(true);
 
   useEffect(() => {
-    const { firestore } = initializeFirebase();
+    // This effect runs only once on component mount.
     const groupsCollection = collection(firestore, 'groups');
-    // Fetch all groups without ordering at the DB level
     const q = query(groupsCollection);
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
       
-      // Sort on the client-side to handle missing/various date formats correctly
+      // Sort on the client-side
       groupsData.sort((a, b) => {
-        const dateA = getSafeDate(a.createdAt).getTime();
-        const dateB = getSafeDate(b.createdAt).getTime();
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA; // Newest first
       });
 
       setGroups(groupsData);
-      setIsGroupLoading(false);
+      setIsGroupLoading(false); // Set loading to false after the first data snapshot
     }, (error) => {
       console.error("Error fetching real-time groups:", error);
-      setIsGroupLoading(false);
+      setIsGroupLoading(false); // Also stop loading on error
     });
 
     // Cleanup the listener when the component unmounts
     return () => unsubscribe();
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once.
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    // No longer need to manually add to state.
     // The real-time listener will automatically update the `groups` state.
   };
 

@@ -1,4 +1,3 @@
-
 import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore, DocumentData } from 'firebase/firestore';
 
 export type GroupLink = {

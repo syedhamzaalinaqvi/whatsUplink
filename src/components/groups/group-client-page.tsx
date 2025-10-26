@@ -7,7 +7,6 @@ import type { GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
 import { SubmitGroup } from './submit-group';
 import { Button } from '../ui/button';
-import { Loader2 } from 'lucide-react';
 
 type GroupClientPageProps = {
     groups: GroupLink[];
