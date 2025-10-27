@@ -7,75 +7,51 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
 interface FirebaseContextType {
-  app: FirebaseApp | null;
-  auth: Auth | null;
-  firestore: Firestore | null;
+  app: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
 }
 
-const FirebaseContext = createContext<FirebaseContextType>({
-  app: null,
-  auth: null,
-  firestore: null,
-});
+const FirebaseContext = createContext<FirebaseContextType | null>(null);
 
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [services, setServices] = useState<FirebaseContextType>({
-    app: null,
-    auth: null,
-    firestore: null,
-  });
+  const [services, setServices] = useState<FirebaseContextType | null>(null);
 
   useEffect(() => {
     try {
-      if (getApps().length === 0) {
-        console.log('Initializing Firebase...');
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
-        console.log('Firebase initialized successfully.');
-        setServices({ app, auth, firestore });
-      } else {
-        console.log('Using existing Firebase app.');
-        const app = getApp();
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
-        setServices({ app, auth, firestore });
-      }
+      const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const firestore = getFirestore(app);
+      setServices({ app, auth, firestore });
+      console.log('Firebase services are ready.');
     } catch (e) {
         console.error("Firebase initialization error:", e);
-        setServices({ app: null, auth: null, firestore: null });
+        setServices(null);
     }
   }, []);
 
+  // Only render children when firebase services are available to avoid null context issues
   return (
     <FirebaseContext.Provider value={services}>
-      {children}
+      {services ? children : null /* Or a loading indicator */}
     </FirebaseContext.Provider>
   );
 };
 
-export const useFirebase = () => {
-  const context = useContext(FirebaseContext);
-  if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
-  }
-  return context;
-};
-
 export const useFirestore = () => {
   const context = useContext(FirebaseContext);
-  if (context === undefined) {
-    throw new Error('useFirestore must be used within a FirebaseProvider');
+  if (context === null) {
+    throw new Error('useFirestore must be used within a FirebaseProvider and after initialization');
   }
   return context;
 };
 
 export const useAuth = () => {
   const context = useContext(FirebaseContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within a FirebaseProvider');
+  if (context === null) {
+    throw new Error('useAuth must be used within a FirebaseProvider and after initialization');
   }
   return context;
 };
