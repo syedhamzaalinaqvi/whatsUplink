@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { useCallback } from 'react';
 
 const moderationSettingsSchema = z.object({
     cooldownEnabled: z.boolean(),
@@ -28,35 +27,13 @@ type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
 
 type AdminModerationSettingsProps = {
     initialSettings: ModerationSettings;
-    showClicks: boolean;
-    onShowClicksChange: (show: boolean) => void;
-    isUpdating: boolean;
+    onSettingsChange: (settings: ModerationSettings) => void;
 };
 
-export function AdminModerationSettings({ initialSettings, showClicks, onShowClicksChange, isUpdating }: AdminModerationSettingsProps) {
+export function AdminModerationSettings({ initialSettings, onSettingsChange }: AdminModerationSettingsProps) {
     const { toast } = useToast();
     const [isSaving, startSaving] = useTransition();
-
-    const handleShowClicksChange = useCallback(async (checked: boolean) => {
-        try {
-            const result = await toggleShowClicks(checked);
-            if (result.success) {
-                onShowClicksChange(checked);
-            }
-            toast({
-                title: result.success ? 'Success' : 'Error',
-                description: result.message,
-                variant: result.success ? 'default' : 'destructive',
-            });
-        } catch (error) {
-            console.error('Error updating view count visibility:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to update view count visibility.',
-                variant: 'destructive',
-            });
-        }
-    }, [onShowClicksChange, toast]);
+    const [isToggling, startToggling] = useTransition();
 
     const form = useForm<ModerationFormValues>({
         resolver: zodResolver(moderationSettingsSchema),
@@ -67,6 +44,20 @@ export function AdminModerationSettings({ initialSettings, showClicks, onShowCli
         },
     });
 
+    const handleShowClicksChange = (checked: boolean) => {
+        startToggling(async () => {
+            const result = await toggleShowClicks(checked);
+            if (result.success) {
+                onSettingsChange({ ...initialSettings, showClicks: checked });
+            }
+            toast({
+                title: result.success ? 'Success' : 'Error',
+                description: result.message,
+                variant: result.success ? 'default' : 'destructive',
+            });
+        });
+    };
+
     const onSubmit = (data: ModerationFormValues) => {
         startSaving(async () => {
             const formData = new FormData();
@@ -75,6 +66,9 @@ export function AdminModerationSettings({ initialSettings, showClicks, onShowCli
             formData.append('cooldownUnit', data.cooldownUnit);
             
             const result = await saveModerationSettings(formData);
+            if (result.success) {
+                 onSettingsChange({ ...initialSettings, ...data });
+            }
             toast({
                 title: result.success ? 'Success' : 'Error',
                 description: result.message,
@@ -102,9 +96,9 @@ export function AdminModerationSettings({ initialSettings, showClicks, onShowCli
                             </div>
                             <Switch
                                 id="show-clicks-toggle"
-                                checked={showClicks}
+                                checked={initialSettings.showClicks}
                                 onCheckedChange={handleShowClicksChange}
-                                disabled={isUpdating}
+                                disabled={isToggling}
                             />
                         </div>
                     </div>

@@ -2,10 +2,8 @@
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
-import { mapDocToGroupLink } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -26,22 +24,38 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { COUNTRIES, CATEGORIES, GROUP_TYPES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
-import { toggleFeaturedStatus, bulkSetFeaturedStatus, toggleShowClicks, getModerationSettings } from '@/app/admin/actions';
+import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
-import { Switch } from '../ui/switch';
-import { Label } from '../ui/label';
 import { AdminModerationSettings } from './admin-moderation-settings';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
-export function AdminDashboard() {
-  const { firestore } = useFirestore();
+type AdminDashboardProps = {
+  initialGroups: GroupLink[];
+  initialHasNextPage: boolean;
+  initialHasPrevPage: boolean;
+  initialModerationSettings: ModerationSettings;
+};
+
+export function AdminDashboard({
+  initialGroups,
+  initialHasNextPage,
+  initialHasPrevPage,
+  initialModerationSettings,
+}: AdminDashboardProps) {
+  'use client';
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [groups, setGroups] = useState<GroupLink[]>([]);
-  const [moderationSettings, setModerationSettings] = useState<ModerationSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+  const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
+  const [hasPrevPage, setHasPrevPage] = useState(initialHasPrevPage);
+  const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
+  const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, startUpdateTransition] = useTransition();
 
   // Filtering, selection, and pagination state
@@ -50,41 +64,39 @@ export function AdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const [showClicks, setShowClicks] = useState(true);
-  
+  const rowsPerPage = searchParams.get('rows') ? parseInt(searchParams.get('rows')!, 10) : 50;
+
   // Dialogs state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
 
+  // Sync state with props on initial load and navigation
   useEffect(() => {
-    if (!firestore) return;
+    setGroups(initialGroups);
+    setHasNextPage(initialHasNextPage);
+    setHasPrevPage(initialHasPrevPage);
+    setModerationSettings(initialModerationSettings);
+  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings]);
 
+
+  const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
     setIsLoading(true);
+    const currentRows = newRowsPerPage || rowsPerPage;
+    const params = new URLSearchParams();
+    params.set('rows', String(currentRows));
+    params.set('page', direction);
+
+    if (direction === 'next' && groups.length > 0) {
+      params.set('cursor', groups[groups.length - 1].id);
+    } else if (direction === 'prev' && groups.length > 0) {
+      params.set('cursor', groups[0].id);
+    }
     
-    // Fetch moderation settings
-    getModerationSettings().then(setModerationSettings);
+    router.push(`/admin?${params.toString()}`);
+  };
 
-    const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const groupsData = snapshot.docs.map(mapDocToGroupLink);
-      setGroups(groupsData);
-      if (groupsData.length > 0) {
-        setShowClicks(groupsData[0].showClicks ?? true);
-      }
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching groups:", error);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [firestore]);
 
   const handleEdit = (group: GroupLink) => {
     setSelectedGroup(group);
@@ -104,6 +116,9 @@ export function AdminDashboard() {
   const handleToggleFeatured = (group: GroupLink) => {
     startUpdateTransition(async () => {
       const result = await toggleFeaturedStatus(group.id, !!group.featured);
+      if (result.success) {
+        setGroups(currentGroups => currentGroups.map(g => g.id === group.id ? { ...g, featured: !g.featured } : g));
+      }
       toast({
         title: result.success ? 'Success' : 'Error',
         description: result.message,
@@ -121,22 +136,9 @@ export function AdminDashboard() {
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success) {
+        setGroups(currentGroups => currentGroups.map(g => selectedRows.includes(g.id) ? { ...g, featured } : g));
         setSelectedRows([]);
       }
-    });
-  }
-
-  const handleToggleShowClicks = (show: boolean) => {
-    startUpdateTransition(async () => {
-        const result = await toggleShowClicks(show);
-        toast({
-            title: result.success ? 'Success' : 'Error',
-            description: result.message,
-            variant: result.success ? 'default' : 'destructive',
-        });
-        if(result.success) {
-            setShowClicks(show);
-        }
     });
   }
 
@@ -156,28 +158,16 @@ export function AdminDashboard() {
       return searchMatch && countryMatch && categoryMatch && typeMatch;
     });
   }, [groups, searchQuery, selectedCountry, selectedCategory, selectedType]);
-  
-  const totalPages = Math.ceil(filteredGroups.length / rowsPerPage);
-  const paginatedGroups = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredGroups.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredGroups, currentPage, rowsPerPage]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(paginatedGroups.map(g => g.id));
+      setSelectedRows(filteredGroups.map(g => g.id));
     } else {
       setSelectedRows([]);
     }
   };
 
-  const isAllSelected = paginatedGroups.length > 0 && selectedRows.length === paginatedGroups.length;
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCountry, selectedCategory, selectedType, rowsPerPage]);
-
+  const isAllSelected = filteredGroups.length > 0 && selectedRows.length === filteredGroups.length;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -192,15 +182,10 @@ export function AdminDashboard() {
 
         <AdminStats groups={groups} />
 
-        {moderationSettings && (
-            <AdminModerationSettings
-                initialSettings={moderationSettings}
-                showClicks={showClicks}
-                onShowClicksChange={handleToggleShowClicks}
-                isUpdating={isUpdating}
-            />
-        )}
-
+        <AdminModerationSettings
+            initialSettings={moderationSettings}
+            onSettingsChange={setModerationSettings}
+        />
 
         <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -303,7 +288,7 @@ export function AdminDashboard() {
                   </TableRow>
                 ))
               ) : (
-                paginatedGroups.map((group) => (
+                filteredGroups.map((group) => (
                   <TableRow key={group.id} data-state={selectedRows.includes(group.id) && 'selected'}>
                     <TableCell padding="checkbox">
                       <Checkbox
@@ -365,13 +350,13 @@ export function AdminDashboard() {
         </div>
         
         <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-                Showing {paginatedGroups.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}-{(currentPage - 1) * rowsPerPage + paginatedGroups.length} of {filteredGroups.length} groups.
+             <div className="text-sm text-muted-foreground">
+                {selectedRows.length} of {filteredGroups.length} row(s) selected.
             </div>
             <div className="flex items-center gap-4">
                 <div className='flex items-center gap-2'>
                     <span className="text-sm">Rows per page:</span>
-                    <Select value={`${rowsPerPage}`} onValueChange={(value) => setRowsPerPage(Number(value))}>
+                    <Select value={`${rowsPerPage}`} onValueChange={(value) => navigate('first', Number(value))}>
                         <SelectTrigger className='w-20'>
                             <SelectValue />
                         </SelectTrigger>
@@ -382,23 +367,20 @@ export function AdminDashboard() {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="text-sm font-medium">
-                    Page {currentPage} of {totalPages}
-                </div>
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
+                        onClick={() => navigate('prev')}
+                        disabled={!hasPrevPage || isLoading}
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
+                        onClick={() => navigate('next')}
+                        disabled={!hasNextPage || isLoading}
                     >
                         <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -406,7 +388,7 @@ export function AdminDashboard() {
             </div>
         </div>
 
-        {paginatedGroups.length === 0 && !isLoading && (
+        {filteredGroups.length === 0 && !isLoading && (
             <div className="text-center py-12 text-muted-foreground">
                 <p>No groups found for the selected filters.</p>
             </div>
@@ -434,7 +416,10 @@ export function AdminDashboard() {
             groupIds={selectedRows}
             isOpen={isBulkDeleteDialogOpen}
             onOpenChange={setIsBulkDeleteDialogOpen}
-            onSuccess={() => setSelectedRows([])}
+            onSuccess={() => {
+                setGroups(current => current.filter(g => !selectedRows.includes(g.id)));
+                setSelectedRows([]);
+            }}
         />
       )}
     </div>

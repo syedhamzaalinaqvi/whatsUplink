@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { z } from 'zod';
 import type { FormState } from '../actions';
@@ -11,14 +11,14 @@ import { mapDocToGroupLink } from '@/lib/data';
 
 function getFirestoreInstance() {
   if (!getApps().length) {
-    initializeApp({
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    });
+    return getFirestore(initializeApp({
+        apiKey: process.env.FIREBASE_API_KEY,
+        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.FIREBASE_APP_ID,
+    }));
   }
   return getFirestore();
 }
@@ -198,12 +198,12 @@ export async function toggleShowClicks(show: boolean): Promise<{ success: boolea
     querySnapshot.forEach((doc) => {
       batch.update(doc.ref, { showClicks: show });
     });
-    await batch.commit();
     
     // Also update the global setting
     const settingsDocRef = doc(firestore, 'settings', 'moderation');
-    await updateDoc(settingsDocRef, { showClicks: show });
+    await setDoc(settingsDocRef, { showClicks: show }, { merge: true });
 
+    await batch.commit();
 
     revalidatePath('/admin');
     revalidatePath('/');
@@ -279,4 +279,60 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         cooldownUnit: 'hours',
         showClicks: true,
     };
+}
+
+
+export async function getPaginatedGroups(
+    rowsPerPage: number,
+    pageDirection: 'next' | 'prev' | 'first',
+    cursorId?: string
+): Promise<{ groups: GroupLink[], hasNextPage: boolean, hasPrevPage: boolean }> {
+    const firestore = getFirestoreInstance();
+    const groupsCollection = collection(firestore, 'groups');
+    
+    const totalCountSnap = await getCountFromServer(groupsCollection);
+    const totalCount = totalCountSnap.data().count;
+
+    let q;
+    let cursorDoc;
+
+    if (cursorId) {
+        const cursorDocSnap = await getDoc(doc(firestore, 'groups', cursorId));
+        if(cursorDocSnap.exists()) {
+            cursorDoc = cursorDocSnap;
+        }
+    }
+
+    if (pageDirection === 'first') {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
+    } else if (pageDirection === 'next' && cursorDoc) {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDoc), limit(rowsPerPage));
+    } else if (pageDirection === 'prev' && cursorDoc) {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDoc), limitToLast(rowsPerPage));
+    } else {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const groups = querySnapshot.docs.map(mapDocToGroupLink);
+    
+    const firstVisible = querySnapshot.docs[0];
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    
+    let hasNextPage = false;
+    let hasPrevPage = false;
+    
+    if (lastVisible) {
+        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(1));
+        const nextSnap = await getDocs(nextQuery);
+        hasNextPage = !nextSnap.empty;
+    }
+
+    if (firstVisible) {
+        const prevQuery = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(firstVisible), limit(1));
+        const prevSnap = await getDocs(prevQuery);
+        hasPrevPage = !prevSnap.empty;
+    }
+    
+    return { groups, hasNextPage, hasPrevPage };
 }
