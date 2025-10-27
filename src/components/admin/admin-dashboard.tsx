@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '../layout/header';
-import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
 import { AdminDeleteDialog } from './admin-delete-dialog';
@@ -25,11 +25,12 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { COUNTRIES, CATEGORIES, GROUP_TYPES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
-import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions';
+import { toggleFeaturedStatus, bulkSetFeaturedStatus, toggleShowClicks } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
@@ -48,6 +49,7 @@ export function AdminDashboard() {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [showClicks, setShowClicks] = useState(true);
   
   // Dialogs state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -65,6 +67,9 @@ export function AdminDashboard() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const groupsData = snapshot.docs.map(mapDocToGroupLink);
       setGroups(groupsData);
+      if (groupsData.length > 0) {
+        setShowClicks(groupsData[0].showClicks ?? true);
+      }
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching groups:", error);
@@ -114,6 +119,20 @@ export function AdminDashboard() {
     });
   }
 
+  const handleToggleShowClicks = (show: boolean) => {
+    startUpdateTransition(async () => {
+        const result = await toggleShowClicks(show);
+        toast({
+            title: result.success ? 'Success' : 'Error',
+            description: result.message,
+            variant: result.success ? 'default' : 'destructive',
+        });
+        if(result.success) {
+            setShowClicks(show);
+        }
+    });
+  }
+
   const handleSelectRow = (groupId: string) => {
     setSelectedRows(prev => 
       prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
@@ -159,7 +178,18 @@ export function AdminDashboard() {
       <main className="flex-1 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <Button onClick={handleAddNew}>Add New Group</Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+                <Switch
+                    id="show-clicks-toggle"
+                    checked={showClicks}
+                    onCheckedChange={handleToggleShowClicks}
+                    disabled={isUpdating}
+                />
+                <Label htmlFor="show-clicks-toggle">Show click counts to users</Label>
+            </div>
+            <Button onClick={handleAddNew}>Add New Group</Button>
+          </div>
         </div>
 
         <AdminStats groups={groups} />
@@ -243,6 +273,7 @@ export function AdminDashboard() {
                 <TableHead>Type</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Country</TableHead>
+                <TableHead>Clicks</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -256,6 +287,7 @@ export function AdminDashboard() {
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-11" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
@@ -281,6 +313,12 @@ export function AdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{group.country}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <div className='flex items-center gap-1.5'>
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-mono text-sm">{group.clicks ?? 0}</span>
+                        </div>
                     </TableCell>
                     <TableCell>
                       <Switch

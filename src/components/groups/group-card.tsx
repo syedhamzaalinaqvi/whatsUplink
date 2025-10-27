@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, Tag, Share2, Users, Clock, RadioTower } from 'lucide-react';
+import { ExternalLink, Tag, Share2, Users, Clock, RadioTower, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,7 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
         </Avatar>
         <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
         
-        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-4">
+        <div className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-4">
             <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" /> {timeAgo}
             </span>
@@ -51,6 +51,13 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
                 {group.type}
             </Badge>
         </div>
+
+        {group.showClicks && (
+            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                <Eye className="h-3 w-3" />
+                <span>{group.clicks ?? 0} views</span>
+            </div>
+        )}
 
         <div className="absolute bottom-2 right-2 z-10 h-8 w-8 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity">
             <SharePopover title={group.title} url={detailUrl}>
@@ -109,6 +116,12 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             >
                 {group.type}
             </Badge>
+            {group.showClicks && (
+                <span className="flex items-center gap-1.5">
+                    <Eye className="h-3 w-3" />
+                    {group.clicks ?? 0}
+                </span>
+            )}
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <SharePopover title={group.title} url={detailUrl}>

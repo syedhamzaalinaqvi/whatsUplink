@@ -109,6 +109,9 @@ export async function submitGroup(
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       createdAt: serverTimestamp(),
+      clicks: 0,
+      featured: false,
+      showClicks: true,
     };
 
     const docRef = await addDoc(groupsCollection, newGroupData);
@@ -117,7 +120,6 @@ export async function submitGroup(
       ...newGroupData,
       id: docRef.id,
       createdAt: new Date().toISOString(), // Use client-side date for immediate feedback
-      featured: false, // ensure all fields are present
     };
 
     return {
@@ -214,4 +216,3 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
-

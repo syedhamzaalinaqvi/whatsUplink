@@ -30,6 +30,8 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SharePopover } from './share-popover';
 import { useEffect, useState } from 'react';
+import { useFirestore } from '@/firebase/provider';
+import { doc, increment, updateDoc } from 'firebase/firestore';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -38,11 +40,21 @@ type GroupDetailViewProps = {
 
 export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) {
   const [detailUrl, setDetailUrl] = useState('');
+  const { firestore } = useFirestore();
 
   useEffect(() => {
     // Ensure this runs only on the client
     setDetailUrl(window.location.href);
   }, []);
+
+  const handleJoinClick = () => {
+    if (firestore && group.id) {
+      const groupRef = doc(firestore, 'groups', group.id);
+      updateDoc(groupRef, {
+        clicks: increment(1),
+      }).catch(err => console.error("Failed to increment click count", err));
+    }
+  };
 
   // We need a dummy onTagClick for the GroupCard since it's required,
   // but there's no filtering on the detail page.
@@ -113,7 +125,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex flex-wrap items-center gap-4 mb-4">
                     <Badge variant="secondary">{group.category}</Badge>
                     <Badge variant="outline" className="capitalize">
                       {group.country}
@@ -127,6 +139,12 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                             <span>{group.type}</span>
                         </div>
                     </Badge>
+                    {group.showClicks && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Eye className="h-4 w-4" />
+                            <span>{group.clicks ?? 0} views</span>
+                        </div>
+                    )}
                   </div>
                   <p className="text-base text-foreground/80 whitespace-pre-wrap">
                     {group.description}
@@ -138,6 +156,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                       href={group.link}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={handleJoinClick}
                     >
                       Join Now
                       <ExternalLink className="ml-2 h-4 w-4" />

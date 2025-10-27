@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
@@ -188,4 +188,26 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to update groups: ${errorMessage}` };
     }
+}
+
+export async function toggleShowClicks(show: boolean): Promise<{ success: boolean; message: string }> {
+  try {
+    const firestore = getFirestoreInstance();
+    const batch = writeBatch(firestore);
+    const groupsRef = collection(firestore, 'groups');
+    const querySnapshot = await getDocs(groupsRef);
+    querySnapshot.forEach((doc) => {
+      batch.update(doc.ref, { showClicks: show });
+    });
+    await batch.commit();
+
+    revalidatePath('/admin');
+    revalidatePath('/');
+
+    return { success: true, message: `Click visibility ${show ? 'enabled' : 'disabled'} for all groups.` };
+  } catch (error) {
+    console.error('Error toggling click visibility:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update visibility: ${errorMessage}` };
+  }
 }
