@@ -2,12 +2,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
 import type { FormState } from '../actions';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, ModerationSettings } from '@/lib/data';
 
 function getFirestoreInstance() {
   if (!getApps().length) {
@@ -101,6 +101,8 @@ export async function updateGroup(
         imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
         createdAt: new Date().toISOString(), // This won't be perfect but avoids another db read
         imageHint: '',
+        submissionCount: 1, // Default value
+        lastSubmittedAt: new Date().toISOString(), // Default value
     };
 
     return {
@@ -173,7 +175,7 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
         groupIds.forEach(id => {
             const groupDocRef = doc(firestore, 'groups', id);
-            batch.update(groupDocRef, { featured });
+            batch.update(docRef, { featured });
         });
 
         await batch.commit();
@@ -210,4 +212,53 @@ export async function toggleShowClicks(show: boolean): Promise<{ success: boolea
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Failed to update visibility: ${errorMessage}` };
   }
+}
+
+const moderationSettingsSchema = z.object({
+    cooldownEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
+    cooldownValue: z.coerce.number().min(1, 'Value must be at least 1'),
+    cooldownUnit: z.enum(['hours', 'days', 'months']),
+});
+
+export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
+    const validatedFields = moderationSettingsSchema.safeParse({
+        cooldownEnabled: formData.get('cooldownEnabled'),
+        cooldownValue: formData.get('cooldownValue'),
+        cooldownUnit: formData.get('cooldownUnit'),
+    });
+    
+    if (!validatedFields.success) {
+        return { success: false, message: 'Invalid settings.' };
+    }
+
+    try {
+        const firestore = getFirestoreInstance();
+        const settingsDocRef = doc(firestore, 'settings', 'moderation');
+        await setDoc(settingsDocRef, validatedFields.data);
+        revalidatePath('/admin');
+        return { success: true, message: 'Moderation settings saved successfully.' };
+    } catch (error) {
+        console.error('Error saving moderation settings:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to save settings: ${errorMessage}` };
+    }
+}
+
+export async function getModerationSettings(): Promise<ModerationSettings> {
+    try {
+        const firestore = getFirestoreInstance();
+        const settingsDocRef = doc(firestore, 'settings', 'moderation');
+        const docSnap = await getDoc(settingsDocRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as ModerationSettings;
+        }
+    } catch (error) {
+        console.error('Error fetching moderation settings:', error);
+    }
+    // Return default settings if not found or on error
+    return {
+        cooldownEnabled: true,
+        cooldownValue: 6,
+        cooldownUnit: 'hours',
+    };
 }

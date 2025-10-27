@@ -2,11 +2,12 @@
 'use server';
 
 import { z } from 'zod';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getFirestore, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { getModerationSettings } from './admin/actions';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -69,6 +70,19 @@ export async function getGroupPreview(link: string) {
   }
 }
 
+function calculateCooldown(settings: ModerationSettings): number {
+    const { cooldownValue, cooldownUnit } = settings;
+    const now = new Date().getTime();
+    let cooldownMs = 0;
+    if (cooldownUnit === 'hours') {
+        cooldownMs = cooldownValue * 60 * 60 * 1000;
+    } else if (cooldownUnit === 'days') {
+        cooldownMs = cooldownValue * 24 * 60 * 60 * 1000;
+    } else if (cooldownUnit === 'months') {
+        cooldownMs = cooldownValue * 30 * 24 * 60 * 60 * 1000; // Approximation
+    }
+    return cooldownMs;
+}
 
 export async function submitGroup(
   prevState: FormState,
@@ -93,11 +107,51 @@ export async function submitGroup(
   }
 
   const { link, title, description, category, country, tags, imageUrl, type } = validatedFields.data;
-
+  const firestore = getFirestoreInstance();
+  
   try {
-    const firestore = getFirestoreInstance();
+    const moderationSettings = await getModerationSettings();
     const groupsCollection = collection(firestore, 'groups');
+    const q = query(groupsCollection, where('link', '==', link));
+    const querySnapshot = await getDocs(q);
 
+    if (!querySnapshot.empty) {
+        // Link exists, check cooldown
+        if (moderationSettings.cooldownEnabled) {
+            const existingDoc = querySnapshot.docs[0];
+            const existingGroup = existingDoc.data() as Partial<GroupLink>;
+            const lastSubmitted = existingGroup.lastSubmittedAt ? new Date(existingGroup.lastSubmittedAt).getTime() : 0;
+            const cooldownMs = calculateCooldown(moderationSettings);
+
+            if (Date.now() - lastSubmitted < cooldownMs) {
+                const timeLeft = cooldownMs - (Date.now() - lastSubmitted);
+                const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+                return { message: `You have already submitted this link recently. Please try again in about ${hoursLeft} hour(s).` };
+            }
+            
+            // Cooldown passed, update existing document
+            await updateDoc(existingDoc.ref, {
+                submissionCount: increment(1),
+                lastSubmittedAt: serverTimestamp(),
+                 // Also update any other details that might have changed
+                title,
+                description,
+                category,
+                country,
+                type,
+                tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+                imageUrl: imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
+            });
+            const updatedGroup: GroupLink = { ...existingGroup, id: existingDoc.id } as GroupLink;
+            return { message: 'Group submission updated successfully!', group: updatedGroup };
+
+        } else {
+            // Cooldown disabled, just block duplicates
+            return { message: 'This group link has already been submitted.' };
+        }
+    }
+
+    // Link does not exist, add new document
     const newGroupData = {
       title,
       description,
@@ -109,6 +163,8 @@ export async function submitGroup(
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       createdAt: serverTimestamp(),
+      lastSubmittedAt: serverTimestamp(),
+      submissionCount: 1,
       clicks: 0,
       featured: false,
       showClicks: true,
@@ -120,6 +176,7 @@ export async function submitGroup(
       ...newGroupData,
       id: docRef.id,
       createdAt: new Date().toISOString(), // Use client-side date for immediate feedback
+      lastSubmittedAt: new Date().toISOString(),
     };
 
     return {

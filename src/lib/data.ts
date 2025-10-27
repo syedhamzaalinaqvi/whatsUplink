@@ -1,3 +1,4 @@
+
 import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore, DocumentData } from 'firebase/firestore';
 
 export type GroupLink = {
@@ -15,31 +16,34 @@ export type GroupLink = {
   type: 'group' | 'channel';
   clicks?: number;
   showClicks?: boolean;
+  submissionCount?: number;
+  lastSubmittedAt?: string | null;
+};
+
+export type ModerationSettings = {
+    cooldownEnabled: boolean;
+    cooldownValue: number;
+    cooldownUnit: 'hours' | 'days' | 'months';
 };
 
 // This function now robustly handles Timestamps from the server
 // and ensures a serializable string is always returned.
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     const data = doc.data();
-    let createdAt: string | null = null;
-    const docCreatedAt = data.createdAt;
-
-    if (docCreatedAt) {
-      // Handle Firestore Timestamp object (from server-side fetch or real-time listener)
-      if (docCreatedAt instanceof Timestamp) {
-        createdAt = docCreatedAt.toDate().toISOString();
-      } 
-      // Handle existing date string (from client-side submission or already converted)
-      else if (typeof docCreatedAt === 'string') {
-        const date = new Date(docCreatedAt);
-        if (!isNaN(date.getTime())) {
-          createdAt = date.toISOString();
+    
+    const formatTimestamp = (timestamp: any): string | null => {
+        if (!timestamp) return null;
+        if (timestamp instanceof Timestamp) {
+            return timestamp.toDate().toISOString();
         }
-      }
-      // Fallback for other unexpected formats (like plain objects after serialization if that ever happens)
-      else if (docCreatedAt.seconds) {
-        createdAt = new Date(docCreatedAt.seconds * 1000).toISOString();
-      }
+        if (typeof timestamp === 'string') {
+            const date = new Date(timestamp);
+            return !isNaN(date.getTime()) ? date.toISOString() : null;
+        }
+        if (timestamp.seconds) {
+            return new Date(timestamp.seconds * 1000).toISOString();
+        }
+        return null;
     }
 
     return {
@@ -53,10 +57,12 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         country: data.country || 'unknown',
         tags: data.tags || [],
         featured: data.featured || false,
-        createdAt: createdAt, // Pass serializable ISO string or null
-        type: data.type || 'group', // Default to 'group' if not specified
+        createdAt: formatTimestamp(data.createdAt),
+        type: data.type || 'group',
         clicks: data.clicks || 0,
         showClicks: data.showClicks === undefined ? true : data.showClicks,
+        submissionCount: data.submissionCount || 1,
+        lastSubmittedAt: formatTimestamp(data.lastSubmittedAt),
     };
 }
 

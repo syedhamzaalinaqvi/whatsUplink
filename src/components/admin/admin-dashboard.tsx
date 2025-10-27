@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
 import {
   Table,
@@ -16,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '../layout/header';
-import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight, Eye, Repeat } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
 import { AdminDeleteDialog } from './admin-delete-dialog';
@@ -25,12 +26,13 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { COUNTRIES, CATEGORIES, GROUP_TYPES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
-import { toggleFeaturedStatus, bulkSetFeaturedStatus, toggleShowClicks } from '@/app/admin/actions';
+import { toggleFeaturedStatus, bulkSetFeaturedStatus, toggleShowClicks, getModerationSettings } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
+import { AdminModerationSettings } from './admin-moderation-settings';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
@@ -38,6 +40,7 @@ export function AdminDashboard() {
   const { firestore } = useFirestore();
   const { toast } = useToast();
   const [groups, setGroups] = useState<GroupLink[]>([]);
+  const [moderationSettings, setModerationSettings] = useState<ModerationSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, startUpdateTransition] = useTransition();
 
@@ -61,6 +64,10 @@ export function AdminDashboard() {
     if (!firestore) return;
 
     setIsLoading(true);
+    
+    // Fetch moderation settings
+    getModerationSettings().then(setModerationSettings);
+
     const groupsCollection = collection(firestore, 'groups');
     const q = query(groupsCollection, orderBy('createdAt', 'desc'));
 
@@ -179,20 +186,21 @@ export function AdminDashboard() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
-            <div className="flex items-center space-x-2">
-                <Switch
-                    id="show-clicks-toggle"
-                    checked={showClicks}
-                    onCheckedChange={handleToggleShowClicks}
-                    disabled={isUpdating}
-                />
-                <Label htmlFor="show-clicks-toggle">Show click counts to users</Label>
-            </div>
             <Button onClick={handleAddNew}>Add New Group</Button>
           </div>
         </div>
 
         <AdminStats groups={groups} />
+
+        {moderationSettings && (
+            <AdminModerationSettings
+                initialSettings={moderationSettings}
+                showClicks={showClicks}
+                onShowClicksChange={handleToggleShowClicks}
+                isUpdating={isUpdating}
+            />
+        )}
+
 
         <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -274,19 +282,21 @@ export function AdminDashboard() {
                 <TableHead>Category</TableHead>
                 <TableHead>Country</TableHead>
                 <TableHead>Clicks</TableHead>
+                <TableHead>Submissions</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
+                Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-5 w-5" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-11" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
@@ -320,6 +330,12 @@ export function AdminDashboard() {
                             <span className="font-mono text-sm">{group.clicks ?? 0}</span>
                         </div>
                     </TableCell>
+                     <TableCell>
+                        <div className='flex items-center gap-1.5'>
+                            <Repeat className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-mono text-sm">{group.submissionCount ?? 1}</span>
+                        </div>
+                    </TableCell>
                     <TableCell>
                       <Switch
                         checked={group.featured}
@@ -350,7 +366,7 @@ export function AdminDashboard() {
         
         <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
-                Showing {paginatedGroups.length} of {filteredGroups.length} groups.
+                Showing {paginatedGroups.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}-{(currentPage - 1) * rowsPerPage + paginatedGroups.length} of {filteredGroups.length} groups.
             </div>
             <div className="flex items-center gap-4">
                 <div className='flex items-center gap-2'>
