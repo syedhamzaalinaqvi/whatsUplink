@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -36,9 +37,6 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
   // but there's no filtering on the detail page.
   const handleTagClick = () => {};
 
-  // This handler is just for showing new groups on the homepage after submission.
-  const handleGroupSubmitted = () => {};
-
   const rules = [
     {
       icon: ShieldCheck,
@@ -68,7 +66,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header onGroupSubmitted={handleGroupSubmitted} />
+      <Header />
       <main className="flex-1 pb-20 md:pb-0">
         <div className="container py-8 md:py-12">
           <div className="mb-8">

@@ -1,14 +1,20 @@
+
 'use client';
 
 import { useState } from 'react';
 import type { GroupLink } from '@/lib/data';
-import { Menu, MessagesSquare, X } from 'lucide-react';
+import { Menu, MessagesSquare } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-export function Header({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void }) {
+// The `onGroupSubmitted` prop is now optional
+type HeaderProps = {
+  onGroupSubmitted?: (group: GroupLink) => void;
+};
+
+export function Header({ onGroupSubmitted = () => {} }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navLinks = [
     { href: '/', label: 'Home' },
