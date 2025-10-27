@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, Tag, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,9 +34,10 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
 
     if (navigator.share) {
       try {
+        // The user closing the share dialog is not an error.
         await navigator.share(shareData);
       } catch (error) {
-        console.error('Error sharing:', error);
+        // Silently fail if the user cancels the share or an error occurs.
       }
     } else {
       // Fallback for browsers that don't support the Web Share API
@@ -48,7 +48,6 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
           description: 'Group link copied to your clipboard.',
         });
       } catch (error) {
-        console.error('Error copying link:', error);
         toast({
           title: 'Error',
           description: 'Could not copy link to clipboard.',

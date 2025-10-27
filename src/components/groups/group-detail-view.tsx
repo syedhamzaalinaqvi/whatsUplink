@@ -51,7 +51,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
       try {
         await navigator.share(shareData);
       } catch (error) {
-        console.error('Error sharing:', error);
+        // Silently fail if user cancels or there's an error.
       }
     } else {
       try {
@@ -61,7 +61,6 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
           description: 'Group link copied to your clipboard.',
         });
       } catch (error) {
-        console.error('Error copying link:', error);
         toast({
           title: 'Error',
           description: 'Could not copy link to clipboard.',
