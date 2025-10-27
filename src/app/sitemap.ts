@@ -1,20 +1,7 @@
 import { MetadataRoute } from 'next';
-import { getFirestore, collection, getDocs, initializeApp, getApps } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
-
-function getFirestoreInstance() {
-  if (!getApps().length) {
-    return getFirestore(initializeApp({
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-    }));
-  }
-  return getFirestore();
-}
+import { adminDb } from '@/lib/firebase-admin';
 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -31,8 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date().toISOString(),
   }));
   
-  const firestore = getFirestoreInstance();
-  const groupsCollection = collection(firestore, 'groups');
+  const groupsCollection = collection(adminDb, 'groups');
   const querySnapshot = await getDocs(groupsCollection);
   const groups = querySnapshot.docs.map(mapDocToGroupLink);
 
@@ -44,3 +30,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...dynamicRoutes];
 }
+
+    

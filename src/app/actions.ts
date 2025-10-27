@@ -3,26 +3,11 @@
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, getFirestore, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 import { getModerationSettings } from '@/app/admin/actions';
 import { mapDocToGroupLink } from '@/lib/data';
 
-// Helper function to initialize Firebase on the server
-function getFirestoreInstance() {
-  if (!getApps().length) {
-    // This is the correct way for server-side initialization
-    return getFirestore(initializeApp({
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-    }));
-  }
-  return getFirestore();
-}
 
 const submitGroupSchema = z.object({
   link: z.string().url('Please enter a valid WhatsApp group link'),
@@ -91,8 +76,8 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(firestore: any, groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
-    const groupsCollection = collection(firestore, 'groups');
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
+    const groupsCollection = collection(adminDb, 'groups');
     const settings = await getModerationSettings(); // Fetch global settings
     const newGroupData = {
         ...groupData,
@@ -132,12 +117,10 @@ export async function submitGroup(
   }
 
   const { link, title, description, category, country, tags, imageUrl, type } = validatedFields.data;
-  const firestore = getFirestoreInstance();
   
-
   try {
     const moderationSettings = await getModerationSettings();
-    const groupsCollection = collection(firestore, 'groups');
+    const groupsCollection = collection(adminDb, 'groups');
     
     const newGroupPayload = {
       title,
@@ -160,11 +143,11 @@ export async function submitGroup(
         const submissionCount = existingDocs.length + 1;
         
         // Add the new group
-        const newGroup = await addNewGroup(firestore, newGroupPayload, submissionCount);
+        const newGroup = await addNewGroup(newGroupPayload, submissionCount);
         
         // Update submission count for all other existing groups with the same link
         if (existingDocs.length > 0) {
-            const batch = writeBatch(firestore);
+            const batch = writeBatch(adminDb);
             existingDocs.forEach(doc => {
                 batch.update(doc.ref, { submissionCount: submissionCount });
             });
@@ -177,7 +160,7 @@ export async function submitGroup(
     // Logic when cooldown is ENABLED
     if (querySnapshot.empty) {
       // Link is new, so add it with submission count 1.
-      const newGroup = await addNewGroup(firestore, newGroupPayload, 1);
+      const newGroup = await addNewGroup(newGroupPayload, 1);
       return { message: 'Group submitted successfully!', group: newGroup };
     } else {
       // Link exists, check the cooldown on the most recently submitted one.
@@ -301,3 +284,5 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
+
+    

@@ -1,27 +1,13 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast } from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
+import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast } from 'firebase/firestore';
 import { z } from 'zod';
 import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
+import { adminDb } from '@/lib/firebase-admin';
 
-function getFirestoreInstance() {
-  if (!getApps().length) {
-    return getFirestore(initializeApp({
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-    }));
-  }
-  return getFirestore();
-}
 
 export async function deleteGroup(groupId: string): Promise<{ success: boolean; message: string }> {
   if (!groupId) {
@@ -29,8 +15,7 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
   }
 
   try {
-    const firestore = getFirestoreInstance();
-    const groupDocRef = doc(firestore, 'groups', groupId);
+    const groupDocRef = doc(adminDb, 'groups', groupId);
     await deleteDoc(groupDocRef);
     
     revalidatePath('/admin');
@@ -83,8 +68,7 @@ export async function updateGroup(
   const { id, ...dataToUpdate } = validatedFields.data;
 
   try {
-    const firestore = getFirestoreInstance();
-    const groupDocRef = doc(firestore, 'groups', id);
+    const groupDocRef = doc(adminDb, 'groups', id);
 
     const dataForDb: { [key: string]: any } = {
       ...dataToUpdate,
@@ -119,8 +103,7 @@ export async function toggleFeaturedStatus(groupId: string, currentStatus: boole
   }
 
   try {
-    const firestore = getFirestoreInstance();
-    const groupDocRef = doc(firestore, 'groups', groupId);
+    const groupDocRef = doc(adminDb, 'groups', groupId);
     await updateDoc(groupDocRef, { featured: !currentStatus });
     
     revalidatePath('/admin');
@@ -140,11 +123,10 @@ export async function deleteMultipleGroups(groupIds: string[]): Promise<{ succes
     }
 
     try {
-        const firestore = getFirestoreInstance();
-        const batch = writeBatch(firestore);
+        const batch = writeBatch(adminDb);
 
         groupIds.forEach(id => {
-            const groupDocRef = doc(firestore, 'groups', id);
+            const groupDocRef = doc(adminDb, 'groups', id);
             batch.delete(groupDocRef);
         });
 
@@ -167,11 +149,10 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
     }
 
     try {
-        const firestore = getFirestoreInstance();
-        const batch = writeBatch(firestore);
+        const batch = writeBatch(adminDb);
 
         groupIds.forEach(id => {
-            const groupDocRef = doc(firestore, 'groups', id);
+            const groupDocRef = doc(adminDb, 'groups', id);
             batch.update(groupDocRef, { featured });
         });
 
@@ -191,16 +172,15 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
 export async function toggleShowClicks(show: boolean): Promise<{ success: boolean; message: string }> {
   try {
-    const firestore = getFirestoreInstance();
-    const batch = writeBatch(firestore);
-    const groupsRef = collection(firestore, 'groups');
+    const batch = writeBatch(adminDb);
+    const groupsRef = collection(adminDb, 'groups');
     const querySnapshot = await getDocs(groupsRef);
     querySnapshot.forEach((doc) => {
       batch.update(doc.ref, { showClicks: show });
     });
     
     // Also update the global setting
-    const settingsDocRef = doc(firestore, 'settings', 'moderation');
+    const settingsDocRef = doc(adminDb, 'settings', 'moderation');
     await setDoc(settingsDocRef, { showClicks: show }, { merge: true });
 
     await batch.commit();
@@ -234,8 +214,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
     }
 
     try {
-        const firestore = getFirestoreInstance();
-        const settingsDocRef = doc(firestore, 'settings', 'moderation');
+        const settingsDocRef = doc(adminDb, 'settings', 'moderation');
         // We only save the cooldown settings here, showClicks is handled separately
         await updateDoc(settingsDocRef, {
             cooldownEnabled: validatedFields.data.cooldownEnabled,
@@ -253,8 +232,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
 
 export async function getModerationSettings(): Promise<ModerationSettings> {
     try {
-        const firestore = getFirestoreInstance();
-        const settingsDocRef = doc(firestore, 'settings', 'moderation');
+        const settingsDocRef = doc(adminDb, 'settings', 'moderation');
         const docSnap = await getDoc(settingsDocRef);
         if (docSnap.exists()) {
             return docSnap.data() as ModerationSettings;
@@ -287,16 +265,14 @@ export async function getPaginatedGroups(
     pageDirection: 'next' | 'prev' | 'first',
     cursorId?: string
 ): Promise<{ groups: GroupLink[], hasNextPage: boolean, hasPrevPage: boolean }> {
-    const firestore = getFirestoreInstance();
-    const groupsCollection = collection(firestore, 'groups');
+    const groupsCollection = collection(adminDb, 'groups');
     
     let q;
     const isFirstPage = pageDirection === 'first';
     const isPrevPage = pageDirection === 'prev';
-    const validCursorId = cursorId && cursorId.trim() !== '' ? cursorId.trim() : undefined;
     
-    if (!isFirstPage && validCursorId) {
-        const cursorDocSnap = await getDoc(doc(firestore, 'groups', validCursorId));
+    if (!isFirstPage && cursorId) {
+        const cursorDocSnap = await getDoc(doc(adminDb, 'groups', cursorId));
         if (cursorDocSnap.exists()) {
             if (isPrevPage) {
                 q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDocSnap), limitToLast(rowsPerPage));
@@ -324,20 +300,15 @@ export async function getPaginatedGroups(
     const firstVisible = groups[0];
     const lastVisible = groups[groups.length - 1];
 
-    let hasPrevPage = false;
+    let hasPrevPage = !isFirstPage && !!cursorId;
     let hasNextPage = false;
-
-    if (firstVisible) {
-        const prevQuery = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(doc(firestore, 'groups', firstVisible.id)), limitToLast(1));
-        const prevSnap = await getDocs(prevQuery);
-        hasPrevPage = !prevSnap.empty;
-    }
     
     if (lastVisible) {
-        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(doc(firestore, 'groups', lastVisible.id)), limit(1));
+        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(doc(adminDb, 'groups', lastVisible.id)), limit(1));
         const nextSnap = await getDocs(nextQuery);
         hasNextPage = !nextSnap.empty;
     }
 
     return { groups, hasNextPage, hasPrevPage };
 }
+    
