@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-2xl font-bold mt-8 mb-4 text-foreground">Changes</h2>
               <p>
                 We reserve the right, at our sole discretion, to modify or replace these Terms at any time. What constitutes a material change will be determined at our sole discretion.
-              p>
+              </p>
 
               <h2 className="text-2xl font-bold mt-8 mb-4 text-foreground">Contact Us</h2>
               <p>

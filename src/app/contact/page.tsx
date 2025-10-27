@@ -17,6 +17,9 @@ export default function ContactPage() {
               <p className="text-lg text-muted-foreground">
                 Have questions or feedback? We'd love to hear from you.
               </p>
+              <p className="text-sm text-muted-foreground">
+                You can also reach us directly at <a href="mailto:syedhamzaalinaqvi4@gmail.com" className="text-primary underline">syedhamzaalinaqvi4@gmail.com</a>.
+              </p>
             </div>
             <form className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
