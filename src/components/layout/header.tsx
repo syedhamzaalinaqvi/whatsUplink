@@ -7,7 +7,7 @@ import { Menu, MessagesSquare } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 // The `onGroupSubmitted` prop is now optional
 type HeaderProps = {
@@ -57,8 +57,11 @@ export function Header({ onGroupSubmitted = () => {} }: HeaderProps) {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
-                <div className="flex flex-col gap-6 p-6">
+              <SheetContent side="left" className="p-0">
+                <SheetHeader className="p-6">
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-6 p-6 pt-0">
                     <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                         <MessagesSquare className="h-8 w-8 text-primary" />
                         <h1 className="text-2xl font-bold tracking-tighter text-foreground">
