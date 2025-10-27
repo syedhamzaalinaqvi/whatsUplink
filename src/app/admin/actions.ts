@@ -77,23 +77,26 @@ export async function updateGroup(
     const firestore = getFirestoreInstance();
     const groupDocRef = doc(firestore, 'groups', id);
 
-    const updatedGroupData = {
+    // This object is sent to Firestore and can contain the serverTimestamp
+    const dataForDb = {
       ...dataToUpdate,
       tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
-      updatedAt: serverTimestamp(), // Add an updated timestamp
+      updatedAt: serverTimestamp(),
     };
 
-    await updateDoc(groupDocRef, updatedGroupData);
+    await updateDoc(groupDocRef, dataForDb);
 
     revalidatePath('/admin');
     revalidatePath('/');
     revalidatePath(`/group/invite/${id}`);
 
-    // Return a representation of the updated group for potential client-side use
+    // This object is returned to the client and must be serializable
     const updatedGroup: GroupLink = {
         id,
-        ...updatedGroupData,
+        ...dataToUpdate,
+        tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
         createdAt: new Date().toISOString(), // This won't be perfect but avoids another db read
         imageHint: '',
     };
