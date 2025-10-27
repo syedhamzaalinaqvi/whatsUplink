@@ -36,10 +36,12 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         if (timestamp instanceof Timestamp) {
             return timestamp.toDate().toISOString();
         }
+        // Handle cases where it might already be a string from a previous serialization
         if (typeof timestamp === 'string') {
             const date = new Date(timestamp);
             return !isNaN(date.getTime()) ? date.toISOString() : null;
         }
+        // Handle Firestore server timestamp object before it's converted
         if (timestamp.seconds) {
             return new Date(timestamp.seconds * 1000).toISOString();
         }

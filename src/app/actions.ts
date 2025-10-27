@@ -4,10 +4,11 @@
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, getFirestore, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getFirestore, query, where, getDocs, updateDoc, increment, getDoc, doc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { getModerationSettings } from './admin/actions';
+import { mapDocToGroupLink } from '@/lib/data';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -72,7 +73,6 @@ export async function getGroupPreview(link: string) {
 
 function calculateCooldown(settings: ModerationSettings): number {
     const { cooldownValue, cooldownUnit } = settings;
-    const now = new Date().getTime();
     let cooldownMs = 0;
     if (cooldownUnit === 'hours') {
         cooldownMs = cooldownValue * 60 * 60 * 1000;
@@ -116,11 +116,12 @@ export async function submitGroup(
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
+        const existingDoc = querySnapshot.docs[0];
+        const existingGroupData = mapDocToGroupLink(existingDoc);
+
         // Link exists, check cooldown
         if (moderationSettings.cooldownEnabled) {
-            const existingDoc = querySnapshot.docs[0];
-            const existingGroup = existingDoc.data() as Partial<GroupLink>;
-            const lastSubmitted = existingGroup.lastSubmittedAt ? new Date(existingGroup.lastSubmittedAt).getTime() : 0;
+            const lastSubmitted = existingGroupData.lastSubmittedAt ? new Date(existingGroupData.lastSubmittedAt).getTime() : 0;
             const cooldownMs = calculateCooldown(moderationSettings);
 
             if (Date.now() - lastSubmitted < cooldownMs) {
@@ -142,7 +143,9 @@ export async function submitGroup(
                 tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
                 imageUrl: imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
             });
-            const updatedGroup: GroupLink = { ...existingGroup, id: existingDoc.id } as GroupLink;
+
+            const updatedDoc = await getDoc(existingDoc.ref);
+            const updatedGroup = mapDocToGroupLink(updatedDoc);
             return { message: 'Group submission updated successfully!', group: updatedGroup };
 
         } else {
@@ -171,13 +174,8 @@ export async function submitGroup(
     };
 
     const docRef = await addDoc(groupsCollection, newGroupData);
-
-    const newGroup: GroupLink = {
-      ...newGroupData,
-      id: docRef.id,
-      createdAt: new Date().toISOString(), // Use client-side date for immediate feedback
-      lastSubmittedAt: new Date().toISOString(),
-    };
+    const newDoc = await getDoc(docRef);
+    const newGroup = mapDocToGroupLink(newDoc);
 
     return {
       message: 'Group submitted successfully!',

@@ -8,6 +8,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
 import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
+import { mapDocToGroupLink } from '@/lib/data';
 
 function getFirestoreInstance() {
   if (!getApps().length) {
@@ -92,18 +93,8 @@ export async function updateGroup(
     revalidatePath('/');
     revalidatePath(`/group/invite/${id}`);
 
-    const updatedGroup: GroupLink = {
-        id,
-        ...dataToUpdate,
-        type: dataToUpdate.type,
-        featured: false, // We don't know the status from this form, default to false
-        tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-        imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
-        createdAt: new Date().toISOString(), // This won't be perfect but avoids another db read
-        imageHint: '',
-        submissionCount: 1, // Default value
-        lastSubmittedAt: new Date().toISOString(), // Default value
-    };
+    const updatedDoc = await getDoc(groupDocRef);
+    const updatedGroup = mapDocToGroupLink(updatedDoc);
 
     return {
       message: 'Group updated successfully!',
@@ -175,7 +166,7 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
         groupIds.forEach(id => {
             const groupDocRef = doc(firestore, 'groups', id);
-            batch.update(docRef, { featured });
+            batch.update(groupDocRef, { featured });
         });
 
         await batch.commit();
