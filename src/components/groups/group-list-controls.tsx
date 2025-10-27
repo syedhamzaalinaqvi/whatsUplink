@@ -66,8 +66,8 @@ export function GroupListControls({
             </Select>
         </div>
         <div className="flex items-center justify-end gap-2">
-           <div className="hidden md:block">
-             {submitButton}
+           <div className="md:hidden">
+             {/* This button is now only for mobile, and is replaced by the floating button */}
            </div>
           <ToggleGroup 
             type="single" 

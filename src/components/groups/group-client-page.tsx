@@ -39,7 +39,7 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
     });
   }, [groups, searchQuery, selectedCountry, selectedCategory]);
 
-  const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
+  const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
 
   return (
     <section className="container py-8 md:py-12">
