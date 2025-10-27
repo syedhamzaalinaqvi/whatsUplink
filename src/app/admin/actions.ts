@@ -291,60 +291,52 @@ export async function getPaginatedGroups(
     const groupsCollection = collection(firestore, 'groups');
     
     let q;
-    let cursorDoc;
-    let isFirstPage = pageDirection === 'first';
-
+    const isFirstPage = pageDirection === 'first';
+    const isPrevPage = pageDirection === 'prev';
     const validCursorId = cursorId && cursorId.trim() !== '' ? cursorId.trim() : undefined;
-
-    if (validCursorId) {
+    
+    if (!isFirstPage && validCursorId) {
         const cursorDocSnap = await getDoc(doc(firestore, 'groups', validCursorId));
-        if(cursorDocSnap.exists()) {
-            cursorDoc = cursorDocSnap;
+        if (cursorDocSnap.exists()) {
+            if (isPrevPage) {
+                q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDocSnap), limitToLast(rowsPerPage));
+            } else { // 'next'
+                q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDocSnap), limit(rowsPerPage));
+            }
         } else {
-            console.warn(`Cursor document with ID ${validCursorId} not found. Defaulting to first page.`);
-            // If cursor is invalid, we must default to the first page to avoid crashing.
-            isFirstPage = true;
+            // Invalid cursor, default to first page
+             q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
         }
-    }
-
-    if (isFirstPage || !cursorDoc) {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
-    } else if (pageDirection === 'next') {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDoc), limit(rowsPerPage));
-    } else if (pageDirection === 'prev') {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDoc), limitToLast(rowsPerPage));
     } else {
-        // Fallback for any other invalid state
+        // First page
         q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
     }
     
     const querySnapshot = await getDocs(q);
-    const groups = querySnapshot.docs.map(mapDocToGroupLink);
     
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    let groups = querySnapshot.docs.map(mapDocToGroupLink);
     
+    // For 'prev' page, the results are in reverse order. We need to reverse them back.
+    if (isPrevPage) {
+        groups = groups.reverse();
+    }
+    
+    const firstVisible = groups[0];
+    const lastVisible = groups[groups.length - 1];
+
+    let hasPrevPage = false;
     let hasNextPage = false;
+
+    if (firstVisible) {
+        const prevQuery = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(doc(firestore, 'groups', firstVisible.id)), limitToLast(1));
+        const prevSnap = await getDocs(prevQuery);
+        hasPrevPage = !prevSnap.empty;
+    }
     
     if (lastVisible) {
-        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(1));
+        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(doc(firestore, 'groups', lastVisible.id)), limit(1));
         const nextSnap = await getDocs(nextQuery);
         hasNextPage = !nextSnap.empty;
-    }
-    
-    // When navigating backwards, the order is reversed. We need to check if there are more items
-    // by doing another query. But a simpler way is to know that if we navigated back, there is always
-    // a next page (the one we came from), unless there were no results on the previous page.
-    if (pageDirection === 'prev' && groups.length > 0) {
-        hasNextPage = true;
-    }
-
-    // A previous page exists if this is not the first page of results.
-    const hasPrevPage = pageDirection !== 'first' && (!isFirstPage || (pageDirection === 'prev' && groups.length > 0));
-
-    // If we're on a page that isn't the first, and we got here because the cursor was invalid,
-    // we should indicate there's no previous page relative to the new "first" page we just loaded.
-    if (isFirstPage && !cursorDoc && pageDirection !== 'first') {
-        return { groups, hasNextPage, hasPrevPage: false };
     }
 
     return { groups, hasNextPage, hasPrevPage };
