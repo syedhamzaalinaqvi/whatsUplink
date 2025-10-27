@@ -11,7 +11,7 @@ export default function AboutPage() {
             <div className="space-y-4 text-center">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">About WhatsUpLink</h1>
               <p className="text-lg text-muted-foreground">
-                Your number one directory for discovering and sharing WhatsApp groups.
+                Your number one directory for discovering and sharing WhatsApp group links.
               </p>
             </div>
             <div className="space-y-6 text-lg">
@@ -28,11 +28,6 @@ export default function AboutPage() {
           </div>
         </div>
       </main>
-      <footer className="border-t bg-background">
-        <div className="container py-6 text-center text-sm text-muted-foreground">
-          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-        </div>
-      </footer>
     </div>
   );
 }

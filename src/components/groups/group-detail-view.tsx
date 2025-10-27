@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -225,11 +226,6 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
           <Separator className="my-12" />
         </div>
       </main>
-      <footer className="border-t bg-background">
-        <div className="container py-6 text-center text-sm text-muted-foreground">
-          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-        </div>
-      </footer>
     </div>
   );
 }

@@ -26,6 +26,9 @@ export default function PrivacyPolicyPage() {
                   <strong>Group Information:</strong> When you submit a WhatsApp group, we collect the information you provide, such as the group link, title, description, category, country, and tags. This information is made public on our platform.
                 </li>
                 <li>
+                  <strong>Newsletter Subscription:</strong> If you choose to subscribe to our newsletter, we collect your email address. This is used to send you updates and news related to our service.
+                </li>
+                <li>
                   <strong>Usage Data:</strong> We may automatically collect certain information when you access the Site, such as your IP address, browser type, operating system, access times, and the pages you have viewed directly before and after accessing the Site.
                 </li>
               </ul>
@@ -36,13 +39,14 @@ export default function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Create and manage our directory of WhatsApp groups.</li>
+                <li>Send you our newsletter, if you have subscribed.</li>
                 <li>Monitor and analyze usage and trends to improve your experience with the Site.</li>
                 <li>Prevent fraudulent transactions, monitor against theft, and protect against criminal activity.</li>
               </ul>
 
               <h2 className="text-2xl font-bold mt-8 mb-4 text-foreground">Disclosure of Your Information</h2>
               <p>
-                We do not sell, trade, or otherwise transfer to outside parties your personally identifiable information. All group information you submit is intended for public display on our platform.
+                We do not sell, trade, or otherwise transfer to outside parties your personally identifiable information, except for the purpose of operating our newsletter service. All group information you submit is intended for public display on our platform.
               </p>
 
               <h2 className="text-2xl font-bold mt-8 mb-4 text-foreground">Contact Us</h2>
@@ -53,11 +57,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </main>
-      <footer className="border-t bg-background">
-        <div className="container py-6 text-center text-sm text-muted-foreground">
-          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-        </div>
-      </footer>
     </div>
   );
 }

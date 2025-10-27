@@ -158,3 +158,60 @@ export async function login(formData: FormData) {
         return { success: false, message: 'Invalid username or password.' };
     }
 }
+
+const newsletterSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
+});
+
+export async function subscribeToNewsletter(prevState: any, formData: FormData) {
+  const validatedFields = newsletterSchema.safeParse({
+    email: formData.get('email'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: validatedFields.error.flatten().fieldErrors.email?.[0] || 'Invalid email format.',
+    };
+  }
+
+  const { email } = validatedFields.data;
+  const apiKey = process.env.MAILCHIMP_API_KEY;
+  const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
+
+  if (!apiKey || !audienceId) {
+    console.error('Mailchimp API Key or Audience ID is not configured.');
+    return { success: false, message: 'Newsletter service is not configured. Please contact support.' };
+  }
+  
+  const dc = apiKey.split('-')[1];
+  const url = `https://${dc}.api.mailchimp.com/3.0/lists/${audienceId}/members`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `apikey ${apiKey}`,
+      },
+      body: JSON.stringify({
+        email_address: email,
+        status: 'subscribed',
+      }),
+    });
+
+    if (response.ok) {
+      return { success: true, message: "You've successfully subscribed to our newsletter!" };
+    } else {
+      const data = await response.json();
+      if (data.title === 'Member Exists') {
+        return { success: true, message: "You're already subscribed!" };
+      }
+      return { success: false, message: data.detail || 'An unexpected error occurred.' };
+    }
+  } catch (error) {
+    console.error('Mailchimp API error:', error);
+    return { success: false, message: 'Failed to subscribe. Please try again later.' };
+  }
+}
+

@@ -51,11 +51,6 @@ export default function TermsOfServicePage() {
           </div>
         </div>
       </main>
-      <footer className="border-t bg-background">
-        <div className="container py-6 text-center text-sm text-muted-foreground">
-          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-        </div>
-      </footer>
     </div>
   );
 }
