@@ -84,6 +84,24 @@ function calculateCooldown(settings: ModerationSettings): number {
     return cooldownMs;
 }
 
+// Function to add a new group document
+async function addNewGroup(firestore: any, groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt'>) {
+    const groupsCollection = collection(firestore, 'groups');
+    const newGroupData = {
+        ...groupData,
+        createdAt: serverTimestamp(),
+        lastSubmittedAt: serverTimestamp(),
+        submissionCount: 1,
+        clicks: 0,
+        featured: false,
+        showClicks: true,
+    };
+    const docRef = await addDoc(groupsCollection, newGroupData);
+    const newDoc = await getDoc(docRef);
+    return mapDocToGroupLink(newDoc);
+}
+
+
 export async function submitGroup(
   prevState: FormState,
   formData: FormData
@@ -112,53 +130,9 @@ export async function submitGroup(
   try {
     const moderationSettings = await getModerationSettings();
     const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection, where('link', '==', link));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-        const existingDoc = querySnapshot.docs[0];
-        let allowUpdate = false;
-
-        if (moderationSettings.cooldownEnabled) {
-            const existingGroupData = mapDocToGroupLink(existingDoc);
-            const lastSubmitted = existingGroupData.lastSubmittedAt ? new Date(existingGroupData.lastSubmittedAt).getTime() : 0;
-            const cooldownMs = calculateCooldown(moderationSettings);
-
-            if (Date.now() - lastSubmitted < cooldownMs) {
-                const timeLeft = cooldownMs - (Date.now() - lastSubmitted);
-                const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
-                return { message: `You have already submitted this link recently. Please try again in about ${hoursLeft} hour(s).` };
-            }
-            allowUpdate = true; // Cooldown has passed
-        } else {
-            allowUpdate = true; // Cooldown is disabled, so allow the update
-        }
-        
-        if (allowUpdate) {
-            // Update existing document
-            await updateDoc(existingDoc.ref, {
-                submissionCount: increment(1),
-                lastSubmittedAt: serverTimestamp(),
-                title,
-                description,
-                category,
-                country,
-                type,
-                tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-                imageUrl: imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
-            });
-
-            const updatedDoc = await getDoc(existingDoc.ref);
-            const updatedGroup = mapDocToGroupLink(updatedDoc);
-            return { message: 'Group submission updated successfully!', group: updatedGroup };
-        } else {
-            // This case should logically not be hit with the new structure, but as a fallback.
-            return { message: 'This group link has already been submitted.' };
-        }
-    }
-
-    // Link does not exist, add new document
-    const newGroupData = {
+    
+    // The data for a new group
+    const newGroupPayload = {
       title,
       description,
       link,
@@ -168,22 +142,52 @@ export async function submitGroup(
       country,
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-      createdAt: serverTimestamp(),
-      lastSubmittedAt: serverTimestamp(),
-      submissionCount: 1,
-      clicks: 0,
-      featured: false,
-      showClicks: true,
     };
 
-    const docRef = await addDoc(groupsCollection, newGroupData);
-    const newDoc = await getDoc(docRef);
-    const newGroup = mapDocToGroupLink(newDoc);
+    // If cooldown is disabled, just add the new group without any checks.
+    if (!moderationSettings.cooldownEnabled) {
+        const newGroup = await addNewGroup(firestore, newGroupPayload);
+        return { message: 'Group submitted successfully!', group: newGroup };
+    }
 
-    return {
-      message: 'Group submitted successfully!',
-      group: newGroup,
-    };
+    // Cooldown is ENABLED, so we perform checks.
+    const q = query(groupsCollection, where('link', '==', link));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      // Link is new, so add it.
+      const newGroup = await addNewGroup(firestore, newGroupPayload);
+      return { message: 'Group submitted successfully!', group: newGroup };
+    } else {
+      // Link exists, so check the cooldown.
+      const existingDoc = querySnapshot.docs[0];
+      const existingGroupData = mapDocToGroupLink(existingDoc);
+      const lastSubmitted = existingGroupData.lastSubmittedAt ? new Date(existingGroupData.lastSubmittedAt).getTime() : 0;
+      const cooldownMs = calculateCooldown(moderationSettings);
+
+      if (Date.now() - lastSubmitted < cooldownMs) {
+          const timeLeft = cooldownMs - (Date.now() - lastSubmitted);
+          const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+          return { message: `You have already submitted this link recently. Please try again in about ${hoursLeft} hour(s).` };
+      } else {
+          // Cooldown has passed, update the existing document.
+          await updateDoc(existingDoc.ref, {
+              submissionCount: increment(1),
+              lastSubmittedAt: serverTimestamp(),
+              title,
+              description,
+              category,
+              country,
+              type,
+              tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+              imageUrl: imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
+          });
+
+          const updatedDoc = await getDoc(existingDoc.ref);
+          const updatedGroup = mapDocToGroupLink(updatedDoc);
+          return { message: 'Group submission updated successfully!', group: updatedGroup };
+      }
+    }
 
   } catch (error) {
     console.error('Submission processing failed:', error);
