@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { ModerationSettings } from '@/lib/data';
-import { saveModerationSettings } from '@/app/admin/actions';
+import { saveModerationSettings, toggleShowClicks } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Label } from '../ui/label';
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useCallback } from 'react';
 
 const moderationSettingsSchema = z.object({
     cooldownEnabled: z.boolean(),
@@ -35,6 +36,27 @@ type AdminModerationSettingsProps = {
 export function AdminModerationSettings({ initialSettings, showClicks, onShowClicksChange, isUpdating }: AdminModerationSettingsProps) {
     const { toast } = useToast();
     const [isSaving, startSaving] = useTransition();
+
+    const handleShowClicksChange = useCallback(async (checked: boolean) => {
+        try {
+            const result = await toggleShowClicks(checked);
+            if (result.success) {
+                onShowClicksChange(checked);
+            }
+            toast({
+                title: result.success ? 'Success' : 'Error',
+                description: result.message,
+                variant: result.success ? 'default' : 'destructive',
+            });
+        } catch (error) {
+            console.error('Error updating view count visibility:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update view count visibility.',
+                variant: 'destructive',
+            });
+        }
+    }, [onShowClicksChange, toast]);
 
     const form = useForm<ModerationFormValues>({
         resolver: zodResolver(moderationSettingsSchema),
@@ -81,7 +103,7 @@ export function AdminModerationSettings({ initialSettings, showClicks, onShowCli
                             <Switch
                                 id="show-clicks-toggle"
                                 checked={showClicks}
-                                onCheckedChange={onShowClicksChange}
+                                onCheckedChange={handleShowClicksChange}
                                 disabled={isUpdating}
                             />
                         </div>
