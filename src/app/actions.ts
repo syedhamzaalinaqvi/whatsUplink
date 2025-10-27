@@ -143,8 +143,9 @@ export async function login(formData: FormData) {
 
     const { username, password } = validatedFields.data;
 
-    const adminUsername = process.env.ADMIN_USERNAME;
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    // These should be in your environment variables for security
+    const adminUsername = process.env.ADMIN_USERNAME || "hworldplayz";
+    const adminPassword = process.env.ADMIN_PASSWORD || "hworldplayz@512";
 
     if (username === adminUsername && password === adminPassword) {
         return { success: true, message: 'Login successful!' };

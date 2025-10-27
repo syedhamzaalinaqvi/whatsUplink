@@ -1,5 +1,6 @@
+
 'use client';
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, getGroupPreview, type FormState } from '@/app/actions';
+import { submitGroup, getGroupPreview } from '@/app/actions';
+import { updateGroup } from '@/app/admin/actions';
 import type { GroupLink } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES, COUNTRIES } from '@/lib/constants';
@@ -25,14 +27,29 @@ type PreviewData = {
     image?: string;
 };
 
-export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void }) {
+type SubmitGroupDialogContentProps = {
+    onGroupSubmitted: (group: GroupLink) => void;
+    groupToEdit?: GroupLink | null;
+}
+
+export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   
-  const [link, setLink] = useState('');
-  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [link, setLink] = useState(groupToEdit?.link || '');
+  const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
   const [isSubmitting, startSubmitting] = useTransition();
+
+  const isEditMode = !!groupToEdit;
+  
+  // Effect to reset form when editing a new group or closing dialog
+  useEffect(() => {
+    setLink(groupToEdit?.link || '');
+    setPreview(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
+    formRef.current?.reset();
+  }, [groupToEdit]);
+
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLink = e.target.value;
@@ -60,7 +77,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
 
   const handleFormSubmit = async (formData: FormData) => {
     startSubmitting(async () => {
-      const result = await submitGroup({ message: '' }, formData);
+      const action = isEditMode ? updateGroup : submitGroup;
+      if (isEditMode && groupToEdit) {
+          formData.append('id', groupToEdit.id);
+      }
+      
+      const result = await action({ message: '' }, formData);
 
       if (result.group) {
         toast({
@@ -68,11 +90,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
           description: result.message,
         });
         onGroupSubmitted(result.group);
-        formRef.current?.reset();
-        setPreview(null);
-        setLink('');
+        // Do not reset form here, the dialog will close.
       } else {
-        // In case of error, we don't reset the form so the user can fix it.
         toast({
           title: 'Error',
           description: result.message,
@@ -85,9 +104,9 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Submit a New Group</DialogTitle>
+        <DialogTitle>{isEditMode ? 'Edit Group' : 'Submit a New Group'}</DialogTitle>
         <DialogDescription>
-          Paste a WhatsApp group link to fetch its details automatically.
+          {isEditMode ? 'Update the details for this group.' : 'Paste a WhatsApp group link to fetch its details automatically.'}
         </DialogDescription>
       </DialogHeader>
       <form ref={formRef} action={handleFormSubmit} className="grid grid-cols-2 gap-4 py-4">
@@ -115,19 +134,19 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Group Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title} readOnly={!!preview?.title}/>
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={groupToEdit?.title || preview?.title} key={groupToEdit?.id} readOnly={!!preview?.title && !isEditMode}/>
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Group Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required defaultValue={preview?.description} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required defaultValue={groupToEdit?.description || preview?.description} key={groupToEdit?.id} />
         </div>
         
-        <input type="hidden" name="imageUrl" value={preview?.image || ''} />
+        <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
 
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
-          <Select name="country" required>
+          <Select name="country" required defaultValue={groupToEdit?.country}>
             <SelectTrigger id="country">
               <SelectValue placeholder="Select a country" />
             </SelectTrigger>
@@ -141,12 +160,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
 
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <Select name="category" required>
+          <Select name="category" required defaultValue={groupToEdit?.category}>
             <SelectTrigger id="category">
               <SelectValue placeholder="Select a category" />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORIES.filter(c => c.value !== 'all' && c.value !== 'new').map(category => (
+              {CATEGORIES.filter(c => c.value !== 'all').map(category => (
                 <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
               ))}
             </SelectContent>
@@ -155,7 +174,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="tags">Tags</Label>
-          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" />
+          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags.join(', ')} key={groupToEdit?.id}/>
           <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
         </div>
 
@@ -172,7 +191,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted }: { onGroupSubmitte
                 Fetching...
                 </>
             ): (
-                'Submit Group'
+                isEditMode ? 'Save Changes' : 'Submit Group'
             )}
             </Button>
         </DialogFooter>

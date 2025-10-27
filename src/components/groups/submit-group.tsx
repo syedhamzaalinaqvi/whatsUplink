@@ -15,7 +15,7 @@ import { SubmitGroupDialogContent } from './submit-group-dialog';
 export function SubmitGroup({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void; }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
-    const handleGroupSubmitted = (newGroup: GroupLink) => {
+    const handleGroupSubmittedAndClose = (newGroup: GroupLink) => {
         onGroupSubmitted(newGroup);
         setIsDialogOpen(false);
     }
@@ -28,7 +28,7 @@ export function SubmitGroup({ onGroupSubmitted }: { onGroupSubmitted: (group: Gr
                     Submit Group
                 </Button>
             </DialogTrigger>
-            <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmitted} />
+            <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmittedAndClose} />
         </Dialog>
     );
 }
