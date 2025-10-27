@@ -11,6 +11,7 @@ import {
   Eye,
   Info,
   Users,
+  Share2,
 } from 'lucide-react';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { GroupCard } from '@/components/groups/group-card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -33,9 +35,42 @@ type GroupDetailViewProps = {
 };
 
 export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) {
+  const { toast } = useToast();
   // We need a dummy onTagClick for the GroupCard since it's required,
   // but there's no filtering on the detail page.
   const handleTagClick = () => {};
+
+  const handleShare = async () => {
+    const shareData = {
+      title: group.title,
+      text: `Check out this WhatsApp group: ${group.title}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: 'Link Copied!',
+          description: 'Group link copied to your clipboard.',
+        });
+      } catch (error) {
+        console.error('Error copying link:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not copy link to clipboard.',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
 
   const rules = [
     {
@@ -109,8 +144,8 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                     {group.description}
                   </p>
                 </CardContent>
-                <CardFooter>
-                  <Button asChild className="w-full text-lg py-6">
+                <CardFooter className="flex flex-col sm:flex-row gap-2">
+                  <Button asChild className="w-full text-lg py-6 flex-1">
                     <a
                       href={group.link}
                       target="_blank"
@@ -120,6 +155,10 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>
+                   <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto text-lg py-6">
+                      <Share2 className="mr-2 h-5 w-5" />
+                      Share
+                    </Button>
                 </CardFooter>
               </Card>
 
