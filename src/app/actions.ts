@@ -125,3 +125,30 @@ export async function submitGroup(
     return { message: 'Failed to submit group. Please try again.' };
   }
 }
+
+const loginSchema = z.object({
+    username: z.string().min(1, { message: "Username is required" }),
+    password: z.string().min(1, { message: "Password is required" }),
+});
+
+export async function login(formData: FormData) {
+    const validatedFields = loginSchema.safeParse({
+        username: formData.get('username'),
+        password: formData.get('password'),
+    });
+
+    if (!validatedFields.success) {
+        return { success: false, message: 'Invalid form data.' };
+    }
+
+    const { username, password } = validatedFields.data;
+
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (username === adminUsername && password === adminPassword) {
+        return { success: true, message: 'Login successful!' };
+    } else {
+        return { success: false, message: 'Invalid username or password.' };
+    }
+}
