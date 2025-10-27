@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
 import { FirebaseProvider } from '@/firebase/provider';
+import { ScrollToTop } from '@/components/layout/scroll-to-top';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-body antialiased`}>
         <FirebaseProvider>
           {children}
+          <ScrollToTop />
         </FirebaseProvider>
         <Toaster />
       </body>
