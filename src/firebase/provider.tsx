@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
@@ -20,22 +20,30 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
   const [services, setServices] = useState<FirebaseContextType | null>(null);
 
   useEffect(() => {
+    // This effect runs once on component mount to initialize Firebase.
+    if (services) return; // Already initialized
+
     try {
       const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const firestore = getFirestore(app);
       setServices({ app, auth, firestore });
-      console.log('Firebase services are ready.');
+      console.log('Firebase services have been successfully initialized.');
     } catch (e) {
         console.error("Firebase initialization error:", e);
-        setServices(null);
+        // In case of error, services remain null
     }
-  }, []);
+  }, [services]); // Rerun if services changes (e.g. from null to initialized)
 
-  // Only render children when firebase services are available to avoid null context issues
+  // Only render children when Firebase services are confirmed to be available.
+  // This prevents components from trying to access a null context.
+  if (!services) {
+    return null; // Or you can return a loading spinner here
+  }
+
   return (
     <FirebaseContext.Provider value={services}>
-      {services ? children : null /* Or a loading indicator */}
+      {children}
     </FirebaseContext.Provider>
   );
 };
