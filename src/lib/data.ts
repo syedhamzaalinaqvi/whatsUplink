@@ -42,7 +42,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
             return !isNaN(date.getTime()) ? date.toISOString() : null;
         }
         // Handle Firestore server timestamp object before it's converted
-        if (timestamp.seconds) {
+        if (typeof timestamp === 'object' && timestamp.seconds !== undefined && timestamp.nanoseconds !== undefined) {
             return new Date(timestamp.seconds * 1000).toISOString();
         }
         return null;

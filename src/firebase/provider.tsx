@@ -21,22 +21,10 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // This effect runs once on component mount to initialize Firebase.
-    if (getApps().length === 0) {
-      try {
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
-        setServices({ app, auth, firestore });
-        console.log('Firebase services have been successfully initialized.');
-      } catch (e) {
-          console.error("Firebase initialization error:", e);
-      }
-    } else {
-        const app = getApp();
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
-        setServices({ app, auth, firestore });
-    }
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    setServices({ app, auth, firestore });
   }, []); // Empty dependency array ensures this runs only once.
 
   // Only render children when Firebase services are confirmed to be available.
