@@ -4,7 +4,6 @@
 import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
 import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
@@ -12,7 +11,14 @@ import { mapDocToGroupLink } from '@/lib/data';
 
 function getFirestoreInstance() {
   if (!getApps().length) {
-    initializeApp(firebaseConfig);
+    initializeApp({
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    });
   }
   return getFirestore();
 }
@@ -193,6 +199,11 @@ export async function toggleShowClicks(show: boolean): Promise<{ success: boolea
       batch.update(doc.ref, { showClicks: show });
     });
     await batch.commit();
+    
+    // Also update the global setting
+    const settingsDocRef = doc(firestore, 'settings', 'moderation');
+    await updateDoc(settingsDocRef, { showClicks: show });
+
 
     revalidatePath('/admin');
     revalidatePath('/');
@@ -225,7 +236,12 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
     try {
         const firestore = getFirestoreInstance();
         const settingsDocRef = doc(firestore, 'settings', 'moderation');
-        await setDoc(settingsDocRef, validatedFields.data);
+        // We only save the cooldown settings here, showClicks is handled separately
+        await updateDoc(settingsDocRef, {
+            cooldownEnabled: validatedFields.data.cooldownEnabled,
+            cooldownValue: validatedFields.data.cooldownValue,
+            cooldownUnit: validatedFields.data.cooldownUnit,
+        });
         revalidatePath('/admin');
         return { success: true, message: 'Moderation settings saved successfully.' };
     } catch (error) {
@@ -242,6 +258,16 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         const docSnap = await getDoc(settingsDocRef);
         if (docSnap.exists()) {
             return docSnap.data() as ModerationSettings;
+        } else {
+            // If the document doesn't exist, create it with default values
+            const defaultSettings: ModerationSettings = {
+                cooldownEnabled: true,
+                cooldownValue: 6,
+                cooldownUnit: 'hours',
+                showClicks: true,
+            };
+            await setDoc(settingsDocRef, defaultSettings);
+            return defaultSettings;
         }
     } catch (error) {
         console.error('Error fetching moderation settings:', error);
@@ -251,5 +277,6 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         cooldownEnabled: true,
         cooldownValue: 6,
         cooldownUnit: 'hours',
+        showClicks: true,
     };
 }

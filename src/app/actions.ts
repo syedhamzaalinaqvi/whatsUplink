@@ -6,14 +6,20 @@ import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
 import { collection, addDoc, serverTimestamp, getFirestore, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
-import { getModerationSettings } from './admin/actions';
+import { getModerationSettings } from '@/app/admin/actions';
 import { mapDocToGroupLink } from '@/lib/data';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
   if (!getApps().length) {
-    initializeApp(firebaseConfig);
+    initializeApp({
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    });
   }
   return getFirestore();
 }
@@ -52,7 +58,7 @@ export async function getGroupPreview(link: string) {
   try {
     const preview = await getLinkPreview(link, {
       headers: {
-        'X-Link-Preview-Api-Key': '883f322167cd5c53e0c616349ea3f5e9',
+        'X-Link-Preview-Api-Key': process.env.LINK_PREVIEW_API_KEY,
       },
     });
 
@@ -87,6 +93,7 @@ function calculateCooldown(settings: ModerationSettings): number {
 // Function to add a new group document
 async function addNewGroup(firestore: any, groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
     const groupsCollection = collection(firestore, 'groups');
+    const settings = await getModerationSettings(); // Fetch global settings
     const newGroupData = {
         ...groupData,
         createdAt: serverTimestamp(),
@@ -94,7 +101,7 @@ async function addNewGroup(firestore: any, groupData: Omit<GroupLink, 'id' | 'cr
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
-        showClicks: true,
+        showClicks: settings.showClicks ?? true, // Use the global setting
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -186,6 +193,7 @@ export async function submitGroup(
           return { message: `You have already submitted this link recently. Please try again in about ${hoursLeft} hour(s).` };
       } else {
           // Cooldown has passed, update the MOST RECENT existing document.
+          // Note: We update, not create a new one, in cooldown mode.
           await updateDoc(mostRecentDoc.ref, {
               submissionCount: increment(1),
               lastSubmittedAt: serverTimestamp(),
@@ -228,8 +236,8 @@ export async function login(formData: FormData) {
     const { username, password } = validatedFields.data;
 
     // These should be in your environment variables for security
-    const adminUsername = process.env.ADMIN_USERNAME || "hworldplayz";
-    const adminPassword = process.env.ADMIN_PASSWORD || "hworldplayz@512";
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (username === adminUsername && password === adminPassword) {
         return { success: true, message: 'Login successful!' };
