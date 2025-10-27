@@ -46,7 +46,6 @@ const updateGroupSchema = z.object({
   country: z.string().min(1, 'Please select a country'),
   tags: z.string().optional(),
   imageUrl: z.string().url().optional(),
-  featured: z.boolean().optional(),
 });
 
 
@@ -78,20 +77,12 @@ export async function updateGroup(
     const firestore = getFirestoreInstance();
     const groupDocRef = doc(firestore, 'groups', id);
 
-    // This object is sent to Firestore and can contain the serverTimestamp
-    const dataForDb: { [key: string]: any } = {
+    const dataForDb = {
       ...dataToUpdate,
       tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
       updatedAt: serverTimestamp(),
     };
-
-     // Handle 'featured' separately since it might not come from the form
-    const featuredValue = formData.get('featured');
-    if (featuredValue !== null) {
-        dataForDb.featured = featuredValue === 'true';
-    }
-
 
     await updateDoc(groupDocRef, dataForDb);
 
@@ -99,11 +90,10 @@ export async function updateGroup(
     revalidatePath('/');
     revalidatePath(`/group/invite/${id}`);
 
-    // This object is returned to the client and must be serializable
     const updatedGroup: GroupLink = {
         id,
         ...dataToUpdate,
-        featured: dataForDb.featured,
+        featured: false, // We don't know the status from this form, default to false
         tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
         createdAt: new Date().toISOString(), // This won't be perfect but avoids another db read

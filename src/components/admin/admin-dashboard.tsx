@@ -29,6 +29,7 @@ import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
+import { Switch } from '../ui/switch';
 
 export function AdminDashboard() {
   const { firestore } = useFirestore();
@@ -102,6 +103,9 @@ export function AdminDashboard() {
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
+      if (result.success) {
+        setSelectedRows([]);
+      }
     });
   }
 
@@ -184,6 +188,10 @@ export function AdminDashboard() {
                     <Star className="mr-2 h-4 w-4" />
                     Mark as Featured
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => handleBulkFeature(false)} disabled={isUpdating}>
+                    <Star className="mr-2 h-4 w-4" />
+                    Remove from Featured
+                </Button>
                 <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Selected
@@ -206,6 +214,7 @@ export function AdminDashboard() {
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Country</TableHead>
+                <TableHead>Featured</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -217,6 +226,7 @@ export function AdminDashboard() {
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-11" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
@@ -230,8 +240,7 @@ export function AdminDashboard() {
                         aria-label={`Select row ${group.title}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium flex items-center gap-2">
-                        {group.featured && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
+                    <TableCell className="font-medium">
                         {group.title}
                     </TableCell>
                     <TableCell>
@@ -239,6 +248,14 @@ export function AdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{group.country}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={group.featured}
+                        onCheckedChange={() => handleToggleFeatured(group)}
+                        disabled={isUpdating}
+                        aria-label={`Mark ${group.title} as featured`}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
@@ -249,9 +266,6 @@ export function AdminDashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(group)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleFeatured(group)} disabled={isUpdating}>
-                            {group.featured ? 'Remove from Featured' : 'Mark as Featured'}
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(group)} className="text-destructive">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
