@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CATEGORIES, COUNTRIES } from '@/lib/constants';
+import { CATEGORIES, COUNTRIES, GROUP_TYPES } from '@/lib/constants';
 
 type GroupListControlsProps = {
   view: 'grid' | 'list';
@@ -16,6 +16,8 @@ type GroupListControlsProps = {
   onCategoryChange: (category: string) => void;
   selectedCountry: string;
   onCountryChange: (country: string) => void;
+  selectedType: 'all' | 'group' | 'channel';
+  onTypeChange: (type: 'all' | 'group' | 'channel') => void;
   submitButton: React.ReactNode;
 };
 
@@ -28,6 +30,8 @@ export function GroupListControls({
   onCategoryChange,
   selectedCountry,
   onCountryChange,
+  selectedType,
+  onTypeChange,
   submitButton,
 }: GroupListControlsProps) {
   return (
@@ -43,9 +47,9 @@ export function GroupListControls({
         />
       </div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 flex-1 gap-4">
             <Select value={selectedCountry} onValueChange={onCountryChange}>
-                <SelectTrigger className="w-full sm:w-[180px] rounded-full bg-card shadow-sm">
+                <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
                     <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -55,12 +59,22 @@ export function GroupListControls({
                 </SelectContent>
             </Select>
             <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                <SelectTrigger className="w-full sm:w-[180px] rounded-full bg-card shadow-sm">
+                <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
                     <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
                     {CATEGORIES.map(category => (
                         <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select value={selectedType} onValueChange={(v) => onTypeChange(v as any)}>
+                <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
+                    <SelectValue placeholder="Select Type" />
+                </SelectTrigger>
+                <SelectContent>
+                    {GROUP_TYPES.map(type => (
+                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                     ))}
                 </SelectContent>
             </Select>

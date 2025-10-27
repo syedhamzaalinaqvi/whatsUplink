@@ -12,6 +12,7 @@ export type GroupLink = {
   tags: string[];
   featured: boolean;
   createdAt: string | null; // Always a string or null
+  type: 'group' | 'channel';
 };
 
 // This function now robustly handles Timestamps from the server
@@ -51,6 +52,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         tags: data.tags || [],
         featured: data.featured || false,
         createdAt: createdAt, // Pass serializable ISO string or null
+        type: data.type || 'group', // Default to 'group' if not specified
     };
 }
 

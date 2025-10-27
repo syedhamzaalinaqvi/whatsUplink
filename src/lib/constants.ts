@@ -14,7 +14,7 @@ export const COUNTRIES = [
   { value: 'ae', label: 'UAE' },
   { value: 'gb', label: 'United Kingdom' },
   { value: 'us', label: 'United States' },
-  { value: 'other', label: 'Other' },
+  { value: 'other', label: 'Other Countries' },
 ];
 
 export const CATEGORIES = [
@@ -39,4 +39,10 @@ export const CATEGORIES = [
   { value: 'technology', label: 'Technology' },
   { value: 'travel-tourism', label: 'Travel & Tourism' },
   { value: 'other', label: 'Other' },
+];
+
+export const GROUP_TYPES = [
+    { value: 'all', label: 'All Types' },
+    { value: 'group', label: 'Group' },
+    { value: 'channel', label: 'Channel' },
 ];

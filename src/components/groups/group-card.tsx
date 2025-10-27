@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { GroupLink } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessagesSquare, Clock } from 'lucide-react';
+import { MessagesSquare, Clock, RadioTower } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
@@ -56,6 +56,10 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
       }
     }
   };
+  
+  const typeIcon = group.type === 'channel' 
+    ? <RadioTower className="h-3 w-3" /> 
+    : <Users className="h-3 w-3" />;
 
   if (view === 'grid') {
     return (
@@ -70,9 +74,19 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             </AvatarFallback>
         </Avatar>
         <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
-        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-          <Clock className="h-3 w-3" /> {timeAgo}
-        </p>
+        
+        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-4">
+            <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> {timeAgo}
+            </span>
+             <Badge 
+                variant={group.type === 'channel' ? 'default' : 'secondary'} 
+                className="capitalize text-xs px-2 py-0.5"
+            >
+                {group.type}
+            </Badge>
+        </div>
+
         <Button onClick={handleShare} variant="ghost" size="icon" className="absolute bottom-2 right-2 z-10 h-8 w-8 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity">
             <Share2 className="h-4 w-4" />
             <span className="sr-only">Share</span>
@@ -116,9 +130,17 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
           )}
         </CardContent>
         <CardFooter className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Clock className="h-3 w-3" /> Submitted {timeAgo}
-          </p>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3" /> Submitted {timeAgo}
+            </span>
+             <Badge 
+                variant={group.type === 'channel' ? 'default' : 'secondary'} 
+                className="capitalize text-xs px-2 py-0.5"
+            >
+                {group.type}
+            </Badge>
+          </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button onClick={handleShare} variant="outline" size="icon" className="h-10 w-10">
                 <Share2 className="h-4 w-4" />

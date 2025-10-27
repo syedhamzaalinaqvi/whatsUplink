@@ -22,6 +22,7 @@ const submitGroupSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
   country: z.string().min(1, 'Please select a country'),
+  type: z.enum(['group', 'channel'], { required_error: 'Please select a type' }),
   tags: z.string().optional(),
   imageUrl: z.string().url().optional(),
 });
@@ -35,6 +36,7 @@ export type FormState = {
     description?: string[];
     category?: string[];
     country?: string[];
+    type?: string[];
     tags?: string[];
     imageUrl?: string[];
   };
@@ -78,6 +80,7 @@ export async function submitGroup(
     description: formData.get('description'),
     category: formData.get('category'),
     country: formData.get('country'),
+    type: formData.get('type'),
     tags: formData.get('tags'),
     imageUrl: formData.get('imageUrl'),
   });
@@ -89,7 +92,7 @@ export async function submitGroup(
     };
   }
 
-  const { link, title, description, category, country, tags, imageUrl } = validatedFields.data;
+  const { link, title, description, category, country, tags, imageUrl, type } = validatedFields.data;
 
   try {
     const firestore = getFirestoreInstance();
@@ -103,6 +106,7 @@ export async function submitGroup(
       imageHint: 'group preview',
       category,
       country,
+      type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       createdAt: serverTimestamp(),
     };
@@ -113,6 +117,7 @@ export async function submitGroup(
       ...newGroupData,
       id: docRef.id,
       createdAt: new Date().toISOString(), // Use client-side date for immediate feedback
+      featured: false, // ensure all fields are present
     };
 
     return {

@@ -20,6 +20,7 @@ import type { GroupLink } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES, COUNTRIES } from '@/lib/constants';
 import { Textarea } from '../ui/textarea';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 type PreviewData = {
     title?: string;
@@ -104,14 +105,14 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>{isEditMode ? 'Edit Group' : 'Submit a New Group'}</DialogTitle>
+        <DialogTitle>{isEditMode ? 'Edit Entry' : 'Submit a New Group or Channel'}</DialogTitle>
         <DialogDescription>
-          {isEditMode ? 'Update the details for this group.' : 'Paste a WhatsApp group link to fetch its details automatically.'}
+          {isEditMode ? 'Update the details for this entry.' : 'Paste a WhatsApp group or channel link to fetch its details automatically.'}
         </DialogDescription>
       </DialogHeader>
       <form ref={formRef} action={handleFormSubmit} className="grid grid-cols-2 gap-4 py-4">
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="link">Group Link</Label>          
+          <Label htmlFor="link">Group or Channel Link</Label>          
           <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
         </div>
 
@@ -133,16 +134,31 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
         )}
         
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="title">Group Title</Label>
+          <Label htmlFor="title">Title</Label>
           <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={groupToEdit?.title || preview?.title} key={groupToEdit?.id} readOnly={!!preview?.title && !isEditMode}/>
         </div>
 
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="description">Group Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your group." required defaultValue={groupToEdit?.description || preview?.description} key={groupToEdit?.id} />
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={groupToEdit?.description || preview?.description} key={groupToEdit?.id} />
         </div>
         
         <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
+        
+        <div className="space-y-2 col-span-2">
+          <Label>Type</Label>
+          <RadioGroup name="type" required defaultValue={groupToEdit?.type || 'group'} className="flex gap-4">
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="group" id="type-group" />
+                <Label htmlFor="type-group">Group</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="channel" id="type-channel" />
+                <Label htmlFor="type-channel">Channel</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="country">Country</Label>
@@ -191,7 +207,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
                 Fetching...
                 </>
             ): (
-                isEditMode ? 'Save Changes' : 'Submit Group'
+                isEditMode ? 'Save Changes' : 'Submit Entry'
             )}
             </Button>
         </DialogFooter>

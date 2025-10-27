@@ -21,6 +21,7 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
 
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);
@@ -35,9 +36,10 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
         group.tags?.some(tag => tag.toLowerCase().includes(searchLower));
       const countryMatch = selectedCountry === 'all' || group.country === selectedCountry;
       const categoryMatch = selectedCategory === 'all' || group.category.toLowerCase() === selectedCategory.toLowerCase();
-      return searchMatch && countryMatch && categoryMatch;
+      const typeMatch = selectedType === 'all' || group.type === selectedType;
+      return searchMatch && countryMatch && categoryMatch && typeMatch;
     });
-  }, [groups, searchQuery, selectedCountry, selectedCategory]);
+  }, [groups, searchQuery, selectedCountry, selectedCategory, selectedType]);
 
   const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
 
@@ -53,6 +55,8 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
             onCountryChange={setSelectedCountry}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
             submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} />}
         />
         

@@ -44,6 +44,7 @@ const updateGroupSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
   country: z.string().min(1, 'Please select a country'),
+  type: z.enum(['group', 'channel']),
   tags: z.string().optional(),
   imageUrl: z.string().url().optional(),
 });
@@ -60,6 +61,7 @@ export async function updateGroup(
     description: formData.get('description'),
     category: formData.get('category'),
     country: formData.get('country'),
+    type: formData.get('type'),
     tags: formData.get('tags'),
     imageUrl: formData.get('imageUrl'),
   });
@@ -77,7 +79,7 @@ export async function updateGroup(
     const firestore = getFirestoreInstance();
     const groupDocRef = doc(firestore, 'groups', id);
 
-    const dataForDb = {
+    const dataForDb: { [key: string]: any } = {
       ...dataToUpdate,
       tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
@@ -93,6 +95,7 @@ export async function updateGroup(
     const updatedGroup: GroupLink = {
         id,
         ...dataToUpdate,
+        type: dataToUpdate.type,
         featured: false, // We don't know the status from this form, default to false
         tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',

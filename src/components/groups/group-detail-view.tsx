@@ -12,6 +12,7 @@ import {
   Info,
   Users,
   Share2,
+  RadioTower,
 } from 'lucide-react';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
@@ -97,6 +98,8 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
         'The group admin may have additional specific rules. Please read and adhere to them upon joining.',
     },
   ];
+  
+  const typeIcon = group.type === 'channel' ? <RadioTower className="h-4 w-4" /> : <Users className="h-4 w-4" />;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -137,6 +140,15 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                     <Badge variant="secondary">{group.category}</Badge>
                     <Badge variant="outline" className="capitalize">
                       {group.country}
+                    </Badge>
+                     <Badge 
+                        variant={group.type === 'channel' ? 'default' : 'secondary'} 
+                        className="capitalize text-sm px-3 py-1"
+                    >
+                        <div className='flex items-center gap-2'>
+                            {typeIcon}
+                            <span>{group.type}</span>
+                        </div>
                     </Badge>
                   </div>
                   <p className="text-base text-foreground/80 whitespace-pre-wrap">
