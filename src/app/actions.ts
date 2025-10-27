@@ -1,10 +1,11 @@
+
 'use server';
 
 import { z } from 'zod';
 import type { GroupLink } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
 import { collection, addDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase on the server

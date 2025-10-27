@@ -2,7 +2,8 @@
 import { notFound } from 'next/navigation';
 import { getGroupById, getRelatedGroups } from '@/lib/data';
 import { GroupDetailView } from '@/components/groups/group-detail-view';
-import { initializeApp, getApps, getFirestore } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase on the server
