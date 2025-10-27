@@ -28,13 +28,11 @@ export default function RootLayout({
         </FirebaseProvider>
         <Toaster />
         <footer className="border-t bg-background">
-          <div className="container py-8 grid lg:grid-cols-2 gap-8">
+          <div className="container py-10 flex flex-col items-center gap-8">
             <NewsletterForm />
-            <div className="flex flex-col items-center justify-center text-center lg:items-end">
-              <p className="text-sm text-muted-foreground">
-                Built for WhatsUpLink. &copy; {new Date().getFullYear()}
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Built for WhatsUpLink. &copy; {new Date().getFullYear()}
+            </p>
           </div>
         </footer>
       </body>

@@ -103,115 +103,117 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
   };
 
   return (
-    <DialogContent className="sm:max-w-lg">
+    <DialogContent className="sm:max-w-lg grid-rows-[auto_1fr_auto] max-h-[90vh]">
       <DialogHeader>
         <DialogTitle>{isEditMode ? 'Edit Entry' : 'Submit a New Group or Channel'}</DialogTitle>
         <DialogDescription>
           {isEditMode ? 'Update the details for this entry.' : 'Paste a WhatsApp group or channel link to fetch its details automatically.'}
         </DialogDescription>
       </DialogHeader>
-      <form ref={formRef} action={handleFormSubmit} className="grid grid-cols-2 gap-4 py-4">
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="link">Group or Channel Link</Label>          
-          <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
-        </div>
-
-        {(isFetchingPreview || preview) && (
-             <div className="col-span-2 p-4 border rounded-lg bg-muted/50 flex flex-col items-center gap-4">
-                {isFetchingPreview ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Fetching preview...</span>
-                    </div>
-                ) : preview?.image ? (
-                    <Image src={preview.image} alt="Group Preview" width={100} height={100} className="rounded-lg object-cover" />
-                ) : (
-                    <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
-                        <LinkIcon className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                )}
-             </div>
-        )}
-        
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={groupToEdit?.title || preview?.title} key={groupToEdit?.id} readOnly={!!preview?.title && !isEditMode}/>
-        </div>
-
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={groupToEdit?.description || preview?.description} key={groupToEdit?.id} />
-        </div>
-        
-        <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
-        
-        <div className="space-y-2 col-span-2">
-          <Label>Type</Label>
-          <RadioGroup name="type" required defaultValue={groupToEdit?.type || 'group'} className="flex gap-4">
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="group" id="type-group" />
-                <Label htmlFor="type-group">Group</Label>
+      <div className="overflow-y-auto pr-6">
+        <form ref={formRef} action={handleFormSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+            <div className="space-y-2 col-span-2">
+            <Label htmlFor="link">Group or Channel Link</Label>          
+            <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
             </div>
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="channel" id="type-channel" />
-                <Label htmlFor="type-channel">Channel</Label>
-            </div>
-          </RadioGroup>
-        </div>
 
-
-        <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
-          <Select name="country" required defaultValue={groupToEdit?.country}>
-            <SelectTrigger id="country">
-              <SelectValue placeholder="Select a country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.filter(c => c.value !== 'all').map(country => (
-                <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select name="category" required defaultValue={groupToEdit?.category}>
-            <SelectTrigger id="category">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.filter(c => c.value !== 'all').map(category => (
-                <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2 col-span-2">
-          <Label htmlFor="tags">Tags</Label>
-          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags.join(', ')} key={groupToEdit?.id}/>
-          <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
-        </div>
-
-        <DialogFooter className="col-span-2">
-            <Button type="submit" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
-            {isSubmitting ? (
-                <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-                </>
-            ) : isFetchingPreview ? (
-                <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Fetching...
-                </>
-            ): (
-                isEditMode ? 'Save Changes' : 'Submit Entry'
+            {(isFetchingPreview || preview) && (
+                <div className="col-span-2 p-4 border rounded-lg bg-muted/50 flex flex-col items-center gap-4">
+                    {isFetchingPreview ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span>Fetching preview...</span>
+                        </div>
+                    ) : preview?.image ? (
+                        <Image src={preview.image} alt="Group Preview" width={100} height={100} className="rounded-lg object-cover" />
+                    ) : (
+                        <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
+                            <LinkIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                    )}
+                </div>
             )}
-            </Button>
-        </DialogFooter>
-      </form>
+            
+            <div className="space-y-2 col-span-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={groupToEdit?.title || preview?.title} key={groupToEdit?.id} readOnly={!!preview?.title && !isEditMode}/>
+            </div>
+
+            <div className="space-y-2 col-span-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={groupToEdit?.description || preview?.description} key={groupToEdit?.id} />
+            </div>
+            
+            <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
+            
+            <div className="space-y-2 col-span-2">
+            <Label>Type</Label>
+            <RadioGroup name="type" required defaultValue={groupToEdit?.type || 'group'} className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="group" id="type-group" />
+                    <Label htmlFor="type-group">Group</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="channel" id="type-channel" />
+                    <Label htmlFor="type-channel">Channel</Label>
+                </div>
+            </RadioGroup>
+            </div>
+
+
+            <div className="space-y-2 col-span-2 sm:col-span-1">
+            <Label htmlFor="country">Country</Label>
+            <Select name="country" required defaultValue={groupToEdit?.country}>
+                <SelectTrigger id="country">
+                <SelectValue placeholder="Select a country" />
+                </SelectTrigger>
+                <SelectContent>
+                {COUNTRIES.filter(c => c.value !== 'all').map(country => (
+                    <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+            </div>
+
+            <div className="space-y-2 col-span-2 sm:col-span-1">
+            <Label htmlFor="category">Category</Label>
+            <Select name="category" required defaultValue={groupToEdit?.category}>
+                <SelectTrigger id="category">
+                <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                {CATEGORIES.filter(c => c.value !== 'all').map(category => (
+                    <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+            </div>
+            
+            <div className="space-y-2 col-span-2">
+            <Label htmlFor="tags">Tags</Label>
+            <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags.join(', ')} key={groupToEdit?.id}/>
+            <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
+            </div>
+        </form>
+      </div>
+
+      <DialogFooter className="pt-4 border-t">
+          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
+          {isSubmitting ? (
+              <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+              </>
+          ) : isFetchingPreview ? (
+              <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Fetching...
+              </>
+          ): (
+              isEditMode ? 'Save Changes' : 'Submit Entry'
+          )}
+          </Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
