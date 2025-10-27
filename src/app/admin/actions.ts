@@ -186,12 +186,6 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 export async function toggleShowClicks(show: boolean): Promise<{ success: boolean; message: string }> {
   try {
     const firestore = getFirestoreInstance();
-    
-    // Update admin settings document
-    const settingsRef = doc(firestore, 'settings', 'admin');
-    await setDoc(settingsRef, { showViews: show }, { merge: true });
-
-    // Update all existing groups
     const batch = writeBatch(firestore);
     const groupsRef = collection(firestore, 'groups');
     const querySnapshot = await getDocs(groupsRef);
@@ -208,26 +202,6 @@ export async function toggleShowClicks(show: boolean): Promise<{ success: boolea
     console.error('Error toggling click visibility:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Failed to update visibility: ${errorMessage}` };
-  }
-}
-
-export async function getAdminSettings() {
-  try {
-    const firestore = getFirestoreInstance();
-    const settingsRef = doc(firestore, 'settings', 'admin');
-    const settingsSnap = await getDoc(settingsRef);
-    
-    if (settingsSnap.exists()) {
-      return settingsSnap.data();
-    }
-    
-    // If settings don't exist, create them with defaults
-    const defaultSettings = { showViews: true };
-    await setDoc(settingsRef, defaultSettings);
-    return defaultSettings;
-  } catch (error) {
-    console.error('Error fetching admin settings:', error);
-    return { showViews: true }; // Default fallback
   }
 }
 

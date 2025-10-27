@@ -87,20 +87,14 @@ function calculateCooldown(settings: ModerationSettings): number {
 // Function to add a new group document
 async function addNewGroup(firestore: any, groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
     const groupsCollection = collection(firestore, 'groups');
-    
-    // Get admin settings
-    const adminSettingsRef = doc(firestore, 'settings', 'admin');
-    const adminSettingsSnap = await getDoc(adminSettingsRef);
-    const showViews = adminSettingsSnap.exists() ? adminSettingsSnap.data()?.showViews : true;
-    
     const newGroupData = {
         ...groupData,
         createdAt: serverTimestamp(),
         lastSubmittedAt: serverTimestamp(),
         submissionCount: submissionCount,
-        clicks: showViews ? 0 : null,
+        clicks: 0,
         featured: false,
-        showClicks: showViews,
+        showClicks: true,
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -133,11 +127,7 @@ export async function submitGroup(
   const { link, title, description, category, country, tags, imageUrl, type } = validatedFields.data;
   const firestore = getFirestoreInstance();
   
-  // Get admin settings to check view count visibility
-  const adminSettingsRef = doc(firestore, 'settings', 'admin');
-  const adminSettingsSnap = await getDoc(adminSettingsRef);
-  const showViews = adminSettingsSnap.exists() ? adminSettingsSnap.data()?.showViews : true;
-  
+
   try {
     const moderationSettings = await getModerationSettings();
     const groupsCollection = collection(firestore, 'groups');
