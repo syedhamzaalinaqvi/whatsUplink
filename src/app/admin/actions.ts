@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { z } from 'zod';
 import type { FormState } from '../actions';
@@ -290,16 +290,18 @@ export async function getPaginatedGroups(
     const firestore = getFirestoreInstance();
     const groupsCollection = collection(firestore, 'groups');
     
-    const totalCountSnap = await getCountFromServer(groupsCollection);
-    const totalCount = totalCountSnap.data().count;
-
     let q;
     let cursorDoc;
 
-    if (cursorId && cursorId !== '') {
-        const cursorDocSnap = await getDoc(doc(firestore, 'groups', cursorId));
+    // Ensure cursorId is not an empty string
+    const validCursorId = cursorId && cursorId !== '' ? cursorId : undefined;
+
+    if (validCursorId) {
+        const cursorDocSnap = await getDoc(doc(firestore, 'groups', validCursorId));
         if(cursorDocSnap.exists()) {
             cursorDoc = cursorDocSnap;
+        } else {
+            console.warn(`Cursor document with ID ${validCursorId} not found.`);
         }
     }
 
@@ -310,6 +312,7 @@ export async function getPaginatedGroups(
     } else if (pageDirection === 'prev' && cursorDoc) {
         q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDoc), limitToLast(rowsPerPage));
     } else {
+        // Fallback for invalid state or initial load
         q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
     }
     
@@ -334,5 +337,22 @@ export async function getPaginatedGroups(
         hasPrevPage = !prevSnap.empty;
     }
     
+    // If navigating backwards, the last item in the result set is actually the start of the previous page
+    // so `hasNextPage` will always be true. We need to check if there are items AFTER the last document
+    // of our original 'forwards' query. This is complex to do without knowing the full original context.
+    // For now, we accept this might be slightly off for 'prev' pages. A simpler approach is just to check
+    // if the cursor existed. If we navigated back, there must be a next page (the one we came from).
+    if (pageDirection === 'prev' && cursorDoc) {
+        hasNextPage = true;
+    }
+
+    // if we are on the first page, there is no previous page.
+    if (!cursorDoc && pageDirection !== 'first') {
+       // This condition can be tricky. Let's rely on the query for now.
+    }
+    if (pageDirection === 'first') {
+        hasPrevPage = false;
+    }
+
     return { groups, hasNextPage, hasPrevPage };
 }

@@ -29,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 import { AdminModerationSettings } from './admin-moderation-settings';
+import { Switch } from '../ui/switch';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
@@ -78,6 +79,7 @@ export function AdminDashboard({
     setHasNextPage(initialHasNextPage);
     setHasPrevPage(initialHasPrevPage);
     setModerationSettings(initialModerationSettings);
+    setIsLoading(false); // Reset loading state after data is received
   }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings]);
 
 
@@ -274,7 +276,7 @@ export function AdminDashboard({
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 10 }).map((_, i) => (
+                Array.from({ length: rowsPerPage }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-5 w-5" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
