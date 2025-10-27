@@ -296,7 +296,7 @@ export async function getPaginatedGroups(
     let q;
     let cursorDoc;
 
-    if (cursorId) {
+    if (cursorId && cursorId !== '') {
         const cursorDocSnap = await getDoc(doc(firestore, 'groups', cursorId));
         if(cursorDocSnap.exists()) {
             cursorDoc = cursorDocSnap;
