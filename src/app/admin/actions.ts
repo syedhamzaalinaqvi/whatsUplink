@@ -319,40 +319,25 @@ export async function getPaginatedGroups(
     const querySnapshot = await getDocs(q);
     const groups = querySnapshot.docs.map(mapDocToGroupLink);
     
-    const firstVisible = querySnapshot.docs[0];
     const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
     
     let hasNextPage = false;
-    let hasPrevPage = false;
     
     if (lastVisible) {
         const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(1));
         const nextSnap = await getDocs(nextQuery);
         hasNextPage = !nextSnap.empty;
     }
-
-    if (firstVisible) {
-        const prevQuery = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(firstVisible), limit(1));
-        const prevSnap = await getDocs(prevQuery);
-        hasPrevPage = !prevSnap.empty;
-    }
     
-    // If navigating backwards, the last item in the result set is actually the start of the previous page
-    // so `hasNextPage` will always be true. We need to check if there are items AFTER the last document
-    // of our original 'forwards' query. This is complex to do without knowing the full original context.
-    // For now, we accept this might be slightly off for 'prev' pages. A simpler approach is just to check
-    // if the cursor existed. If we navigated back, there must be a next page (the one we came from).
-    if (pageDirection === 'prev' && cursorDoc) {
+    // When navigating backwards, the order is reversed. We need to check if there are more items
+    // by doing another query. But a simpler way is to know that if we navigated back, there is always
+    // a next page (the one we came from).
+    if (pageDirection === 'prev') {
         hasNextPage = true;
     }
 
-    // if we are on the first page, there is no previous page.
-    if (!cursorDoc && pageDirection !== 'first') {
-       // This condition can be tricky. Let's rely on the query for now.
-    }
-    if (pageDirection === 'first') {
-        hasPrevPage = false;
-    }
+    // A previous page exists if this is not the first page of results.
+    const hasPrevPage = pageDirection !== 'first';
 
     return { groups, hasNextPage, hasPrevPage };
 }
