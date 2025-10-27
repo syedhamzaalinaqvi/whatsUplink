@@ -10,6 +10,7 @@ export type GroupLink = {
   category: string;
   country: string;
   tags: string[];
+  featured: boolean;
   createdAt: string | null; // Always a string or null
 };
 
@@ -48,6 +49,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         category: data.category || 'uncategorized',
         country: data.country || 'unknown',
         tags: data.tags || [],
+        featured: data.featured || false,
         createdAt: createdAt, // Pass serializable ISO string or null
     };
 }

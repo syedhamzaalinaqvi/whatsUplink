@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, getFirestore, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { z } from 'zod';
@@ -46,6 +46,7 @@ const updateGroupSchema = z.object({
   country: z.string().min(1, 'Please select a country'),
   tags: z.string().optional(),
   imageUrl: z.string().url().optional(),
+  featured: z.boolean().optional(),
 });
 
 
@@ -78,12 +79,19 @@ export async function updateGroup(
     const groupDocRef = doc(firestore, 'groups', id);
 
     // This object is sent to Firestore and can contain the serverTimestamp
-    const dataForDb = {
+    const dataForDb: { [key: string]: any } = {
       ...dataToUpdate,
       tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
       updatedAt: serverTimestamp(),
     };
+
+     // Handle 'featured' separately since it might not come from the form
+    const featuredValue = formData.get('featured');
+    if (featuredValue !== null) {
+        dataForDb.featured = featuredValue === 'true';
+    }
+
 
     await updateDoc(groupDocRef, dataForDb);
 
@@ -95,6 +103,7 @@ export async function updateGroup(
     const updatedGroup: GroupLink = {
         id,
         ...dataToUpdate,
+        featured: dataForDb.featured,
         tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
         createdAt: new Date().toISOString(), // This won't be perfect but avoids another db read
@@ -110,4 +119,52 @@ export async function updateGroup(
     console.error('Update processing failed:', error);
     return { message: 'Failed to update group. Please try again.' };
   }
+}
+
+export async function toggleFeaturedStatus(groupId: string, currentStatus: boolean): Promise<{ success: boolean; message: string }> {
+  if (!groupId) {
+    return { success: false, message: 'Group ID is required.' };
+  }
+
+  try {
+    const firestore = getFirestoreInstance();
+    const groupDocRef = doc(firestore, 'groups', groupId);
+    await updateDoc(groupDocRef, { featured: !currentStatus });
+    
+    revalidatePath('/admin');
+    revalidatePath('/');
+
+    return { success: true, message: `Group marked as ${!currentStatus ? 'featured' : 'not featured'}.` };
+  } catch (error) {
+    console.error('Error toggling featured status:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update group: ${errorMessage}` };
+  }
+}
+
+export async function deleteMultipleGroups(groupIds: string[]): Promise<{ success: boolean, message: string }> {
+    if (!groupIds || groupIds.length === 0) {
+        return { success: false, message: 'No group IDs provided.' };
+    }
+
+    try {
+        const firestore = getFirestoreInstance();
+        const batch = writeBatch(firestore);
+
+        groupIds.forEach(id => {
+            const groupDocRef = doc(firestore, 'groups', id);
+            batch.delete(groupDocRef);
+        });
+
+        await batch.commit();
+
+        revalidatePath('/admin');
+        revalidatePath('/');
+
+        return { success: true, message: `${groupIds.length} groups deleted successfully.` };
+    } catch (error) {
+        console.error('Error deleting multiple groups:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to delete groups: ${errorMessage}` };
+    }
 }

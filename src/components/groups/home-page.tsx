@@ -1,13 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
+import { GroupCard } from './group-card';
+import { Separator } from '../ui/separator';
 
 const GROUPS_PER_PAGE = 20;
 
@@ -53,11 +55,28 @@ export function HomePage() {
 
   const visibleGroups = groups.slice(0, visibleCount);
   const hasMoreGroups = visibleCount < groups.length;
+  
+  const featuredGroups = useMemo(() => groups.filter(g => g.featured), [groups]);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header onGroupSubmitted={handleGroupSubmitted} />
       <main className="flex-1 pb-20 md:pb-0">
+        
+        {featuredGroups.length > 0 && (
+          <section className="container py-8 md:py-12">
+            <div className="mx-auto max-w-5xl">
+              <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
+                {featuredGroups.map(group => (
+                  <GroupCard key={group.id} group={group} view="grid" onTagClick={() => {}} />
+                ))}
+              </div>
+              <Separator className="my-8" />
+            </div>
+          </section>
+        )}
+
         <GroupClientPage 
             groups={visibleGroups} 
             onGroupSubmitted={handleGroupSubmitted}

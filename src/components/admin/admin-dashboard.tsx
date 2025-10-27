@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useTransition } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { GroupLink } from '@/lib/data';
@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '../layout/header';
-import { MoreVertical, Search } from 'lucide-react';
+import { MoreVertical, Search, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
 import { AdminDeleteDialog } from './admin-delete-dialog';
@@ -25,18 +25,30 @@ import { AdminEditDialog } from './admin-edit-dialog';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { COUNTRIES, CATEGORIES } from '@/lib/constants';
+import { Checkbox } from '../ui/checkbox';
+import { Switch } from '../ui/switch';
+import { toggleFeaturedStatus, deleteMultipleGroups } from '@/app/admin/actions';
+import { useToast } from '@/hooks/use-toast';
+import { AdminStats } from './admin-stats';
+import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 
 export function AdminDashboard() {
   const { firestore } = useFirestore();
+  const { toast } = useToast();
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, startUpdateTransition] = useTransition();
+
+  // Filtering and selection state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   
-  // State for dialogs
+  // Dialogs state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
 
   useEffect(() => {
@@ -69,8 +81,33 @@ export function AdminDashboard() {
   };
 
   const handleAddNew = () => {
-    setSelectedGroup(null); // No group is selected, so it's a new one
+    setSelectedGroup(null);
     setIsEditDialogOpen(true);
+  };
+  
+  const handleToggleFeatured = (group: GroupLink) => {
+    startUpdateTransition(async () => {
+      const result = await toggleFeaturedStatus(group.id, group.featured);
+      toast({
+        title: result.success ? 'Success' : 'Error',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
+      });
+    });
+  };
+
+  const handleSelectRow = (groupId: string) => {
+    setSelectedRows(prev => 
+      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows(filteredGroups.map(g => g.id));
+    } else {
+      setSelectedRows([]);
+    }
   };
   
   const filteredGroups = useMemo(() => {
@@ -83,17 +120,20 @@ export function AdminDashboard() {
     });
   }, [groups, searchQuery, selectedCountry, selectedCategory]);
 
+  const isAllSelected = filteredGroups.length > 0 && selectedRows.length === filteredGroups.length;
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <Header />
       <main className="flex-1 p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <Button onClick={handleAddNew}>Add New Group</Button>
         </div>
 
-        <div className="mb-6 p-4 border rounded-lg bg-background">
+        <AdminStats groups={groups} />
+
+        <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="relative sm:col-span-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -126,15 +166,32 @@ export function AdminDashboard() {
             </Select>
           </div>
         </div>
+        
+        {selectedRows.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{selectedRows.length} group(s) selected</p>
+            <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Selected
+            </Button>
+          </div>
+        )}
 
         <div className="border rounded-lg bg-background">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    aria-label="Select all rows"
+                  />
+                </TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Country</TableHead>
-                <TableHead className="hidden md:table-cell">Submitted</TableHead>
+                <TableHead>Featured</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -142,16 +199,24 @@ export function AdminDashboard() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-5" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-10" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : (
                 filteredGroups.map((group) => (
-                  <TableRow key={group.id}>
+                  <TableRow key={group.id} data-state={selectedRows.includes(group.id) && 'selected'}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedRows.includes(group.id)}
+                        onCheckedChange={() => handleSelectRow(group.id)}
+                        aria-label={`Select row ${group.title}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{group.title}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{group.category}</Badge>
@@ -159,8 +224,13 @@ export function AdminDashboard() {
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{group.country}</Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {group.createdAt ? new Date(group.createdAt).toLocaleDateString() : 'N/A'}
+                    <TableCell>
+                       <Switch
+                        checked={group.featured}
+                        onCheckedChange={() => handleToggleFeatured(group)}
+                        disabled={isUpdating}
+                        aria-label="Toggle featured status"
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
@@ -201,6 +271,15 @@ export function AdminDashboard() {
             group={selectedGroup}
             isOpen={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
+        />
+      )}
+
+      {isBulkDeleteDialogOpen && (
+        <AdminBulkDeleteDialog
+            groupIds={selectedRows}
+            isOpen={isBulkDeleteDialogOpen}
+            onOpenChange={setIsBulkDeleteDialogOpen}
+            onSuccess={() => setSelectedRows([])}
         />
       )}
     </div>
