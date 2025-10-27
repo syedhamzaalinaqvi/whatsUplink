@@ -1,23 +1,82 @@
+'use client';
 
+import { useState } from 'react';
 import type { GroupLink } from '@/lib/data';
-import { MessagesSquare } from 'lucide-react';
+import { Menu, MessagesSquare, X } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export function Header({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+    { href: '/privacy', label: 'Privacy' },
+    { href: '/terms', label: 'Terms' },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <MessagesSquare className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tighter text-foreground">
-            WhatsUp<span className="text-primary">Link</span>
-          </h1>
-        </Link>
-        <div className="hidden sm:block">
+    <>
+      <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <MessagesSquare className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tighter text-foreground">
+              WhatsUp<span className="text-primary">Link</span>
+            </h1>
+          </Link>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          
+          <div className="hidden md:flex items-center gap-4">
             <SubmitGroup onGroupSubmitted={onGroupSubmitted} />
+          </div>
+
+          {/* Mobile Navigation Trigger */}
+          <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <div className="flex flex-col gap-6 p-6">
+                    <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                        <MessagesSquare className="h-8 w-8 text-primary" />
+                        <h1 className="text-2xl font-bold tracking-tighter text-foreground">
+                            WhatsUp<span className="text-primary">Link</span>
+                        </h1>
+                    </Link>
+                    <nav className="flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                      <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
+                        {link.label}
+                      </Link>
+                    ))}
+                  </nav>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
+      </header>
+
+      {/* Mobile Floating Submit Button */}
+      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <SubmitGroup onGroupSubmitted={onGroupSubmitted} />
       </div>
-    </header>
+    </>
   );
 }

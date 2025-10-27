@@ -5,7 +5,7 @@ import type { GroupLink } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 
 const GROUPS_PER_PAGE = 20;
@@ -24,17 +24,10 @@ export function HomePage() {
     
     setIsGroupLoading(true);
     const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection);
+    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
-      
-      groupsData.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA; // Newest first
-      });
-
       setGroups(groupsData);
       setIsGroupLoading(false);
     }, (error) => {
@@ -49,6 +42,8 @@ export function HomePage() {
   const handleGroupSubmitted = (newGroup: GroupLink) => {
     // The real-time listener will automatically update the `groups` state,
     // so no manual addition to the state is needed here.
+    // We can scroll to the top to show the new group.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLoadMore = () => {
@@ -61,7 +56,7 @@ export function HomePage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header onGroupSubmitted={handleGroupSubmitted} />
-      <main className="flex-1">
+      <main className="flex-1 pb-20 md:pb-0">
         <GroupClientPage 
             groups={visibleGroups} 
             onGroupSubmitted={handleGroupSubmitted}

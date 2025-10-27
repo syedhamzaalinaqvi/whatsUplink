@@ -66,7 +66,9 @@ export function GroupListControls({
             </Select>
         </div>
         <div className="flex items-center justify-end gap-2">
-          {submitButton}
+           <div className="hidden md:block">
+             {submitButton}
+           </div>
           <ToggleGroup 
             type="single" 
             value={view} 

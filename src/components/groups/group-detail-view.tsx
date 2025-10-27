@@ -69,12 +69,12 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header onGroupSubmitted={handleGroupSubmitted} />
-      <main className="flex-1">
+      <main className="flex-1 pb-20 md:pb-0">
         <div className="container py-8 md:py-12">
           <div className="mb-8">
             <Button asChild variant="outline">
               <Link href="/">
-                <ArrowLeft className="mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to All Groups
               </Link>
             </Button>
@@ -119,7 +119,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                       rel="noopener noreferrer"
                     >
                       Join Now
-                      <ExternalLink className="ml-2" />
+                      <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>
                 </CardFooter>
@@ -129,7 +129,7 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                 <Card className="bg-muted/30">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-xl">
-                      <Info />
+                      <Info className="h-5 w-5" />
                       Before You Join...
                     </CardTitle>
                   </CardHeader>
