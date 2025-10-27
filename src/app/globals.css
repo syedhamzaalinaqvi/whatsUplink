@@ -68,5 +68,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    background-image: url('https://user-images.githubusercontent.com/15277486/46806533-328a6780-cd8c-11e8-8e62-2621a02a3536.png');
+    background-attachment: fixed;
   }
 }
