@@ -117,10 +117,10 @@ export async function submitGroup(
 
     if (!querySnapshot.empty) {
         const existingDoc = querySnapshot.docs[0];
-        const existingGroupData = mapDocToGroupLink(existingDoc);
+        let allowUpdate = false;
 
-        // Link exists, check cooldown
         if (moderationSettings.cooldownEnabled) {
+            const existingGroupData = mapDocToGroupLink(existingDoc);
             const lastSubmitted = existingGroupData.lastSubmittedAt ? new Date(existingGroupData.lastSubmittedAt).getTime() : 0;
             const cooldownMs = calculateCooldown(moderationSettings);
 
@@ -129,12 +129,16 @@ export async function submitGroup(
                 const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
                 return { message: `You have already submitted this link recently. Please try again in about ${hoursLeft} hour(s).` };
             }
-            
-            // Cooldown passed, update existing document
+            allowUpdate = true; // Cooldown has passed
+        } else {
+            allowUpdate = true; // Cooldown is disabled, so allow the update
+        }
+        
+        if (allowUpdate) {
+            // Update existing document
             await updateDoc(existingDoc.ref, {
                 submissionCount: increment(1),
                 lastSubmittedAt: serverTimestamp(),
-                 // Also update any other details that might have changed
                 title,
                 description,
                 category,
@@ -147,9 +151,8 @@ export async function submitGroup(
             const updatedDoc = await getDoc(existingDoc.ref);
             const updatedGroup = mapDocToGroupLink(updatedDoc);
             return { message: 'Group submission updated successfully!', group: updatedGroup };
-
         } else {
-            // Cooldown disabled, just block duplicates
+            // This case should logically not be hit with the new structure, but as a fallback.
             return { message: 'This group link has already been submitted.' };
         }
     }
