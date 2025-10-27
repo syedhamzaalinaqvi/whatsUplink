@@ -10,6 +10,13 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 import { GroupCard } from './group-card';
 import { Separator } from '../ui/separator';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 const GROUPS_PER_PAGE = 20;
 
@@ -67,11 +74,23 @@ export function HomePage() {
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
-                {featuredGroups.map(group => (
-                  <GroupCard key={group.id} group={group} view="grid" onTagClick={() => {}} />
-                ))}
-              </div>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {featuredGroups.map((group) => (
+                    <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                       <GroupCard group={group} view="grid" onTagClick={() => {}} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
               <Separator className="my-8" />
             </div>
           </section>
