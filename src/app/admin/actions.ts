@@ -168,3 +168,31 @@ export async function deleteMultipleGroups(groupIds: string[]): Promise<{ succes
         return { success: false, message: `Failed to delete groups: ${errorMessage}` };
     }
 }
+
+export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolean): Promise<{ success: boolean, message: string }> {
+    if (!groupIds || groupIds.length === 0) {
+        return { success: false, message: 'No group IDs provided.' };
+    }
+
+    try {
+        const firestore = getFirestoreInstance();
+        const batch = writeBatch(firestore);
+
+        groupIds.forEach(id => {
+            const groupDocRef = doc(firestore, 'groups', id);
+            batch.update(groupDocRef, { featured });
+        });
+
+        await batch.commit();
+
+        revalidatePath('/admin');
+        revalidatePath('/');
+
+        const actionText = featured ? 'marked as featured' : 'removed from featured';
+        return { success: true, message: `${groupIds.length} group(s) ${actionText}.` };
+    } catch (error) {
+        console.error('Error bulk setting featured status:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to update groups: ${errorMessage}` };
+    }
+}

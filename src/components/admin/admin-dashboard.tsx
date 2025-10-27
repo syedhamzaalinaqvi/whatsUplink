@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
@@ -17,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '../layout/header';
-import { MoreVertical, Search, Trash2 } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
 import { AdminDeleteDialog } from './admin-delete-dialog';
@@ -26,8 +25,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { COUNTRIES, CATEGORIES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
-import { Switch } from '../ui/switch';
-import { toggleFeaturedStatus, deleteMultipleGroups } from '@/app/admin/actions';
+import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
@@ -95,6 +93,17 @@ export function AdminDashboard() {
       });
     });
   };
+
+  const handleBulkFeature = (featured: boolean) => {
+    startUpdateTransition(async () => {
+      const result = await bulkSetFeaturedStatus(selectedRows, featured);
+      toast({
+        title: result.success ? 'Success' : 'Error',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
+      });
+    });
+  }
 
   const handleSelectRow = (groupId: string) => {
     setSelectedRows(prev => 
@@ -170,10 +179,16 @@ export function AdminDashboard() {
         {selectedRows.length > 0 && (
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">{selectedRows.length} group(s) selected</p>
-            <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Selected
-            </Button>
+            <div className="flex items-center gap-2">
+                 <Button variant="outline" size="sm" onClick={() => handleBulkFeature(true)} disabled={isUpdating}>
+                    <Star className="mr-2 h-4 w-4" />
+                    Mark as Featured
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Selected
+                </Button>
+            </div>
           </div>
         )}
 
@@ -191,7 +206,6 @@ export function AdminDashboard() {
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Country</TableHead>
-                <TableHead>Featured</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -203,7 +217,6 @@ export function AdminDashboard() {
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-10" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
@@ -217,20 +230,15 @@ export function AdminDashboard() {
                         aria-label={`Select row ${group.title}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{group.title}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                        {group.featured && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
+                        {group.title}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{group.category}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{group.country}</Badge>
-                    </TableCell>
-                    <TableCell>
-                       <Switch
-                        checked={group.featured}
-                        onCheckedChange={() => handleToggleFeatured(group)}
-                        disabled={isUpdating}
-                        aria-label="Toggle featured status"
-                      />
                     </TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
@@ -241,6 +249,9 @@ export function AdminDashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(group)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleFeatured(group)} disabled={isUpdating}>
+                            {group.featured ? 'Remove from Featured' : 'Mark as Featured'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(group)} className="text-destructive">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
