@@ -43,6 +43,24 @@ export type Country = {
     value: string;
 };
 
+export type NavLink = {
+  id: string;
+  label: string;
+  href: string;
+};
+
+export type FooterContent = {
+  heading: string;
+  paragraph: string;
+  copyrightText: string;
+};
+
+export type LayoutSettings = {
+  headerScripts: string;
+  navLinks: NavLink[];
+  footerContent: FooterContent;
+};
+
 // This function now robustly handles Timestamps from the server
 // and ensures a serializable string is always returned.
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {

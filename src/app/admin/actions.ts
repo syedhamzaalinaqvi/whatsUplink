@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
 import type { FormState } from '../actions';
-import type { GroupLink, ModerationSettings, Category, Country } from '@/lib/data';
+import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink } from '@/lib/data';
 import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
@@ -478,6 +478,101 @@ export async function seedInitialData() {
     if (writes > 0) {
         await batch.commit();
         console.log('Initial data seeding complete.');
+    }
+}
+
+// ------ Layout Settings Actions ------
+
+const defaultLayoutSettings: LayoutSettings = {
+    headerScripts: '<!-- Add analytics or other scripts here -->',
+    navLinks: [
+        { id: '1', label: 'Home', href: '/' },
+        { id: '2', label: 'About', href: '/about' },
+        { id: '3', label: 'Contact', href: '/contact' },
+        { id: '4', label: 'Privacy', href: '/privacy' },
+        { id: '5', label: 'Terms', href: '/terms' },
+    ],
+    footerContent: {
+        heading: 'WhatsUpLink',
+        paragraph: 'Your number one directory for discovering and sharing WhatsApp group links.',
+        copyrightText: `Built for WhatsUpLink. © ${new Date().getFullYear()}`,
+    },
+};
+
+export async function getLayoutSettings(): Promise<LayoutSettings> {
+    try {
+        const db = getFirestoreInstance();
+        const settingsDocRef = doc(db, 'settings', 'layout');
+        const docSnap = await getDoc(settingsDocRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Merge with defaults to ensure all fields are present
+            return {
+                headerScripts: data.headerScripts ?? defaultLayoutSettings.headerScripts,
+                navLinks: data.navLinks && data.navLinks.length > 0 ? data.navLinks : defaultLayoutSettings.navLinks,
+                footerContent: {
+                    ...defaultLayoutSettings.footerContent,
+                    ...data.footerContent,
+                },
+            };
+        } else {
+            // Document doesn't exist, create it with defaults
+            await setDoc(settingsDocRef, defaultLayoutSettings);
+            return defaultLayoutSettings;
+        }
+    } catch (error) {
+        console.error('Error fetching layout settings:', error);
+        // On error, return defaults to prevent site crash
+        return defaultLayoutSettings;
+    }
+}
+
+const layoutSettingsSchema = z.object({
+  headerScripts: z.string().optional(),
+  navLinks: z.string().transform(val => JSON.parse(val) as NavLink[]),
+  footerHeading: z.string(),
+  footerParagraph: z.string(),
+  footerCopyright: z.string(),
+});
+
+export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
+    const validatedFields = layoutSettingsSchema.safeParse({
+        headerScripts: formData.get('headerScripts'),
+        navLinks: formData.get('navLinks'),
+        footerHeading: formData.get('footerHeading'),
+        footerParagraph: formData.get('footerParagraph'),
+        footerCopyright: formData.get('footerCopyright'),
+    });
+
+    if (!validatedFields.success) {
+        return { success: false, message: 'Invalid data format.' };
+    }
+
+    try {
+        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright } = validatedFields.data;
+        
+        const settingsToSave: LayoutSettings = {
+            headerScripts: headerScripts || '',
+            navLinks: navLinks,
+            footerContent: {
+                heading: footerHeading,
+                paragraph: footerParagraph,
+                copyrightText: footerCopyright,
+            },
+        };
+
+        const db = getFirestoreInstance();
+        const settingsDocRef = doc(db, 'settings', 'layout');
+        await setDoc(settingsDocRef, settingsToSave, { merge: true });
+
+        // Revalidate all paths since header and footer are on every page
+        revalidatePath('/', 'layout');
+
+        return { success: true, message: 'Layout settings saved successfully.' };
+    } catch (error) {
+        console.error('Error saving layout settings:', error);
+        return { success: false, message: 'Failed to save layout settings.' };
     }
 }
 

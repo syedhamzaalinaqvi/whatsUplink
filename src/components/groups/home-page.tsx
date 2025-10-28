@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
-import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -133,7 +132,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header onGroupSubmitted={handleGroupSubmitted} categories={categories} countries={countries} isLoadingFilters={isFiltersLoading} />
       <main className="flex-1 pb-20 md:pb-0">
         
         {featuredGroups.length > 0 && !isGroupLoading && (

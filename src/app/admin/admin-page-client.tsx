@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, ModerationSettings, LayoutSettings } from '@/lib/data';
 import { AdminLogin } from '@/components/admin/admin-login';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
@@ -13,6 +13,7 @@ type AdminPageClientProps = {
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
+  initialLayoutSettings: LayoutSettings;
 };
 
 export function AdminPageClient({
@@ -22,6 +23,7 @@ export function AdminPageClient({
   initialModerationSettings,
   initialCategories,
   initialCountries,
+  initialLayoutSettings,
 }: AdminPageClientProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -37,6 +39,7 @@ export function AdminPageClient({
       initialModerationSettings={initialModerationSettings}
       initialCategories={initialCategories}
       initialCountries={initialCountries}
+      initialLayoutSettings={initialLayoutSettings}
     />
   );
 }

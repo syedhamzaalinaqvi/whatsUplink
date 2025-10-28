@@ -6,7 +6,9 @@ import { Inter } from 'next/font/google';
 import { FirebaseProvider } from '@/firebase/provider';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { NewsletterSignup } from '@/components/layout/newsletter-signup';
-import { getModerationSettings } from './admin/actions';
+import { getModerationSettings, getLayoutSettings } from './admin/actions';
+import { Header } from '@/components/layout/header';
+import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -48,13 +50,21 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getModerationSettings();
+  const moderationSettings = await getModerationSettings();
+  const layoutSettings = await getLayoutSettings();
 
   return (
     <html lang="en" suppressHydrationWarning>
+       <head>
+        {/* Render custom scripts from admin settings */}
+        {layoutSettings.headerScripts && (
+          <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
+        )}
+      </head>
       <body className={`${inter.variable} font-body antialiased`}>
         <div className="flex flex-col min-h-screen">
           <FirebaseProvider>
+            <Header navLinks={layoutSettings.navLinks} />
             <div className="flex-1">
               {children}
             </div>
@@ -64,15 +74,15 @@ export default async function RootLayout({
               <div className="container py-12">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                   <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                      <h3 className="text-xl font-bold">WhatsUpLink</h3>
+                      <h3 className="text-xl font-bold">{layoutSettings.footerContent.heading}</h3>
                       <p className="text-muted-foreground mt-2 max-w-md">
-                        Your number one directory for discovering and sharing WhatsApp group links.
+                        {layoutSettings.footerContent.paragraph}
                       </p>
                        <p className="text-sm text-muted-foreground mt-8">
-                          Built for WhatsUpLink. &copy; {new Date().getFullYear()}
+                          {layoutSettings.footerContent.copyrightText}
                         </p>
                   </div>
-                  {settings.showNewsletter && (
+                  {moderationSettings.showNewsletter && (
                     <div className="flex-shrink-0 w-full md:w-auto">
                         <NewsletterSignup />
                     </div>

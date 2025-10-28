@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { GroupLink, Category, Country } from '@/lib/data';
+import type { GroupLink, Category, Country, NavLink } from '@/lib/data';
 import { Menu, MessagesSquare, Loader2 } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { getCategories, getCountries } from '@/app/admin/actions';
 
 type HeaderProps = {
   onGroupSubmitted?: (group: GroupLink) => void;
+  navLinks?: NavLink[];
   categories?: Category[];
   countries?: Country[];
   isLoadingFilters?: boolean;
@@ -19,6 +20,7 @@ type HeaderProps = {
 
 export function Header({ 
     onGroupSubmitted = () => {}, 
+    navLinks = [],
     categories: initialCategories, 
     countries: initialCountries,
     isLoadingFilters: initialIsLoading
@@ -51,13 +53,6 @@ export function Header({
     }
   }, [initialCategories, initialCountries, initialIsLoading]);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/privacy', label: 'Privacy' },
-    { href: '/terms', label: 'Terms' },
-  ];
 
   return (
     <>
@@ -73,7 +68,7 @@ export function Header({
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+              <Link key={link.id} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                 {link.label}
               </Link>
             ))}
@@ -105,7 +100,7 @@ export function Header({
                     </Link>
                     <nav className="flex flex-col gap-4">
                     {navLinks.map((link) => (
-                      <Link key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
+                      <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
                         {link.label}
                       </Link>
                     ))}

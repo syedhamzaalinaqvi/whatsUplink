@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -31,6 +31,9 @@ import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 import { AdminModerationSettings } from './admin-moderation-settings';
 import { Switch } from '../ui/switch';
 import { AdminTaxonomyManager } from './admin-taxonomy-manager';
+import { AdminLayoutSettings } from './admin-layout-settings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
@@ -41,6 +44,7 @@ type AdminDashboardProps = {
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
+  initialLayoutSettings: LayoutSettings;
 };
 
 export function AdminDashboard({
@@ -50,6 +54,7 @@ export function AdminDashboard({
   initialModerationSettings,
   initialCategories,
   initialCountries,
+  initialLayoutSettings,
 }: AdminDashboardProps) {
   'use client';
   
@@ -61,6 +66,7 @@ export function AdminDashboard({
   const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
   const [hasPrevPage, setHasPrevPage] = useState(initialHasPrevPage);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
+  const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(initialLayoutSettings);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, startUpdateTransition] = useTransition();
 
@@ -84,10 +90,11 @@ export function AdminDashboard({
     setHasNextPage(initialHasNextPage);
     setHasPrevPage(initialHasPrevPage);
     setModerationSettings(initialModerationSettings);
+    setLayoutSettings(initialLayoutSettings);
     setCategories(initialCategories);
     setCountries(initialCountries);
     setIsLoading(false);
-  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialCategories, initialCountries]);
+  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
 
 
   const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
@@ -180,7 +187,7 @@ export function AdminDashboard({
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <Header categories={categories} countries={countries}/>
+      <Header navLinks={layoutSettings.navLinks} categories={categories} countries={countries}/>
       <main className="flex-1 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
@@ -191,22 +198,33 @@ export function AdminDashboard({
 
         <AdminStats groups={groups} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2">
-                <AdminModerationSettings
-                    initialSettings={moderationSettings}
-                    onSettingsChange={setModerationSettings}
-                />
-            </div>
-            <div className="lg:col-span-1">
-                <AdminTaxonomyManager
-                    initialCategories={categories}
-                    initialCountries={countries}
-                    onUpdateCategories={setCategories}
-                    onUpdateCountries={setCountries}
-                />
-            </div>
-        </div>
+        <Tabs defaultValue="groups" className="mt-6">
+            <TabsList className="grid w-full grid-cols-2 lg:w-1/2">
+                <TabsTrigger value="groups">Groups & Moderation</TabsTrigger>
+                <TabsTrigger value="layout">Layout & Appearance</TabsTrigger>
+            </TabsList>
+            <TabsContent value="groups">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <div className="lg:col-span-2">
+                        <AdminModerationSettings
+                            initialSettings={moderationSettings}
+                            onSettingsChange={setModerationSettings}
+                        />
+                    </div>
+                    <div className="lg:col-span-1">
+                        <AdminTaxonomyManager
+                            initialCategories={categories}
+                            initialCountries={countries}
+                            onUpdateCategories={setCategories}
+                            onUpdateCountries={setCountries}
+                        />
+                    </div>
+                </div>
+            </TabsContent>
+            <TabsContent value="layout">
+                <AdminLayoutSettings initialSettings={layoutSettings} onSettingsChange={setLayoutSettings} />
+            </TabsContent>
+        </Tabs>
 
 
         <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
