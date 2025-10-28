@@ -100,7 +100,7 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
-        showClicks: settings.showClicks, // Ensure this is set from global settings
+        showClicks: settings.showClicks,
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -147,7 +147,6 @@ export async function submitGroup(
       country,
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-      // The `showClicks` field is now set inside `addNewGroup` to ensure it uses the latest global setting
     };
     
     const q = query(groupsCollection, where('link', '==', link));
@@ -158,7 +157,6 @@ export async function submitGroup(
     if (!moderationSettings.cooldownEnabled) {
         const submissionCount = existingDocs.length + 1;
         
-        // Add the new group, `showClicks` is now handled inside this function
         const newGroup = await addNewGroup(newGroupPayload, submissionCount);
         
         // Update submission count for all other existing groups with the same link
@@ -278,7 +276,7 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `apikey ${apiKey}`,
+        'Authorization': `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}`,
       },
       body: JSON.stringify({
         email_address: email,
