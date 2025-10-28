@@ -1,5 +1,5 @@
 
-import { getPaginatedGroups, getModerationSettings } from './actions';
+import { getPaginatedGroups, getModerationSettings, getCategories, getCountries, seedInitialData } from './actions';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
 
@@ -18,24 +18,28 @@ export default async function AdminPage({
   const cursor = searchParams?.cursor;
 
   try {
-    const [initialData, moderationSettings] = await Promise.all([
+    // Seed data if necessary, then fetch everything
+    await seedInitialData();
+    
+    const [initialData, moderationSettings, categories, countries] = await Promise.all([
       getPaginatedGroups(rowsPerPage, pageDirection, cursor),
       getModerationSettings(),
+      getCategories(),
+      getCountries(),
     ]);
 
-    // The server component now fetches data and passes it to the client component,
-    // which will handle the authentication state.
     return (
       <AdminPageClient
         initialGroups={initialData.groups}
         initialHasNextPage={initialData.hasNextPage}
         initialHasPrevPage={initialData.hasPrevPage}
         initialModerationSettings={moderationSettings}
+        initialCategories={categories}
+        initialCountries={countries}
       />
     );
   } catch (error) {
     console.error('Failed to load admin data:', error);
-    // You can return a dedicated error component here
     return notFound();
   }
 }

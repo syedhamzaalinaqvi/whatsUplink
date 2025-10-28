@@ -30,6 +30,18 @@ export type ModerationSettings = {
     featuredGroupsDisplay: 'slider' | 'grid' | 'list';
 };
 
+export type Category = {
+    id: string;
+    label: string;
+    value: string;
+};
+
+export type Country = {
+    id: string;
+    label: string;
+    value: string;
+};
+
 // This function now robustly handles Timestamps from the server
 // and ensures a serializable string is always returned.
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
@@ -74,6 +86,23 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     };
 }
 
+export function mapDocToCategory(doc: DocumentData): Category {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        label: data.label || 'No Label',
+        value: data.value || doc.id,
+    };
+}
+
+export function mapDocToCountry(doc: DocumentData): Country {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        label: data.label || 'No Label',
+        value: data.value || doc.id,
+    };
+}
 
 export async function getGroupById(firestore: Firestore, id: string | undefined): Promise<GroupLink | undefined> {
     if (!id) return undefined;

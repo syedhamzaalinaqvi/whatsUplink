@@ -1,7 +1,6 @@
 
 
-export const COUNTRIES = [
-  { value: 'all', label: 'All Countries' },
+export const DEFAULT_COUNTRIES = [
   { value: 'au', label: 'Australia' },
   { value: 'bd', label: 'Bangladesh' },
   { value: 'ca', label: 'Canada' },
@@ -17,8 +16,7 @@ export const COUNTRIES = [
   { value: 'other', label: 'Other Countries' },
 ];
 
-export const CATEGORIES = [
-  { value: 'all', label: 'All Categories' },
+export const DEFAULT_CATEGORIES = [
   { value: 'adult-18-plus', label: 'Adult/18+' },
   { value: 'art-design', label: 'Art & Design' },
   { value: 'business', label: 'Business' },

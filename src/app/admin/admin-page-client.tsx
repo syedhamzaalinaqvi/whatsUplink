@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { AdminLogin } from '@/components/admin/admin-login';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
@@ -11,6 +11,8 @@ type AdminPageClientProps = {
   initialHasNextPage: boolean;
   initialHasPrevPage: boolean;
   initialModerationSettings: ModerationSettings;
+  initialCategories: Category[];
+  initialCountries: Country[];
 };
 
 export function AdminPageClient({
@@ -18,6 +20,8 @@ export function AdminPageClient({
   initialHasNextPage,
   initialHasPrevPage,
   initialModerationSettings,
+  initialCategories,
+  initialCountries,
 }: AdminPageClientProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -31,6 +35,8 @@ export function AdminPageClient({
       initialHasNextPage={initialHasNextPage}
       initialHasPrevPage={initialHasPrevPage}
       initialModerationSettings={initialModerationSettings}
+      initialCategories={initialCategories}
+      initialCountries={initialCountries}
     />
   );
 }

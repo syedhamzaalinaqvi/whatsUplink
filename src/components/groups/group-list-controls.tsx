@@ -1,3 +1,4 @@
+
 'use client';
 
 import { LayoutGrid, List, Search } from 'lucide-react';
@@ -5,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CATEGORIES, COUNTRIES, GROUP_TYPES } from '@/lib/constants';
+import { GROUP_TYPES } from '@/lib/constants';
+import type { Category, Country } from '@/lib/data';
+import { Skeleton } from '../ui/skeleton';
 
 type GroupListControlsProps = {
   view: 'grid' | 'list';
@@ -19,6 +22,9 @@ type GroupListControlsProps = {
   selectedType: 'all' | 'group' | 'channel';
   onTypeChange: (type: 'all' | 'group' | 'channel') => void;
   submitButton: React.ReactNode;
+  categories: Category[];
+  countries: Country[];
+  isLoadingFilters: boolean;
 };
 
 export function GroupListControls({
@@ -33,6 +39,9 @@ export function GroupListControls({
   selectedType,
   onTypeChange,
   submitButton,
+  categories,
+  countries,
+  isLoadingFilters
 }: GroupListControlsProps) {
   return (
     <div className="mb-8 flex flex-col gap-4">
@@ -48,26 +57,38 @@ export function GroupListControls({
       </div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="grid grid-cols-1 sm:grid-cols-3 flex-1 gap-4">
-            <Select value={selectedCountry} onValueChange={onCountryChange}>
-                <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
-                    <SelectValue placeholder="Select Country" />
-                </SelectTrigger>
-                <SelectContent>
-                    {COUNTRIES.map(country => (
-                        <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
-                    <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                    {CATEGORIES.map(category => (
-                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            {isLoadingFilters ? (
+                <>
+                    <Skeleton className="h-10 w-full rounded-full" />
+                    <Skeleton className="h-10 w-full rounded-full" />
+                    <Skeleton className="h-10 w-full rounded-full" />
+                </>
+            ) : (
+                <>
+                    <Select value={selectedCountry} onValueChange={onCountryChange}>
+                        <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
+                            <SelectValue placeholder="Select Country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Countries</SelectItem>
+                            {countries.map(country => (
+                                <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedCategory} onValueChange={onCategoryChange}>
+                        <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
+                            <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {categories.map(category => (
+                                <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </>
+            )}
             <Select value={selectedType} onValueChange={(v) => onTypeChange(v as any)}>
                 <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
                     <SelectValue placeholder="Select Type" />

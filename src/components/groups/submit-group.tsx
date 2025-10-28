@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, Category, Country } from '@/lib/data';
 import {
   Dialog,
   DialogTrigger,
@@ -12,7 +12,15 @@ import { MessageCirclePlus } from 'lucide-react';
 import { SubmitGroupDialogContent } from './submit-group-dialog';
 
 
-export function SubmitGroup({ onGroupSubmitted }: { onGroupSubmitted: (group: GroupLink) => void; }) {
+export function SubmitGroup({ 
+    onGroupSubmitted,
+    categories,
+    countries 
+}: { 
+    onGroupSubmitted: (group: GroupLink) => void;
+    categories: Category[];
+    countries: Country[];
+}) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
     const handleGroupSubmittedAndClose = (newGroup: GroupLink) => {
@@ -28,7 +36,7 @@ export function SubmitGroup({ onGroupSubmitted }: { onGroupSubmitted: (group: Gr
                     Submit Group
                 </Button>
             </DialogTrigger>
-            <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmittedAndClose} />
+            <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmittedAndClose} categories={categories} countries={countries} />
         </Dialog>
     );
 }

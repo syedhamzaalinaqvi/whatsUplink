@@ -1,12 +1,14 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
-import type { GroupLink } from '@/lib/data';
+import type { Category, Country, GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
 import { SubmitGroup } from './submit-group';
 import { Button } from '../ui/button';
+import { getCategories, getCountries } from '@/app/admin/actions';
 
 type GroupClientPageProps = {
     groups: GroupLink[];
@@ -14,7 +16,7 @@ type GroupClientPageProps = {
     onLoadMore: () => void;
     hasMore: boolean;
     isGroupLoading: boolean;
-    showClicks: boolean; // Accept the global showClicks setting
+    showClicks: boolean;
 };
 
 export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore, isGroupLoading, showClicks }: GroupClientPageProps) {
@@ -23,6 +25,21 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+
+  useEffect(() => {
+    async function fetchFilters() {
+      setIsLoadingFilters(true);
+      const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+      setCategories(cats);
+      setCountries(counts);
+      setIsLoadingFilters(false);
+    }
+    fetchFilters();
+  }, []);
 
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);
@@ -58,7 +75,10 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
             onCategoryChange={setSelectedCategory}
             selectedType={selectedType}
             onTypeChange={setSelectedType}
-            submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} />}
+            submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} />}
+            categories={categories}
+            countries={countries}
+            isLoadingFilters={isLoadingFilters}
         />
         
         {isGroupLoading ? (

@@ -5,10 +5,11 @@ import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
 import type { FormState } from '../actions';
-import type { GroupLink, ModerationSettings } from '@/lib/data';
-import { mapDocToGroupLink } from '@/lib/data';
+import type { GroupLink, ModerationSettings, Category, Country } from '@/lib/data';
+import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -171,7 +172,7 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
         groupIds.forEach(id => {
             const groupDocRef = doc(db, 'groups', id);
-            batch.update(docRef, { featured });
+            batch.update(groupDocRef, { featured });
         });
 
         await batch.commit();
@@ -344,4 +345,137 @@ export async function getPaginatedGroups(
     const hasPrevPage = pageDirection !== 'first' && !!cursorId;
 
     return { groups, hasNextPage, hasPrevPage };
+}
+
+// ----- Categories & Countries Management Actions -----
+
+export async function getCategories(): Promise<Category[]> {
+    const db = getFirestoreInstance();
+    const catCollection = collection(db, 'categories');
+    const q = query(catCollection, orderBy('label'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(mapDocToCategory);
+}
+
+export async function getCountries(): Promise<Country[]> {
+    const db = getFirestoreInstance();
+    const countryCollection = collection(db, 'countries');
+    const q = query(countryCollection, orderBy('label'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(mapDocToCountry);
+}
+
+const taxonomySchema = z.object({
+  label: z.string().min(2, 'Label must be at least 2 characters.'),
+  value: z.string().min(2, 'Value must be at least 2 characters. Use lowercase and hyphens (e.g., "my-value").').regex(/^[a-z0-9-]+$/, 'Value can only contain lowercase letters, numbers, and hyphens.'),
+});
+
+export async function saveTaxonomyItem(
+    type: 'category' | 'country',
+    isEditing: boolean,
+    formData: FormData
+): Promise<{ success: boolean; message: string }> {
+    const validatedFields = taxonomySchema.safeParse({
+        label: formData.get('label'),
+        value: formData.get('value'),
+    });
+
+    if (!validatedFields.success) {
+        const errorMsg = validatedFields.error.flatten().fieldErrors;
+        return { success: false, message: errorMsg.label?.[0] || errorMsg.value?.[0] || 'Invalid data.' };
+    }
+
+    const { label, value } = validatedFields.data;
+    const collectionName = type === 'category' ? 'categories' : 'countries';
+
+    try {
+        const db = getFirestoreInstance();
+        const docRef = doc(db, collectionName, value);
+
+        if (!isEditing) {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                return { success: false, message: `A ${type} with the value "${value}" already exists.` };
+            }
+        }
+
+        await setDoc(docRef, { label, value }, { merge: isEditing });
+        
+        revalidatePath('/admin');
+        revalidatePath('/'); // Revalidate homepage for filters
+
+        return { success: true, message: `${type.charAt(0).toUpperCase() + type.slice(1)} saved successfully!` };
+    } catch (error) {
+        console.error(`Error saving ${type}:`, error);
+        return { success: false, message: `Failed to save ${type}.` };
+    }
+}
+
+
+export async function deleteTaxonomyItem(type: 'category' | 'country', value: string): Promise<{ success: boolean; message: string }> {
+    if (!value) {
+        return { success: false, message: 'Value is required.' };
+    }
+    
+    // Prevent deletion of 'all'
+    if (value === 'all') {
+        return { success: false, message: 'Cannot delete the "all" value.' };
+    }
+
+    const collectionName = type === 'category' ? 'categories' : 'countries';
+
+    try {
+        const db = getFirestoreInstance();
+        await deleteDoc(doc(db, collectionName, value));
+        
+        revalidatePath('/admin');
+        revalidatePath('/');
+
+        return { success: true, message: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully.` };
+    } catch (error) {
+        console.error(`Error deleting ${type}:`, error);
+        return { success: false, message: `Failed to delete ${type}.` };
+    }
+}
+
+// One-time seeding function
+export async function seedInitialData() {
+    const db = getFirestoreInstance();
+    const categoriesRef = collection(db, 'categories');
+    const countriesRef = collection(db, 'countries');
+
+    const catSnapshot = await getDocs(query(categoriesRef, limit(1)));
+    const countrySnapshot = await getDocs(query(countriesRef, limit(1)));
+
+    const batch = writeBatch(db);
+    let writes = 0;
+
+    if (catSnapshot.empty) {
+        console.log('Seeding initial categories...');
+        DEFAULT_CATEGORIES.forEach(cat => {
+            if (cat.value !== 'all') { // Do not write 'all' to db
+                const docRef = doc(db, 'categories', cat.value);
+                batch.set(docRef, { label: cat.label, value: cat.value });
+                writes++;
+            }
+        });
+    }
+
+    if (countrySnapshot.empty) {
+        console.log('Seeding initial countries...');
+        DEFAULT_COUNTRIES.forEach(country => {
+             if (country.value !== 'all') { // Do not write 'all' to db
+                const docRef = doc(db, 'countries', country.value);
+                batch.set(docRef, { label: country.label, value: country.value });
+                writes++;
+             }
+        });
+    }
+
+    if (writes > 0) {
+        await batch.commit();
+        console.log('Initial data seeding complete.');
+    }
 }

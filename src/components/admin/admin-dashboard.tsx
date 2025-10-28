@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import { AdminDeleteDialog } from './admin-delete-dialog';
 import { AdminEditDialog } from './admin-edit-dialog';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { COUNTRIES, CATEGORIES, GROUP_TYPES } from '@/lib/constants';
+import { GROUP_TYPES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
 import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,7 @@ import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
 import { AdminModerationSettings } from './admin-moderation-settings';
 import { Switch } from '../ui/switch';
+import { AdminTaxonomyManager } from './admin-taxonomy-manager';
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
@@ -38,6 +39,8 @@ type AdminDashboardProps = {
   initialHasNextPage: boolean;
   initialHasPrevPage: boolean;
   initialModerationSettings: ModerationSettings;
+  initialCategories: Category[];
+  initialCountries: Country[];
 };
 
 export function AdminDashboard({
@@ -45,6 +48,8 @@ export function AdminDashboard({
   initialHasNextPage,
   initialHasPrevPage,
   initialModerationSettings,
+  initialCategories,
+  initialCountries,
 }: AdminDashboardProps) {
   'use client';
   
@@ -58,6 +63,10 @@ export function AdminDashboard({
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, startUpdateTransition] = useTransition();
+
+  // Categories and Countries state
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [countries, setCountries] = useState<Country[]>(initialCountries);
 
   // Filtering, selection, and pagination state
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,8 +88,10 @@ export function AdminDashboard({
     setHasNextPage(initialHasNextPage);
     setHasPrevPage(initialHasPrevPage);
     setModerationSettings(initialModerationSettings);
+    setCategories(initialCategories);
+    setCountries(initialCountries);
     setIsLoading(false); // Reset loading state after data is received
-  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings]);
+  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialCategories, initialCountries]);
 
 
   const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
@@ -184,10 +195,23 @@ export function AdminDashboard({
 
         <AdminStats groups={groups} />
 
-        <AdminModerationSettings
-            initialSettings={moderationSettings}
-            onSettingsChange={setModerationSettings}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+                <AdminModerationSettings
+                    initialSettings={moderationSettings}
+                    onSettingsChange={setModerationSettings}
+                />
+            </div>
+            <div className="lg:col-span-1">
+                <AdminTaxonomyManager
+                    initialCategories={categories}
+                    initialCountries={countries}
+                    onUpdateCategories={setCategories}
+                    onUpdateCountries={setCountries}
+                />
+            </div>
+        </div>
+
 
         <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -205,7 +229,8 @@ export function AdminDashboard({
                     <SelectValue placeholder="Filter by Country" />
                 </SelectTrigger>
                 <SelectContent>
-                    {COUNTRIES.map(country => (
+                    <SelectItem value="all">All Countries</SelectItem>
+                    {countries.map(country => (
                         <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
                     ))}
                 </SelectContent>
@@ -215,7 +240,8 @@ export function AdminDashboard({
                     <SelectValue placeholder="Filter by Category" />
                 </SelectTrigger>
                 <SelectContent>
-                    {CATEGORIES.map(category => (
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(category => (
                         <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
                     ))}
                 </SelectContent>
@@ -410,6 +436,8 @@ export function AdminDashboard({
             group={selectedGroup}
             isOpen={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
+            categories={categories}
+            countries={countries}
         />
       )}
 

@@ -16,9 +16,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { submitGroup, getGroupPreview } from '@/app/actions';
 import { updateGroup } from '@/app/admin/actions';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CATEGORIES, COUNTRIES } from '@/lib/constants';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
@@ -31,9 +30,11 @@ type PreviewData = {
 type SubmitGroupDialogContentProps = {
     onGroupSubmitted: (group: GroupLink) => void;
     groupToEdit?: GroupLink | null;
+    categories: Category[];
+    countries: Country[];
 }
 
-export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: SubmitGroupDialogContentProps) {
+export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   
@@ -168,7 +169,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
                 <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
                 <SelectContent>
-                {COUNTRIES.filter(c => c.value !== 'all').map(country => (
+                {countries.map(country => (
                     <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
                 ))}
                 </SelectContent>
@@ -182,7 +183,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit }: Subm
                 <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                {CATEGORIES.filter(c => c.value !== 'all').map(category => (
+                {categories.map(category => (
                     <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
                 ))}
                 </SelectContent>
