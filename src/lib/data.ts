@@ -63,6 +63,7 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         createdAt: formatTimestamp(data.createdAt),
         type: data.type || 'group',
         clicks: data.clicks || 0,
+        // If showClicks is not defined on the doc, default to true for backward compatibility
         showClicks: data.showClicks === undefined ? true : data.showClicks,
         submissionCount: data.submissionCount || 1,
         lastSubmittedAt: formatTimestamp(data.lastSubmittedAt),

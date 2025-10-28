@@ -171,7 +171,7 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
         groupIds.forEach(id => {
             const groupDocRef = doc(db, 'groups', id);
-            batch.update(groupDocRef, { featured });
+            batch.update(docRef, { featured });
         });
 
         await batch.commit();
@@ -191,26 +191,19 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 export async function toggleShowClicks(show: boolean): Promise<{ success: boolean; message: string }> {
   try {
     const db = getFirestoreInstance();
-    const batch = writeBatch(db);
-    const groupsRef = collection(db, 'groups');
-    const querySnapshot = await getDocs(groupsRef);
-    querySnapshot.forEach((doc) => {
-      batch.update(doc.ref, { showClicks: show });
-    });
     
-    // Also update the global setting
+    // Update the global setting ONLY. This is much more efficient.
     const settingsDocRef = doc(db, 'settings', 'moderation');
     await setDoc(settingsDocRef, { showClicks: show }, { merge: true });
-
-    await batch.commit();
 
     revalidatePath('/admin');
     revalidatePath('/');
 
-    return { success: true, message: `Click visibility ${show ? 'enabled' : 'disabled'} for all groups.` };
+    return { success: true, message: `Click visibility set to ${show ? 'ON' : 'OFF'} globally.` };
   } catch (error) {
     console.error('Error toggling click visibility:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    // The error message from Firestore now gets propagated to the UI.
     return { success: false, message: `Failed to update visibility: ${errorMessage}` };
   }
 }
@@ -333,5 +326,3 @@ export async function getPaginatedGroups(
 
     return { groups, hasNextPage, hasPrevPage };
 }
-
-    
