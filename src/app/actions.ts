@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -274,7 +273,7 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`user:${apiKey}`).toString('base64')}`,
+        'Authorization': `Basic ${Buffer.from('user:' + apiKey).toString('base64')}`,
       },
       body: JSON.stringify({
         email_address: email,
@@ -296,5 +295,3 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
-
-    
