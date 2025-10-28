@@ -31,7 +31,7 @@ export default function RootLayout({
             <Toaster />
             <footer className="border-t bg-background/95 backdrop-blur">
               <div className="container py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                   <div className="flex flex-col items-center md:items-start text-center md:text-left">
                       <h3 className="text-xl font-bold">WhatsUpLink</h3>
                       <p className="text-muted-foreground mt-2 max-w-md">
@@ -41,7 +41,7 @@ export default function RootLayout({
                           Built for WhatsUpLink. &copy; {new Date().getFullYear()}
                         </p>
                   </div>
-                  <div className="flex items-center justify-center md:justify-end">
+                  <div className="flex-shrink-0">
                     <NewsletterSignup />
                   </div>
                 </div>
