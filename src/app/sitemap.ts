@@ -1,8 +1,17 @@
+
 import { MetadataRoute } from 'next';
 import { collection, getDocs } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
+function getDb() {
+    if (!getApps().length) {
+        initializeApp(firebaseConfig);
+    }
+    return getFirestore();
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://whatsuplink.com';
@@ -18,7 +27,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date().toISOString(),
   }));
   
-  const groupsCollection = collection(adminDb, 'groups');
+  const db = getDb();
+  const groupsCollection = collection(db, 'groups');
   const querySnapshot = await getDocs(groupsCollection);
   const groups = querySnapshot.docs.map(mapDocToGroupLink);
 
@@ -30,5 +40,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...dynamicRoutes];
 }
-
-    

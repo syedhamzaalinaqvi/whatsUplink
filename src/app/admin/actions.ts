@@ -1,13 +1,24 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
 import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
+// Helper function to initialize Firebase on the server
+function getFirestoreInstance() {
+    if (!getApps().length) {
+        initializeApp(firebaseConfig);
+    }
+    // It's safe to import and use getFirestore here because this is a server action
+    const { getFirestore } = require('firebase/firestore');
+    return getFirestore();
+}
 
 export async function deleteGroup(groupId: string): Promise<{ success: boolean; message: string }> {
   if (!groupId) {
@@ -15,7 +26,8 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
   }
 
   try {
-    const groupDocRef = doc(adminDb, 'groups', groupId);
+    const db = getFirestoreInstance();
+    const groupDocRef = doc(db, 'groups', groupId);
     await deleteDoc(groupDocRef);
     
     revalidatePath('/admin');
@@ -68,7 +80,8 @@ export async function updateGroup(
   const { id, ...dataToUpdate } = validatedFields.data;
 
   try {
-    const groupDocRef = doc(adminDb, 'groups', id);
+    const db = getFirestoreInstance();
+    const groupDocRef = doc(db, 'groups', id);
 
     const dataForDb: { [key: string]: any } = {
       ...dataToUpdate,
@@ -103,7 +116,8 @@ export async function toggleFeaturedStatus(groupId: string, currentStatus: boole
   }
 
   try {
-    const groupDocRef = doc(adminDb, 'groups', groupId);
+    const db = getFirestoreInstance();
+    const groupDocRef = doc(db, 'groups', groupId);
     await updateDoc(groupDocRef, { featured: !currentStatus });
     
     revalidatePath('/admin');
@@ -123,10 +137,11 @@ export async function deleteMultipleGroups(groupIds: string[]): Promise<{ succes
     }
 
     try {
-        const batch = writeBatch(adminDb);
+        const db = getFirestoreInstance();
+        const batch = writeBatch(db);
 
         groupIds.forEach(id => {
-            const groupDocRef = doc(adminDb, 'groups', id);
+            const groupDocRef = doc(db, 'groups', id);
             batch.delete(groupDocRef);
         });
 
@@ -149,10 +164,11 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
     }
 
     try {
-        const batch = writeBatch(adminDb);
+        const db = getFirestoreInstance();
+        const batch = writeBatch(db);
 
         groupIds.forEach(id => {
-            const groupDocRef = doc(adminDb, 'groups', id);
+            const groupDocRef = doc(db, 'groups', id);
             batch.update(groupDocRef, { featured });
         });
 
@@ -172,15 +188,16 @@ export async function bulkSetFeaturedStatus(groupIds: string[], featured: boolea
 
 export async function toggleShowClicks(show: boolean): Promise<{ success: boolean; message: string }> {
   try {
-    const batch = writeBatch(adminDb);
-    const groupsRef = collection(adminDb, 'groups');
+    const db = getFirestoreInstance();
+    const batch = writeBatch(db);
+    const groupsRef = collection(db, 'groups');
     const querySnapshot = await getDocs(groupsRef);
     querySnapshot.forEach((doc) => {
       batch.update(doc.ref, { showClicks: show });
     });
     
     // Also update the global setting
-    const settingsDocRef = doc(adminDb, 'settings', 'moderation');
+    const settingsDocRef = doc(db, 'settings', 'moderation');
     await setDoc(settingsDocRef, { showClicks: show }, { merge: true });
 
     await batch.commit();
@@ -214,7 +231,8 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
     }
 
     try {
-        const settingsDocRef = doc(adminDb, 'settings', 'moderation');
+        const db = getFirestoreInstance();
+        const settingsDocRef = doc(db, 'settings', 'moderation');
         // We only save the cooldown settings here, showClicks is handled separately
         await updateDoc(settingsDocRef, {
             cooldownEnabled: validatedFields.data.cooldownEnabled,
@@ -232,7 +250,8 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
 
 export async function getModerationSettings(): Promise<ModerationSettings> {
     try {
-        const settingsDocRef = doc(adminDb, 'settings', 'moderation');
+        const db = getFirestoreInstance();
+        const settingsDocRef = doc(db, 'settings', 'moderation');
         const docSnap = await getDoc(settingsDocRef);
         if (docSnap.exists()) {
             return docSnap.data() as ModerationSettings;
@@ -265,50 +284,50 @@ export async function getPaginatedGroups(
     pageDirection: 'next' | 'prev' | 'first',
     cursorId?: string
 ): Promise<{ groups: GroupLink[], hasNextPage: boolean, hasPrevPage: boolean }> {
-    const groupsCollection = collection(adminDb, 'groups');
+    const db = getFirestoreInstance();
+    const groupsCollection = collection(db, 'groups');
     
     let q;
-    const isFirstPage = pageDirection === 'first';
-    const isPrevPage = pageDirection === 'prev';
-    
-    if (!isFirstPage && cursorId) {
-        const cursorDocSnap = await getDoc(doc(adminDb, 'groups', cursorId));
+    let cursorDoc: DocumentSnapshot | undefined = undefined;
+
+    if (pageDirection !== 'first' && cursorId) {
+        const cursorDocSnap = await getDoc(doc(db, 'groups', cursorId));
         if (cursorDocSnap.exists()) {
-            if (isPrevPage) {
-                q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDocSnap), limitToLast(rowsPerPage));
-            } else { // 'next'
-                q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDocSnap), limit(rowsPerPage));
-            }
+            cursorDoc = cursorDocSnap;
         } else {
-            // Invalid cursor, default to first page
-             q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
+             // Invalid cursor, default to first page
+             pageDirection = 'first';
         }
+    }
+
+    if (pageDirection === 'first') {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage + 1));
+    } else if (pageDirection === 'next' && cursorDoc) {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDoc), limit(rowsPerPage + 1));
+    } else if (pageDirection === 'prev' && cursorDoc) {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDoc), limitToLast(rowsPerPage));
     } else {
-        // First page
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
+        // Fallback to first page if logic is inconsistent
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage + 1));
     }
     
     const querySnapshot = await getDocs(q);
     
     let groups = querySnapshot.docs.map(mapDocToGroupLink);
     
-    // For 'prev' page, the results are in reverse order. We need to reverse them back.
-    if (isPrevPage) {
-        groups = groups.reverse();
+    const hasNextPage = groups.length > rowsPerPage;
+    if (hasNextPage) {
+        groups.pop(); // Remove the extra item used for checking
     }
     
-    const firstVisible = groups[0];
-    const lastVisible = groups[groups.length - 1];
-
-    let hasPrevPage = !isFirstPage && !!cursorId;
-    let hasNextPage = false;
-    
-    if (lastVisible) {
-        const nextQuery = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(doc(adminDb, 'groups', lastVisible.id)), limit(1));
-        const nextSnap = await getDocs(nextQuery);
-        hasNextPage = !nextSnap.empty;
+    if (pageDirection === 'prev') {
+        // When going back, Firestore returns the last N items in ascending order of the orderBy field.
+        // Since we orderBy 'createdAt' 'desc', we get them in reverse chronological order (oldest first).
+        // We need to reverse them to show the newest of that page first.
+        groups.reverse();
     }
+    
+    const hasPrevPage = pageDirection === 'prev' || (pageDirection === 'next' && !!cursorId);
 
     return { groups, hasNextPage, hasPrevPage };
 }
-    

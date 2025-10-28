@@ -1,18 +1,27 @@
+
 import { notFound } from 'next/navigation';
 import { getGroupById, getRelatedGroups } from '@/lib/data';
 import { GroupDetailView } from '@/components/groups/group-detail-view';
-import { adminDb } from '@/lib/firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+import { getFirestore } from 'firebase/firestore';
+
+function getDb() {
+    if (!getApps().length) {
+        initializeApp(firebaseConfig);
+    }
+    return getFirestore();
+}
 
 export default async function GroupDetailPage({ params }: { params: { id: string } }) {
-  const group = await getGroupById(adminDb, params.id);
+  const db = getDb();
+  const group = await getGroupById(db, params.id);
   
   if (!group) {
     notFound();
   }
 
-  const relatedGroups = await getRelatedGroups(adminDb, group);
+  const relatedGroups = await getRelatedGroups(db, group);
 
   return <GroupDetailView group={group} relatedGroups={relatedGroups} />;
 }
-
-    

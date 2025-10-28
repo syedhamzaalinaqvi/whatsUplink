@@ -1,13 +1,24 @@
+
 'use server';
 
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
-import { adminDb } from '@/lib/firebase-admin';
-import { getModerationSettings } from '@/app/admin/actions';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch, initializeFirestore } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
+import { getModerationSettings } from '@/app/admin/actions';
+import { initializeApp, getApps, App } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
+// Helper function to initialize Firebase on the server
+function getFirestoreInstance() {
+    if (!getApps().length) {
+        initializeApp(firebaseConfig);
+    }
+    // It's safe to import and use getFirestore here because this is a server action
+    const { getFirestore } = require('firebase/firestore');
+    return getFirestore();
+}
 
 const submitGroupSchema = z.object({
   link: z.string().url('Please enter a valid WhatsApp group link'),
@@ -77,7 +88,8 @@ function calculateCooldown(settings: ModerationSettings): number {
 
 // Function to add a new group document
 async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
-    const groupsCollection = collection(adminDb, 'groups');
+    const db = getFirestoreInstance();
+    const groupsCollection = collection(db, 'groups');
     const settings = await getModerationSettings(); // Fetch global settings
     const newGroupData = {
         ...groupData,
@@ -119,8 +131,9 @@ export async function submitGroup(
   const { link, title, description, category, country, tags, imageUrl, type } = validatedFields.data;
   
   try {
+    const db = getFirestoreInstance();
     const moderationSettings = await getModerationSettings();
-    const groupsCollection = collection(adminDb, 'groups');
+    const groupsCollection = collection(db, 'groups');
     
     const newGroupPayload = {
       title,
@@ -147,7 +160,7 @@ export async function submitGroup(
         
         // Update submission count for all other existing groups with the same link
         if (existingDocs.length > 0) {
-            const batch = writeBatch(adminDb);
+            const batch = writeBatch(db);
             existingDocs.forEach(doc => {
                 batch.update(doc.ref, { submissionCount: submissionCount });
             });
@@ -284,5 +297,3 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
-
-    
