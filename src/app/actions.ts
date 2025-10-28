@@ -9,8 +9,6 @@ import { getModerationSettings } from '@/app/admin/actions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
-import mailchimp from '@mailchimp/mailchimp_marketing';
-
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -261,34 +259,51 @@ export async function subscribeToNewsletter(formData: FormData): Promise<{ succe
   const { email } = validatedFields.data;
   const apiKey = process.env.MAILCHIMP_API_KEY;
   const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
-  
+
   if (!apiKey || !audienceId) {
     console.error('Mailchimp API Key or Audience ID is not configured.');
     return { success: false, message: 'Newsletter service is not configured. Please contact support.' };
   }
 
   const serverPrefix = apiKey.split('-')[1];
-
-  mailchimp.setConfig({
-    apiKey: apiKey,
-    server: serverPrefix,
-  });
+  if (!serverPrefix) {
+      console.error('Could not extract server prefix from Mailchimp API Key.');
+      return { success: false, message: 'Invalid Mailchimp API Key format.' };
+  }
+  
+  const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
+  const endpoint = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${audienceId}/members/${subscriberHash}`;
 
   try {
-    const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
-
-    await mailchimp.lists.setListMember(audienceId, subscriberHash, {
-      email_address: email,
-      status_if_new: 'subscribed',
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${Buffer.from(`user:${apiKey}`).toString('base64')}`
+      },
+      body: JSON.stringify({
+        email_address: email,
+        status: 'subscribed',
+      }),
     });
-
-    return { success: true, message: "You've been successfully subscribed!" };
-  } catch (error: any) {
-    console.error('Mailchimp API Error:', error);
-    // Check if the error is a Mailchimp API error and if the user already exists
-    if (error.response?.body?.title === 'Member Exists') {
-      return { success: true, message: "You're already subscribed. Thanks for being with us!" };
+    
+    // Member added or updated successfully
+    if (response.ok) {
+        return { success: true, message: "You've been successfully subscribed!" };
     }
+
+    // Handle cases where the user might already be subscribed (which is still a success for the user)
+    const responseBody = await response.json();
+    if (response.status === 400 && responseBody.title === 'Member Exists') {
+        return { success: true, message: "You're already subscribed. Thanks for being with us!" };
+    }
+
+    // Handle other errors
+    console.error('Mailchimp API Error:', responseBody);
+    return { success: false, message: 'Failed to subscribe. Please try again later.' };
+
+  } catch (error) {
+    console.error('Failed to communicate with Mailchimp:', error);
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
