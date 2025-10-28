@@ -64,11 +64,9 @@ export function AdminDashboard({
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, startUpdateTransition] = useTransition();
 
-  // Categories and Countries state
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
 
-  // Filtering, selection, and pagination state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -76,13 +74,11 @@ export function AdminDashboard({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const rowsPerPage = searchParams.get('rows') ? parseInt(searchParams.get('rows')!, 10) : 50;
 
-  // Dialogs state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
 
-  // Sync state with props on initial load and navigation
   useEffect(() => {
     setGroups(initialGroups);
     setHasNextPage(initialHasNextPage);
@@ -90,7 +86,7 @@ export function AdminDashboard({
     setModerationSettings(initialModerationSettings);
     setCategories(initialCategories);
     setCountries(initialCountries);
-    setIsLoading(false); // Reset loading state after data is received
+    setIsLoading(false);
   }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialCategories, initialCountries]);
 
 
@@ -184,7 +180,7 @@ export function AdminDashboard({
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <Header />
+      <Header categories={categories} countries={countries}/>
       <main className="flex-1 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>

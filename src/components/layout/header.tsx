@@ -1,21 +1,43 @@
 
 'use client';
 
-import { useState } from 'react';
-import type { GroupLink } from '@/lib/data';
+import { useState, useEffect } from 'react';
+import type { GroupLink, Category, Country } from '@/lib/data';
 import { Menu, MessagesSquare } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { getCategories, getCountries } from '@/app/admin/actions';
+
 
 // The `onGroupSubmitted` prop is now optional
 type HeaderProps = {
   onGroupSubmitted?: (group: GroupLink) => void;
+  categories?: Category[];
+  countries?: Country[];
 };
 
-export function Header({ onGroupSubmitted = () => {} }: HeaderProps) {
+export function Header({ onGroupSubmitted = () => {}, categories: initialCategories, countries: initialCountries }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [countries, setCountries] = useState<Country[]>(initialCountries || []);
+  const [isLoading, setIsLoading] = useState(!initialCategories || !initialCountries);
+
+  useEffect(() => {
+    // If props are not provided, fetch them.
+    if (!initialCategories || !initialCountries) {
+      const fetchData = async () => {
+        setIsLoading(true);
+        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+        setCategories(cats);
+        setCountries(counts);
+        setIsLoading(false);
+      }
+      fetchData();
+    }
+  }, [initialCategories, initialCountries]);
+
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/about', label: 'About' },
@@ -45,7 +67,7 @@ export function Header({ onGroupSubmitted = () => {} }: HeaderProps) {
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-            <SubmitGroup onGroupSubmitted={onGroupSubmitted} />
+            <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} />
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -84,7 +106,7 @@ export function Header({ onGroupSubmitted = () => {} }: HeaderProps) {
 
       {/* Mobile Floating Submit Button */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup onGroupSubmitted={onGroupSubmitted} />
+        <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries}/>
       </div>
     </>
   );

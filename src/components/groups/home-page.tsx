@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
@@ -17,6 +17,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { getCategories, getCountries } from '@/app/admin/actions';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -28,9 +29,10 @@ export function HomePage({ initialSettings }: HomePageProps) {
   const [visibleCount, setVisibleCount] = useState(initialSettings.groupsPerPage);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
   
-  // The global settings are now managed here as state.
-  // They are initialized by the server.
   const [settings, setSettings] = useState(initialSettings);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+
 
   useEffect(() => {
     if (!firestore) {
@@ -50,15 +52,19 @@ export function HomePage({ initialSettings }: HomePageProps) {
       console.error("Error fetching real-time groups:", error);
       setIsGroupLoading(false);
     });
+    
+    async function fetchFilters() {
+      const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+      setCategories(cats);
+      setCountries(counts);
+    }
+    fetchFilters();
 
     return () => unsubscribe();
   }, [firestore]);
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    // The real-time listener will automatically update the `groups` state,
-    // so no manual addition to the state is needed here.
-    // We can scroll to the top to show the new group.
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -92,7 +98,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
       );
     }
     
-    // Default to slider
     return (
       <Carousel
         opts={{
@@ -116,7 +121,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header onGroupSubmitted={handleGroupSubmitted} />
+      <Header onGroupSubmitted={handleGroupSubmitted} categories={categories} countries={countries} />
       <main className="flex-1 pb-20 md:pb-0">
         
         {featuredGroups.length > 0 && (
