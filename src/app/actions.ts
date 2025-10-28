@@ -10,6 +10,7 @@ import { getModerationSettings } from '@/app/admin/actions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
+import mailchimp from '@mailchimp/mailchimp_marketing';
 
 
 // Helper function to initialize Firebase on the server
@@ -95,9 +96,6 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
     
-    // Explicitly read the global showClicks setting
-    const moderationSettings = await getModerationSettings();
-
     const newGroupData = {
         ...groupData,
         createdAt: serverTimestamp(),
@@ -266,46 +264,34 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
   const { email } = validatedFields.data;
   const apiKey = process.env.MAILCHIMP_API_KEY;
   const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
-
+  
   if (!apiKey || !audienceId) {
     console.error('Mailchimp API Key or Audience ID is not configured.');
     return { success: false, message: 'Newsletter service is not configured. Please contact support.' };
   }
-  
-  const dc = apiKey.split('-')[1];
-  const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
-  const url = `https://${dc}.api.mailchimp.com/3.0/lists/${audienceId}/members/${subscriberHash}`;
+
+  const serverPrefix = apiKey.split('-')[1];
+
+  mailchimp.setConfig({
+    apiKey: apiKey,
+    server: serverPrefix,
+  });
 
   try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from('user:' + apiKey).toString('base64')}`,
-      },
-      body: JSON.stringify({
-        email_address: email,
-        status: 'subscribed',
-      }),
+    const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
+
+    await mailchimp.lists.setListMember(audienceId, subscriberHash, {
+      email_address: email,
+      status_if_new: 'subscribed',
     });
 
-    if (response.ok) {
-        const data = await response.json();
-        // If the member was already subscribed, their status will be 'subscribed'.
-        // If they were newly subscribed, their status will also be 'subscribed'.
-        // This endpoint can also be used to re-subscribe someone who unsubscribed.
-        return { success: true, message: "You've successfully subscribed. Thank you!" };
-    } else {
-      const data = await response.json();
-      // Handle cases where a user might already be subscribed but the 'status' is different (e.g., 'unsubscribed')
-      if (data.title === "Member Exists") {
-          return { success: true, message: "You're already subscribed. Thanks for being with us!" };
-      }
-      console.error('Mailchimp API Error:', data);
-      return { success: false, message: data.detail || 'An unexpected error occurred.' };
+    return { success: true, message: "You've been successfully subscribed!" };
+  } catch (error: any) {
+    console.error('Mailchimp API Error:', error);
+    // Check if the error is a Mailchimp API error and if the user already exists
+    if (error.status === 400 && error.response?.body?.title === 'Member Exists') {
+      return { success: true, message: "You're already subscribed. Thanks for being with us!" };
     }
-  } catch (error) {
-    console.error('Mailchimp fetch error:', error);
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
