@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 
 const moderationSettingsSchema = z.object({
+    showClicks: z.boolean(),
     cooldownEnabled: z.boolean(),
     cooldownValue: z.coerce.number().min(1, 'Must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
@@ -40,6 +41,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
     const form = useForm<ModerationFormValues>({
         resolver: zodResolver(moderationSettingsSchema),
         defaultValues: {
+            showClicks: initialSettings.showClicks,
             cooldownEnabled: initialSettings.cooldownEnabled,
             cooldownValue: initialSettings.cooldownValue,
             cooldownUnit: initialSettings.cooldownUnit,
@@ -48,22 +50,27 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             showNewsletter: initialSettings.showNewsletter,
         },
     });
-     
-    // Watch for form changes to keep state in sync
-    const watchedValues = form.watch();
-    
-    // Sync parent state when form values change using useEffect
-    useEffect(() => {
-        onSettingsChange({
-            ...initialSettings,
-            ...watchedValues,
-        });
-    }, [watchedValues, onSettingsChange, initialSettings]);
 
+    useEffect(() => {
+        // Reset the form if the initial settings from the parent change.
+        // This is important for keeping the UI in sync if data is refetched.
+        form.reset({
+            showClicks: initialSettings.showClicks,
+            cooldownEnabled: initialSettings.cooldownEnabled,
+            cooldownValue: initialSettings.cooldownValue,
+            cooldownUnit: initialSettings.cooldownUnit,
+            groupsPerPage: initialSettings.groupsPerPage,
+            featuredGroupsDisplay: initialSettings.featuredGroupsDisplay,
+            showNewsletter: initialSettings.showNewsletter,
+        });
+    }, [initialSettings, form]);
 
     const onSubmit = (data: ModerationFormValues) => {
         startSaving(async () => {
             const formData = new FormData();
+            // Note: The 'showClicks' setting is handled by a separate action now
+            // and is not included in this form submission to prevent conflicts.
+            // We pass it to the form for UI consistency only.
             formData.append('cooldownEnabled', data.cooldownEnabled ? 'on' : 'off');
             formData.append('cooldownValue', String(data.cooldownValue));
             formData.append('cooldownUnit', data.cooldownUnit);
@@ -72,9 +79,12 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
             
             const result = await saveModerationSettings(formData);
+
             if (result.success) {
+                 // Update the parent component's state AFTER successful save.
                  onSettingsChange({ ...initialSettings, ...data });
             }
+
             toast({
                 title: result.success ? 'Success' : 'Error',
                 description: result.message,
@@ -278,5 +288,3 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
         </Card>
     );
 }
-
-    
