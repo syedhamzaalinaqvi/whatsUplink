@@ -92,7 +92,7 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number, showClicks: boolean) {
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount' | 'showClicks'>, submissionCount: number, showClicks: boolean) {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
     
