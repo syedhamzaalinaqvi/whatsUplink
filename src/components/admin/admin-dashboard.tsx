@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Header } from '../layout/header';
 import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight, Eye, Repeat } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
@@ -187,7 +186,6 @@ export function AdminDashboard({
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <Header navLinks={layoutSettings.navLinks} categories={categories} countries={countries}/>
       <main className="flex-1 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
