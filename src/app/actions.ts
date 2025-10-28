@@ -297,6 +297,10 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
         return { success: true, message: "You've successfully subscribed. Thank you!" };
     } else {
       const data = await response.json();
+      // Handle cases where a user might already be subscribed but the 'status' is different (e.g., 'unsubscribed')
+      if (data.title === "Member Exists") {
+          return { success: true, message: "You're already subscribed. Thanks for being with us!" };
+      }
       console.error('Mailchimp API Error:', data);
       return { success: false, message: data.detail || 'An unexpected error occurred.' };
     }
@@ -305,5 +309,3 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
-
-    
