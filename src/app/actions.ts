@@ -9,6 +9,8 @@ import { mapDocToGroupLink } from '@/lib/data';
 import { getModerationSettings } from '@/app/admin/actions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import crypto from 'crypto';
+
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -103,7 +105,6 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
-        showClicks: moderationSettings.showClicks, // Set showClicks on creation
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -272,11 +273,12 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
   }
   
   const dc = apiKey.split('-')[1];
-  const url = `https://${dc}.api.mailchimp.com/3.0/lists/${audienceId}/members`;
+  const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
+  const url = `https://${dc}.api.mailchimp.com/3.0/lists/${audienceId}/members/${subscriberHash}`;
 
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${Buffer.from('user:' + apiKey).toString('base64')}`,
@@ -288,16 +290,18 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     });
 
     if (response.ok) {
-      return { success: true, message: "You've successfully subscribed to our newsletter!" };
+        const data = await response.json();
+        // If the member was already subscribed, their status will be 'subscribed'.
+        // If they were newly subscribed, their status will also be 'subscribed'.
+        // This endpoint can also be used to re-subscribe someone who unsubscribed.
+        return { success: true, message: "You've successfully subscribed. Thank you!" };
     } else {
       const data = await response.json();
-      if (data.title === 'Member Exists') {
-        return { success: true, message: "You're already subscribed!" };
-      }
+      console.error('Mailchimp API Error:', data);
       return { success: false, message: data.detail || 'An unexpected error occurred.' };
     }
   } catch (error) {
-    console.error('Mailchimp API error:', error);
+    console.error('Mailchimp fetch error:', error);
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
