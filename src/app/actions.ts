@@ -89,10 +89,9 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount' | 'showClicks'>, submissionCount: number) {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
-    const settings = await getModerationSettings(); // Fetch global settings
     const newGroupData = {
         ...groupData,
         createdAt: serverTimestamp(),
@@ -100,7 +99,6 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
-        showClicks: settings.showClicks,
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -276,7 +274,7 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}`,
+        'Authorization': `Basic ${Buffer.from(`user:${apiKey}`).toString('base64')}`,
       },
       body: JSON.stringify({
         email_address: email,
@@ -298,3 +296,5 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
+
+    
