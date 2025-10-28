@@ -55,10 +55,15 @@ export function HomePage({ initialSettings }: HomePageProps) {
     
     async function fetchFilters() {
       setIsFiltersLoading(true);
-      const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-      setCategories(cats);
-      setCountries(counts);
-      setIsFiltersLoading(false);
+      try {
+        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+        setCategories(cats);
+        setCountries(counts);
+      } catch (error) {
+        console.error("Failed to fetch filters:", error);
+      } finally {
+        setIsFiltersLoading(false);
+      }
     }
     fetchFilters();
 
@@ -126,7 +131,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
       <Header onGroupSubmitted={handleGroupSubmitted} categories={categories} countries={countries} />
       <main className="flex-1 pb-20 md:pb-0">
         
-        {featuredGroups.length > 0 && (
+        {featuredGroups.length > 0 && !isGroupLoading && (
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
