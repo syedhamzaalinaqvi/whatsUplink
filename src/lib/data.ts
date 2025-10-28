@@ -26,6 +26,7 @@ export type ModerationSettings = {
     cooldownValue: number;
     cooldownUnit: 'hours' | 'days' | 'months';
     showClicks: boolean;
+    groupsPerPage: number;
 };
 
 // This function now robustly handles Timestamps from the server

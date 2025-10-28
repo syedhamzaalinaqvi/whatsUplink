@@ -212,6 +212,7 @@ const moderationSettingsSchema = z.object({
     cooldownEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
     cooldownValue: z.coerce.number().min(1, 'Value must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
+    groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot exceed 100'),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -219,6 +220,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         cooldownEnabled: formData.get('cooldownEnabled'),
         cooldownValue: formData.get('cooldownValue'),
         cooldownUnit: formData.get('cooldownUnit'),
+        groupsPerPage: formData.get('groupsPerPage'),
     });
     
     if (!validatedFields.success) {
@@ -233,8 +235,10 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
             cooldownEnabled: validatedFields.data.cooldownEnabled,
             cooldownValue: validatedFields.data.cooldownValue,
             cooldownUnit: validatedFields.data.cooldownUnit,
+            groupsPerPage: validatedFields.data.groupsPerPage,
         });
         revalidatePath('/admin');
+        revalidatePath('/');
         return { success: true, message: 'Moderation settings saved successfully.' };
     } catch (error) {
         console.error('Error saving moderation settings:', error);
@@ -249,7 +253,15 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         const settingsDocRef = doc(db, 'settings', 'moderation');
         const docSnap = await getDoc(settingsDocRef);
         if (docSnap.exists()) {
-            return docSnap.data() as ModerationSettings;
+            const data = docSnap.data();
+            // Return existing data with defaults for any missing fields
+            return {
+                cooldownEnabled: data.cooldownEnabled ?? true,
+                cooldownValue: data.cooldownValue ?? 6,
+                cooldownUnit: data.cooldownUnit ?? 'hours',
+                showClicks: data.showClicks ?? true,
+                groupsPerPage: data.groupsPerPage ?? 20,
+            };
         } else {
             // If the document doesn't exist, create it with default values
             const defaultSettings: ModerationSettings = {
@@ -257,6 +269,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 cooldownValue: 6,
                 cooldownUnit: 'hours',
                 showClicks: true,
+                groupsPerPage: 20,
             };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
@@ -270,6 +283,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         cooldownValue: 6,
         cooldownUnit: 'hours',
         showClicks: true,
+        groupsPerPage: 20,
     };
 }
 

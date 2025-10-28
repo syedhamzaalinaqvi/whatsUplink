@@ -21,6 +21,7 @@ const moderationSettingsSchema = z.object({
     cooldownEnabled: z.boolean(),
     cooldownValue: z.coerce.number().min(1, 'Must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
+    groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot be more than 100'),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -41,6 +42,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             cooldownEnabled: initialSettings.cooldownEnabled,
             cooldownValue: initialSettings.cooldownValue,
             cooldownUnit: initialSettings.cooldownUnit,
+            groupsPerPage: initialSettings.groupsPerPage,
         },
     });
 
@@ -64,6 +66,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('cooldownEnabled', data.cooldownEnabled ? 'on' : 'off');
             formData.append('cooldownValue', String(data.cooldownValue));
             formData.append('cooldownUnit', data.cooldownUnit);
+            formData.append('groupsPerPage', String(data.groupsPerPage));
             
             const result = await saveModerationSettings(formData);
             if (result.success) {
@@ -84,28 +87,49 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                 <CardDescription>Manage global settings for your directory.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Display Settings</h4>
-                         <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                                <Label htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Display the join link click count on group cards for all users.
-                                </p>
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Display Settings Column */}
+                        <div className="space-y-4">
+                            <h4 className="font-semibold text-lg">Display Settings</h4>
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Display join link click counts publicly.
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="show-clicks-toggle"
+                                    checked={initialSettings.showClicks}
+                                    onCheckedChange={handleShowClicksChange}
+                                    disabled={isToggling}
+                                />
                             </div>
-                            <Switch
-                                id="show-clicks-toggle"
-                                checked={initialSettings.showClicks}
-                                onCheckedChange={handleShowClicksChange}
-                                disabled={isToggling}
+                            <FormField
+                                control={form.control}
+                                name="groupsPerPage"
+                                render={({ field }) => (
+                                    <FormItem className="rounded-lg border p-4">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">Groups Per Page</FormLabel>
+                                            <p className="text-sm text-muted-foreground">
+                                                Set how many groups load on the homepage at a time.
+                                            </p>
+                                        </div>
+                                        <FormControl>
+                                            <Input type="number" {...field} className="mt-2" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
                         </div>
-                    </div>
-                     <div className="space-y-4">
-                        <h4 className="font-semibold text-lg">Moderation Settings</h4>
-                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 rounded-lg border p-4">
+
+                        {/* Moderation Settings Column */}
+                        <div className="space-y-4">
+                            <h4 className="font-semibold text-lg">Moderation Settings</h4>
+                            <div className="space-y-6 rounded-lg border p-4">
                                 <FormField
                                     control={form.control}
                                     name="cooldownEnabled"
@@ -114,7 +138,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                             <div className="space-y-0.5">
                                                 <FormLabel className="text-base">Enable Resubmission Cooldown</FormLabel>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Prevent spam by limiting how often the same link can be submitted.
+                                                    Prevent spam by limiting resubmissions of the same link.
                                                 </p>
                                             </div>
                                             <FormControl>
@@ -165,16 +189,18 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                         />
                                     </div>
                                 )}
-                                <div className="flex justify-end">
-                                    <Button type="submit" disabled={isSaving}>
-                                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Save Moderation Settings
-                                    </Button>
-                                </div>
-                            </form>
-                        </Form>
-                    </div>
-                </div>
+                            </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="md:col-span-2 flex justify-end">
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save All Settings
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </CardContent>
         </Card>
     );

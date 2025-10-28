@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
@@ -18,21 +18,19 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 
-const GROUPS_PER_PAGE = 20;
-
 type HomePageProps = {
-  initialShowClicks: boolean;
+  initialSettings: ModerationSettings;
 };
 
-export function HomePage({ initialShowClicks }: HomePageProps) {
+export function HomePage({ initialSettings }: HomePageProps) {
   const { firestore } = useFirestore();
   const [groups, setGroups] = useState<GroupLink[]>([]);
-  const [visibleCount, setVisibleCount] = useState(GROUPS_PER_PAGE);
+  const [visibleCount, setVisibleCount] = useState(initialSettings.groupsPerPage);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
   
-  // The global `showClicks` setting is now managed here as state.
-  // It is initialized by the server and can be updated by client-side actions if needed.
-  const [showClicks, setShowClicks] = useState(initialShowClicks);
+  // The global settings are now managed here as state.
+  // They are initialized by the server.
+  const [settings, setSettings] = useState(initialSettings);
 
   useEffect(() => {
     if (!firestore) {
@@ -65,7 +63,7 @@ export function HomePage({ initialShowClicks }: HomePageProps) {
   };
 
   const handleLoadMore = () => {
-    setVisibleCount(prevCount => prevCount + GROUPS_PER_PAGE);
+    setVisibleCount(prevCount => prevCount + settings.groupsPerPage);
   };
 
   const visibleGroups = groups.slice(0, visibleCount);
@@ -92,7 +90,7 @@ export function HomePage({ initialShowClicks }: HomePageProps) {
                 <CarouselContent>
                   {featuredGroups.map((group) => (
                     <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                       <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={showClicks} />
+                       <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -110,7 +108,7 @@ export function HomePage({ initialShowClicks }: HomePageProps) {
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
             isGroupLoading={isGroupLoading}
-            showClicks={showClicks}
+            showClicks={settings.showClicks}
         />
       </main>
     </div>
