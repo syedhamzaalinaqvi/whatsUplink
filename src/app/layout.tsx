@@ -58,7 +58,7 @@ export default async function RootLayout({
        <head>
         {/* Render custom scripts from admin settings */}
         {layoutSettings.headerScripts && (
-          <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
+           <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
         )}
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
