@@ -147,6 +147,7 @@ export async function submitGroup(
       country,
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+      showClicks: moderationSettings.showClicks, // Explicitly set from global settings
     };
     
     const q = query(groupsCollection, where('link', '==', link));

@@ -63,8 +63,9 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         createdAt: formatTimestamp(data.createdAt),
         type: data.type || 'group',
         clicks: data.clicks || 0,
-        // If showClicks is not defined on the doc, default to true for backward compatibility
-        showClicks: data.showClicks === undefined ? true : data.showClicks,
+        // If showClicks is not defined on the doc, default to true for backward compatibility.
+        // This ensures old and new documents behave consistently.
+        showClicks: typeof data.showClicks === 'boolean' ? data.showClicks : true,
         submissionCount: data.submissionCount || 1,
         lastSubmittedAt: formatTimestamp(data.lastSubmittedAt),
     };
@@ -109,3 +110,5 @@ export async function getRelatedGroups(firestore: Firestore, currentGroup: Group
         return [];
     }
 }
+
+    
