@@ -1,7 +1,7 @@
 
-import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { getPaginatedGroups, getModerationSettings } from './actions';
 import { notFound } from 'next/navigation';
+import { AdminPageClient } from './admin-page-client';
 
 export default async function AdminPage({
   searchParams,
@@ -23,8 +23,10 @@ export default async function AdminPage({
       getModerationSettings(),
     ]);
 
+    // The server component now fetches data and passes it to the client component,
+    // which will handle the authentication state.
     return (
-      <AdminDashboard
+      <AdminPageClient
         initialGroups={initialData.groups}
         initialHasNextPage={initialData.hasNextPage}
         initialHasPrevPage={initialData.hasPrevPage}
