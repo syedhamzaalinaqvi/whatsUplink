@@ -291,7 +291,7 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
   } catch (error: any) {
     console.error('Mailchimp API Error:', error);
     // Check if the error is a Mailchimp API error and if the user already exists
-    if (error.status === 400 && error.response?.body?.title === 'Member Exists') {
+    if (error.response?.body?.title === 'Member Exists') {
       return { success: true, message: "You're already subscribed. Thanks for being with us!" };
     }
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
