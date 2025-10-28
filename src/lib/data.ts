@@ -1,5 +1,6 @@
 
 import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore, DocumentData } from 'firebase/firestore';
+import { getModerationSettings as getGlobalModerationSettings } from '@/app/admin/actions';
 
 export type GroupLink = {
   id: string;
@@ -76,11 +77,16 @@ export async function getGroupById(firestore: Firestore, id: string | undefined)
     if (!id) return undefined;
     
     try {
-        const groupDocRef = doc(firestore, 'groups', id);
-        const docSnap = await getDoc(groupDocRef);
+        const [groupDocSnap, settings] = await Promise.all([
+            getDoc(doc(firestore, 'groups', id)),
+            getGlobalModerationSettings() // Fetch global settings
+        ]);
 
-        if (docSnap.exists()) {
-            return mapDocToGroupLink(docSnap);
+        if (groupDocSnap.exists()) {
+            const group = mapDocToGroupLink(groupDocSnap);
+            // Override with the global setting
+            group.showClicks = settings.showClicks;
+            return group;
         } else {
             console.log("No such document!");
             return undefined;
@@ -95,20 +101,25 @@ export async function getRelatedGroups(firestore: Firestore, currentGroup: Group
     if (!currentGroup) return [];
 
     try {
-        const groupsCollection = collection(firestore, 'groups');
-        const q = query(
-            groupsCollection,
-            where('category', '==', currentGroup.category),
-            where('__name__', '!=', currentGroup.id), // Exclude the current group using document ID
-            limit(4)
-        );
+        const [querySnapshot, settings] = await Promise.all([
+            getDocs(query(
+                collection(firestore, 'groups'),
+                where('category', '==', currentGroup.category),
+                where('__name__', '!=', currentGroup.id),
+                limit(4)
+            )),
+            getGlobalModerationSettings() // Fetch global settings
+        ]);
 
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(mapDocToGroupLink);
+        return querySnapshot.docs.map(doc => {
+            const group = mapDocToGroupLink(doc);
+            // Override with the global setting
+            group.showClicks = settings.showClicks;
+            return group;
+        });
+
     } catch (error) {
         console.error("Error fetching related groups:", error);
         return [];
     }
 }
-
-    
