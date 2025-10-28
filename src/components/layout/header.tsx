@@ -28,10 +28,15 @@ export function Header({ onGroupSubmitted = () => {}, categories: initialCategor
     if (!initialCategories || !initialCountries) {
       const fetchData = async () => {
         setIsLoading(true);
-        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-        setCategories(cats);
-        setCountries(counts);
-        setIsLoading(false);
+        try {
+          const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+          setCategories(cats);
+          setCountries(counts);
+        } catch (error) {
+            console.error("Failed to fetch header data:", error);
+        } finally {
+            setIsLoading(false);
+        }
       }
       fetchData();
     }

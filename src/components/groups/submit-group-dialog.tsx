@@ -167,12 +167,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <Label htmlFor="country">Country</Label>
             <Select name="country" required defaultValue={groupToEdit?.country}>
                 <SelectTrigger id="country" disabled={areFiltersLoading}>
-                <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a country'} />
+                    <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a country'} />
                 </SelectTrigger>
                 <SelectContent>
-                {countries?.map(country => (
-                    <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
-                ))}
+                    {countries?.map(country => (
+                        <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
             </div>
@@ -181,12 +181,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <Label htmlFor="category">Category</Label>
             <Select name="category" required defaultValue={groupToEdit?.category}>
                 <SelectTrigger id="category" disabled={areFiltersLoading}>
-                <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a category'} />
+                    <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a category'} />
                 </SelectTrigger>
                 <SelectContent>
-                {categories?.map(category => (
-                    <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                ))}
+                    {categories?.map(category => (
+                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
             </div>
@@ -214,7 +214,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
           ) : areFiltersLoading ? (
                <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
+              Loading Filters...
               </>
           )
           : (
