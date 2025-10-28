@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -199,7 +198,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
 
       <DialogFooter className="pt-4 border-t">
-          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
+          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || !categories?.length || !countries?.length} className="w-full sm:w-auto">
           {isSubmitting ? (
               <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -210,7 +209,13 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Fetching...
               </>
-          ): (
+          ) : !categories?.length || !countries?.length ? (
+               <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+              </>
+          )
+          : (
               isEditMode ? 'Save Changes' : 'Submit Entry'
           )}
           </Button>
