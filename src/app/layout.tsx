@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
-import { FirebaseProvider } from '@/firebase/provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { NewsletterSignup } from '@/components/layout/newsletter-signup';
 import { getModerationSettings, getLayoutSettings } from './admin/actions';
@@ -57,7 +57,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-body antialiased`}>
         <div className="flex flex-col min-h-screen">
-          <FirebaseProvider>
+          <FirebaseClientProvider>
             <Header navLinks={layoutSettings.navLinks} />
             <div className="flex-1">
               {children}
@@ -84,7 +84,7 @@ export default async function RootLayout({
                 </div>
               </div>
             </footer>
-          </FirebaseProvider>
+          </FirebaseClientProvider>
         </div>
          {/* Render custom scripts from admin settings at the end of the body */}
          {layoutSettings.headerScripts && (
