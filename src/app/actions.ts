@@ -9,6 +9,7 @@ import { getModerationSettings } from '@/app/admin/actions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
+import mailchimp from '@mailchimp/mailchimp_marketing';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -244,7 +245,9 @@ const newsletterSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
 });
 
-export async function subscribeToNewsletter(formData: FormData): Promise<{ success: boolean; message: string; }> {
+export async function subscribeToNewsletter(
+  formData: FormData
+): Promise<{ success: boolean; message: string }> {
   const validatedFields = newsletterSchema.safeParse({
     email: formData.get('email'),
   });
@@ -252,58 +255,54 @@ export async function subscribeToNewsletter(formData: FormData): Promise<{ succe
   if (!validatedFields.success) {
     return {
       success: false,
-      message: validatedFields.error.flatten().fieldErrors.email?.[0] || 'Invalid email format.',
+      message:
+        validatedFields.error.flatten().fieldErrors.email?.[0] ||
+        'Invalid email format.',
     };
   }
-
   const { email } = validatedFields.data;
+
   const apiKey = process.env.MAILCHIMP_API_KEY;
   const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
 
   if (!apiKey || !audienceId) {
     console.error('Mailchimp API Key or Audience ID is not configured.');
-    return { success: false, message: 'Newsletter service is not configured. Please contact support.' };
+    return {
+      success: false,
+      message: 'Newsletter service is not configured. Please contact support.',
+    };
   }
 
   const serverPrefix = apiKey.split('-')[1];
   if (!serverPrefix) {
-      console.error('Could not extract server prefix from Mailchimp API Key.');
-      return { success: false, message: 'Invalid Mailchimp API Key format.' };
+    console.error('Could not extract server prefix from Mailchimp API Key.');
+    return { success: false, message: 'Invalid Mailchimp API Key format.' };
   }
-  
-  const subscriberHash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
-  const endpoint = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${audienceId}/members/${subscriberHash}`;
+
+  mailchimp.setConfig({
+    apiKey: apiKey,
+    server: serverPrefix,
+  });
 
   try {
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`user:${apiKey}`).toString('base64')}`
-      },
-      body: JSON.stringify({
-        email_address: email,
-        status: 'subscribed',
-      }),
-    });
-    
-    // Member added or updated successfully
-    if (response.ok) {
-        return { success: true, message: "You've been successfully subscribed!" };
-    }
+    const response = await mailchimp.lists.setListMember(audienceId, 
+        crypto.createHash('md5').update(email.toLowerCase()).digest('hex'),
+        {
+            email_address: email,
+            status: 'subscribed',
+        }
+    );
+    return { success: true, message: "You've been successfully subscribed!" };
 
-    // Handle cases where the user might already be subscribed (which is still a success for the user)
-    const responseBody = await response.json();
-    if (response.status === 400 && responseBody.title === 'Member Exists') {
+  } catch (error: any) {
+    if (error.response?.body?.title === 'Member Exists') {
         return { success: true, message: "You're already subscribed. Thanks for being with us!" };
     }
 
-    // Handle other errors
-    console.error('Mailchimp API Error:', responseBody);
-    return { success: false, message: 'Failed to subscribe. Please try again later.' };
-
-  } catch (error) {
-    console.error('Failed to communicate with Mailchimp:', error);
-    return { success: false, message: 'Failed to subscribe. Please try again later.' };
+    console.error('Mailchimp API Error:', error.response?.body || error);
+    return {
+      success: false,
+      message: 'Failed to subscribe. Please try again later.',
+    };
   }
 }
