@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '../ui/badge';
 
 type AdminTaxonomyManagerProps = {
     initialCategories: Category[];
