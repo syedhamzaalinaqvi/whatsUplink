@@ -35,25 +35,14 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
 
   useEffect(() => {
-    if (!firestore) {
-      console.log("Firestore not available yet...");
-      return;
-    }
-    
-    setIsGroupLoading(true);
-    const groupsCollection = collection(firestore, 'groups');
-    const q = query(groupsCollection, orderBy('createdAt', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
-      setGroups(groupsData);
-      setIsGroupLoading(false);
-    }, (error) => {
-      console.error("Error fetching real-time groups:", error);
-      setIsGroupLoading(false);
-    });
-    
-    async function fetchFilters() {
+    async function fetchInitialData() {
+      if (!firestore) {
+        console.log("Firestore not available yet...");
+        setIsGroupLoading(true);
+        setIsFiltersLoading(true);
+        return;
+      }
+      
       setIsFiltersLoading(true);
       try {
         const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
@@ -64,10 +53,25 @@ export function HomePage({ initialSettings }: HomePageProps) {
       } finally {
         setIsFiltersLoading(false);
       }
-    }
-    fetchFilters();
 
-    return () => unsubscribe();
+      setIsGroupLoading(true);
+      const groupsCollection = collection(firestore, 'groups');
+      const q = query(groupsCollection, orderBy('createdAt', 'desc'));
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
+        setGroups(groupsData);
+        setIsGroupLoading(false);
+      }, (error) => {
+        console.error("Error fetching real-time groups:", error);
+        setIsGroupLoading(false);
+      });
+      
+      return () => unsubscribe();
+    }
+    
+    fetchInitialData();
+
   }, [firestore]);
 
 

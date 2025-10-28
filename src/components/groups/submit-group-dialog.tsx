@@ -102,7 +102,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     });
   };
 
-  const isLoading = !categories?.length || !countries?.length;
+  const areFiltersLoading = !categories || !countries;
 
   return (
     <DialogContent className="sm:max-w-lg grid-rows-[auto_1fr_auto] max-h-[90vh]">
@@ -166,11 +166,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="country">Country</Label>
             <Select name="country" required defaultValue={groupToEdit?.country}>
-                <SelectTrigger id="country" disabled={isLoading}>
-                <SelectValue placeholder={isLoading ? 'Loading...' : 'Select a country'} />
+                <SelectTrigger id="country" disabled={areFiltersLoading}>
+                <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a country'} />
                 </SelectTrigger>
                 <SelectContent>
-                {countries && countries.map(country => (
+                {countries?.map(country => (
                     <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
                 ))}
                 </SelectContent>
@@ -180,11 +180,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="category">Category</Label>
             <Select name="category" required defaultValue={groupToEdit?.category}>
-                <SelectTrigger id="category" disabled={isLoading}>
-                <SelectValue placeholder={isLoading ? 'Loading...' : 'Select a category'} />
+                <SelectTrigger id="category" disabled={areFiltersLoading}>
+                <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a category'} />
                 </SelectTrigger>
                 <SelectContent>
-                {categories && categories.map(category => (
+                {categories?.map(category => (
                     <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
                 ))}
                 </SelectContent>
@@ -200,7 +200,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
 
       <DialogFooter className="pt-4 border-t">
-          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || isLoading} className="w-full sm:w-auto">
+          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || areFiltersLoading} className="w-full sm:w-auto">
           {isSubmitting ? (
               <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -211,7 +211,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Fetching...
               </>
-          ) : isLoading ? (
+          ) : areFiltersLoading ? (
                <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Loading...
