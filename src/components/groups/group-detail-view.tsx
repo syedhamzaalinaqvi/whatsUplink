@@ -14,7 +14,7 @@ import {
   Share2,
   RadioTower,
 } from 'lucide-react';
-import type { GroupLink } from '@/lib/data';
+import type { GroupLink, Category, Country } from '@/lib/data';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -36,9 +36,11 @@ import { doc, increment, updateDoc } from 'firebase/firestore';
 type GroupDetailViewProps = {
   group: GroupLink;
   relatedGroups: GroupLink[];
+  categories: Category[];
+  countries: Country[];
 };
 
-export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) {
+export function GroupDetailView({ group, relatedGroups, categories, countries }: GroupDetailViewProps) {
   const [detailUrl, setDetailUrl] = useState('');
   const { firestore } = useFirestore();
 
@@ -90,6 +92,9 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
   
   const typeIcon = group.type === 'channel' ? <RadioTower className="h-4 w-4" /> : <Users className="h-4 w-4" />;
 
+  const categoryLabel = categories.find(c => c.value === group.category)?.label || group.category;
+  const countryLabel = countries.find(c => c.value === group.country)?.label || group.country;
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
@@ -126,9 +131,9 @@ export function GroupDetailView({ group, relatedGroups }: GroupDetailViewProps) 
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="flex flex-wrap items-center gap-4 mb-4">
-                    <Badge variant="secondary">{group.category}</Badge>
+                    <Badge variant="secondary">{categoryLabel}</Badge>
                     <Badge variant="outline" className="capitalize">
-                      {group.country}
+                      {countryLabel}
                     </Badge>
                      <Badge 
                         variant={group.type === 'channel' ? 'default' : 'secondary'} 

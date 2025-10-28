@@ -128,8 +128,18 @@ export async function getGroupById(firestore: Firestore, id: string | undefined)
     }
 }
 
-export async function getRelatedGroups(firestore: Firestore, currentGroup: GroupLink | undefined) {
-    if (!currentGroup) return [];
+export async function getRelatedGroups(firestore: Firestore, currentGroupOrId: GroupLink | string | undefined) {
+    if (!currentGroupOrId) return [];
+
+    let currentGroup: GroupLink | undefined;
+
+    if (typeof currentGroupOrId === 'string') {
+        currentGroup = await getGroupById(firestore, currentGroupOrId);
+        if (!currentGroup) return [];
+    } else {
+        currentGroup = currentGroupOrId;
+    }
+
 
     try {
         const [querySnapshot, settings] = await Promise.all([
