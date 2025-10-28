@@ -169,7 +169,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                 <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
                 <SelectContent>
-                {countries.map(country => (
+                {countries && countries.map(country => (
                     <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
                 ))}
                 </SelectContent>
@@ -183,7 +183,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                 <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                {categories.map(category => (
+                {categories && categories.map(category => (
                     <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
                 ))}
                 </SelectContent>
@@ -192,7 +192,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
             <Label htmlFor="tags">Tags</Label>
-            <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags.join(', ')} key={groupToEdit?.id}/>
+            <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags?.join(', ')} key={groupToEdit?.id}/>
             <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
             </div>
         </form>

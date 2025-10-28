@@ -25,7 +25,7 @@ export function Header({ onGroupSubmitted = () => {}, categories: initialCategor
   const [isLoading, setIsLoading] = useState(!initialCategories || !initialCountries);
 
   useEffect(() => {
-    // If props are not provided, fetch them.
+    // If props are not provided, fetch them. This makes the header self-sufficient.
     if (!initialCategories || !initialCountries) {
       const fetchData = async () => {
         setIsLoading(true);

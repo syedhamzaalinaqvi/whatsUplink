@@ -1,6 +1,4 @@
 
-
-import { getCategories, getCountries } from "@/app/admin/actions";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default async function ContactPage() {
-  const [categories, countries] = await Promise.all([
-    getCategories(),
-    getCountries(),
-  ]);
-
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header categories={categories} countries={countries} />
+      <Header />
       <main className="flex-1">
         <div className="container py-12 md:py-24">
           <div className="mx-auto max-w-xl space-y-8">

@@ -78,6 +78,16 @@ export function AdminTaxonomyDialog({ isOpen, onOpenChange, type, itemToEdit, on
   };
 
   const typeName = type.charAt(0).toUpperCase() + type.slice(1);
+  const placeholders = {
+    category: {
+        label: "e.g., Art & Design",
+        value: "e.g., art-design"
+    },
+    country: {
+        label: "e.g., Pakistan",
+        value: "e.g., pk"
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -97,7 +107,7 @@ export function AdminTaxonomyDialog({ isOpen, onOpenChange, type, itemToEdit, on
                         <FormItem>
                             <FormLabel>Label</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., Art & Design" {...field} />
+                                <Input placeholder={placeholders[type].label} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -110,7 +120,7 @@ export function AdminTaxonomyDialog({ isOpen, onOpenChange, type, itemToEdit, on
                         <FormItem>
                             <FormLabel>Value</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., art-design" {...field} disabled={isEditMode} />
+                                <Input placeholder={placeholders[type].value} {...field} disabled={isEditMode} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
