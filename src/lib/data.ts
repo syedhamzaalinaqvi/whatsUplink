@@ -27,6 +27,7 @@ export type ModerationSettings = {
     cooldownUnit: 'hours' | 'days' | 'months';
     showClicks: boolean;
     groupsPerPage: number;
+    featuredGroupsDisplay: 'slider' | 'grid' | 'list';
 };
 
 // This function now robustly handles Timestamps from the server

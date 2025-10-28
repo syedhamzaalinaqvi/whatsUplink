@@ -213,6 +213,7 @@ const moderationSettingsSchema = z.object({
     cooldownValue: z.coerce.number().min(1, 'Value must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot exceed 100'),
+    featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -221,6 +222,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         cooldownValue: formData.get('cooldownValue'),
         cooldownUnit: formData.get('cooldownUnit'),
         groupsPerPage: formData.get('groupsPerPage'),
+        featuredGroupsDisplay: formData.get('featuredGroupsDisplay'),
     });
     
     if (!validatedFields.success) {
@@ -230,12 +232,12 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
     try {
         const db = getFirestoreInstance();
         const settingsDocRef = doc(db, 'settings', 'moderation');
-        // We only save the cooldown settings here, showClicks is handled separately
         await updateDoc(settingsDocRef, {
             cooldownEnabled: validatedFields.data.cooldownEnabled,
             cooldownValue: validatedFields.data.cooldownValue,
             cooldownUnit: validatedFields.data.cooldownUnit,
             groupsPerPage: validatedFields.data.groupsPerPage,
+            featuredGroupsDisplay: validatedFields.data.featuredGroupsDisplay,
         });
         revalidatePath('/admin');
         revalidatePath('/');
@@ -261,6 +263,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 cooldownUnit: data.cooldownUnit ?? 'hours',
                 showClicks: data.showClicks ?? true,
                 groupsPerPage: data.groupsPerPage ?? 20,
+                featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
             };
         } else {
             // If the document doesn't exist, create it with default values
@@ -270,6 +273,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 cooldownUnit: 'hours',
                 showClicks: true,
                 groupsPerPage: 20,
+                featuredGroupsDisplay: 'slider',
             };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
@@ -284,6 +288,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         cooldownUnit: 'hours',
         showClicks: true,
         groupsPerPage: 20,
+        featuredGroupsDisplay: 'slider',
     };
 }
 

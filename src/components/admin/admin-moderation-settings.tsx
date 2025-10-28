@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useTransition, useState, useCallback } from 'react';
+import { useTransition, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,14 +14,16 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { Loader2 } from 'lucide-react';
+import { LayoutGrid, List, Loader2, SlidersHorizontal } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 
 const moderationSettingsSchema = z.object({
     cooldownEnabled: z.boolean(),
     cooldownValue: z.coerce.number().min(1, 'Must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot be more than 100'),
+    featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -43,6 +45,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             cooldownValue: initialSettings.cooldownValue,
             cooldownUnit: initialSettings.cooldownUnit,
             groupsPerPage: initialSettings.groupsPerPage,
+            featuredGroupsDisplay: initialSettings.featuredGroupsDisplay || 'slider',
         },
     });
 
@@ -67,6 +70,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('cooldownValue', String(data.cooldownValue));
             formData.append('cooldownUnit', data.cooldownUnit);
             formData.append('groupsPerPage', String(data.groupsPerPage));
+            formData.append('featuredGroupsDisplay', data.featuredGroupsDisplay);
             
             const result = await saveModerationSettings(formData);
             if (result.success) {
@@ -88,112 +92,151 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             </CardHeader>
             <CardContent>
                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Display Settings Column */}
-                        <div className="space-y-4">
-                            <h4 className="font-semibold text-lg">Display Settings</h4>
-                            <div className="flex items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Display join link click counts publicly.
-                                    </p>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Display Settings Column */}
+                            <div className="space-y-6">
+                                <h4 className="font-semibold text-lg">Display Settings</h4>
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Display join link click counts publicly.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id="show-clicks-toggle"
+                                        checked={initialSettings.showClicks}
+                                        onCheckedChange={handleShowClicksChange}
+                                        disabled={isToggling}
+                                    />
                                 </div>
-                                <Switch
-                                    id="show-clicks-toggle"
-                                    checked={initialSettings.showClicks}
-                                    onCheckedChange={handleShowClicksChange}
-                                    disabled={isToggling}
-                                />
-                            </div>
-                            <FormField
-                                control={form.control}
-                                name="groupsPerPage"
-                                render={({ field }) => (
-                                    <FormItem className="rounded-lg border p-4">
-                                        <div className="space-y-0.5">
-                                            <FormLabel className="text-base">Groups Per Page</FormLabel>
-                                            <p className="text-sm text-muted-foreground">
-                                                Set how many groups load on the homepage at a time.
-                                            </p>
-                                        </div>
-                                        <FormControl>
-                                            <Input type="number" {...field} className="mt-2" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Moderation Settings Column */}
-                        <div className="space-y-4">
-                            <h4 className="font-semibold text-lg">Moderation Settings</h4>
-                            <div className="space-y-6 rounded-lg border p-4">
                                 <FormField
                                     control={form.control}
-                                    name="cooldownEnabled"
+                                    name="groupsPerPage"
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between">
+                                        <FormItem className="rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Enable Resubmission Cooldown</FormLabel>
+                                                <FormLabel className="text-base">Groups Per Page</FormLabel>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Prevent spam by limiting resubmissions of the same link.
+                                                    Set how many groups load on the homepage at a time.
                                                 </p>
                                             </div>
                                             <FormControl>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={field.onChange}
-                                                />
+                                                <Input type="number" {...field} className="mt-2" />
                                             </FormControl>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                {form.watch('cooldownEnabled') && (
-                                    <div className="grid grid-cols-2 gap-4">
-                                         <FormField
-                                            control={form.control}
-                                            name="cooldownValue"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Cooldown Period</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="cooldownUnit"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Unit</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormField
+                                    control={form.control}
+                                    name="featuredGroupsDisplay"
+                                    render={({ field }) => (
+                                        <FormItem className="rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base">Featured Groups Display</FormLabel>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Choose how to display featured groups on the homepage.
+                                                </p>
+                                            </div>
+                                            <FormControl>
+                                                <ToggleGroup
+                                                    type="single"
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    className="justify-start mt-2"
+                                                    defaultValue="slider"
+                                                >
+                                                    <ToggleGroupItem value="slider" aria-label="Slider view">
+                                                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                                                        Slider
+                                                    </ToggleGroupItem>
+                                                    <ToggleGroupItem value="grid" aria-label="Grid view">
+                                                        <LayoutGrid className="h-4 w-4 mr-2" />
+                                                        Grid
+                                                    </ToggleGroupItem>
+                                                    <ToggleGroupItem value="list" aria-label="List view">
+                                                        <List className="h-4 w-4 mr-2" />
+                                                        List
+                                                    </ToggleGroupItem>
+                                                </ToggleGroup>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Moderation Settings Column */}
+                            <div className="space-y-6">
+                                <h4 className="font-semibold text-lg">Moderation Settings</h4>
+                                <div className="space-y-6 rounded-lg border p-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="cooldownEnabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">Enable Resubmission Cooldown</FormLabel>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Prevent spam by limiting resubmissions of the same link.
+                                                    </p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {form.watch('cooldownEnabled') && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="cooldownValue"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Cooldown Period</FormLabel>
                                                         <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select a unit" />
-                                                            </SelectTrigger>
+                                                            <Input type="number" {...field} />
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="hours">Hours</SelectItem>
-                                                            <SelectItem value="days">Days</SelectItem>
-                                                            <SelectItem value="months">Months</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                )}
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="cooldownUnit"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Unit</FormLabel>
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select a unit" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="hours">Hours</SelectItem>
+                                                                <SelectItem value="days">Days</SelectItem>
+                                                                <SelectItem value="months">Months</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         {/* Submit Button */}
-                        <div className="md:col-span-2 flex justify-end">
+                        <div className="flex justify-end">
                             <Button type="submit" disabled={isSaving}>
                                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Save All Settings

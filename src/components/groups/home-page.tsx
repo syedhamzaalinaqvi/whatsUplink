@@ -71,6 +71,49 @@ export function HomePage({ initialSettings }: HomePageProps) {
   
   const featuredGroups = useMemo(() => groups.filter(g => g.featured), [groups]);
 
+  const renderFeaturedGroups = () => {
+    if (settings.featuredGroupsDisplay === 'grid') {
+      return (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
+          {featuredGroups.map(group => (
+            <GroupCard key={group.id} group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
+          ))}
+        </div>
+      );
+    }
+
+    if (settings.featuredGroupsDisplay === 'list') {
+      return (
+        <div className="flex flex-col gap-6">
+          {featuredGroups.map(group => (
+            <GroupCard key={group.id} group={group} view="list" onTagClick={() => {}} showClicks={settings.showClicks} />
+          ))}
+        </div>
+      );
+    }
+    
+    // Default to slider
+    return (
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent>
+          {featuredGroups.map((group) => (
+            <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
+    );
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header onGroupSubmitted={handleGroupSubmitted} />
@@ -80,23 +123,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {featuredGroups.map((group) => (
-                    <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                       <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden sm:flex" />
-                <CarouselNext className="hidden sm:flex" />
-              </Carousel>
+              {renderFeaturedGroups()}
               <Separator className="my-8" />
             </div>
           </section>
