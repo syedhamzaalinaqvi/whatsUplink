@@ -92,7 +92,7 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number, showClicks: boolean) {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
     
@@ -103,6 +103,7 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
+        showClicks: showClicks,
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -159,7 +160,7 @@ export async function submitGroup(
     if (!moderationSettings.cooldownEnabled) {
         const submissionCount = existingDocs.length + 1;
         
-        const newGroup = await addNewGroup(newGroupPayload, submissionCount);
+        const newGroup = await addNewGroup(newGroupPayload, submissionCount, moderationSettings.showClicks);
         
         // Update submission count for all other existing groups with the same link
         if (existingDocs.length > 0) {
@@ -176,7 +177,7 @@ export async function submitGroup(
     // Logic when cooldown is ENABLED
     if (querySnapshot.empty) {
       // Link is new, so add it with submission count 1.
-      const newGroup = await addNewGroup(newGroupPayload, 1);
+      const newGroup = await addNewGroup(newGroupPayload, 1, moderationSettings.showClicks);
       return { message: 'Group submitted successfully!', group: newGroup };
     } else {
       // Link exists, check the cooldown on the most recently submitted one.
