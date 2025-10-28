@@ -1,15 +1,14 @@
 
 'use client';
 
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { ModerationSettings } from '@/lib/data';
-import { saveModerationSettings, toggleShowClicks } from '@/app/admin/actions';
+import { saveModerationSettings } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -37,7 +36,6 @@ type AdminModerationSettingsProps = {
 export function AdminModerationSettings({ initialSettings, onSettingsChange }: AdminModerationSettingsProps) {
     const { toast } = useToast();
     const [isSaving, startSaving] = useTransition();
-    const [isToggling, startToggling] = useTransition();
 
     const form = useForm<ModerationFormValues>({
         resolver: zodResolver(moderationSettingsSchema),
@@ -54,8 +52,8 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
     // Watch for form changes to keep state in sync
     const watchedValues = form.watch();
     
-    // Sync local state when form values change
-    useState(() => {
+    // Sync parent state when form values change using useEffect
+    useEffect(() => {
         onSettingsChange({
             ...initialSettings,
             ...watchedValues,
