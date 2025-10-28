@@ -1,6 +1,6 @@
 
 'use server';
-
+import 'dotenv/config';
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
@@ -160,6 +160,7 @@ export async function submitGroup(
     if (!moderationSettings.cooldownEnabled) {
         const submissionCount = existingDocs.length + 1;
         
+        // Pass the global showClicks setting when creating a new group.
         const newGroup = await addNewGroup(newGroupPayload, submissionCount, moderationSettings.showClicks);
         
         // Update submission count for all other existing groups with the same link
