@@ -84,7 +84,7 @@ function calculateCooldown(settings: ModerationSettings): number {
     if (cooldownUnit === 'hours') {
         cooldownMs = cooldownValue * 60 * 60 * 1000;
     } else if (cooldownUnit === 'days') {
-        cooldownMs = cooldownValue * 24 * 60 * 60 * 1000;
+        cooldownMs = cooldownValue * 24 * 60 * 60 * 1000; // Approximation
     } else if (cooldownUnit === 'months') {
         cooldownMs = cooldownValue * 30 * 24 * 60 * 60 * 1000; // Approximation
     }
@@ -92,7 +92,7 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount' | 'showClicks'>, submissionCount: number, showClicks: boolean) {
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount' | 'showClicks'>) {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
     
@@ -100,10 +100,9 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         ...groupData,
         createdAt: serverTimestamp(),
         lastSubmittedAt: serverTimestamp(),
-        submissionCount: submissionCount,
+        submissionCount: 1,
         clicks: 0,
         featured: false,
-        showClicks: showClicks,
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -158,16 +157,13 @@ export async function submitGroup(
 
     // Logic when cooldown is DISABLED
     if (!moderationSettings.cooldownEnabled) {
-        const submissionCount = existingDocs.length + 1;
-        
-        // Pass the global showClicks setting when creating a new group.
-        const newGroup = await addNewGroup(newGroupPayload, submissionCount, moderationSettings.showClicks);
+        const newGroup = await addNewGroup(newGroupPayload);
         
         // Update submission count for all other existing groups with the same link
         if (existingDocs.length > 0) {
             const batch = writeBatch(db);
             existingDocs.forEach(doc => {
-                batch.update(doc.ref, { submissionCount: submissionCount });
+                batch.update(doc.ref, { submissionCount: increment(1) });
             });
             await batch.commit();
         }
@@ -178,7 +174,7 @@ export async function submitGroup(
     // Logic when cooldown is ENABLED
     if (querySnapshot.empty) {
       // Link is new, so add it with submission count 1.
-      const newGroup = await addNewGroup(newGroupPayload, 1, moderationSettings.showClicks);
+      const newGroup = await addNewGroup(newGroupPayload);
       return { message: 'Group submitted successfully!', group: newGroup };
     } else {
       // Link exists, check the cooldown on the most recently submitted one.
@@ -251,7 +247,7 @@ const newsletterSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
 });
 
-export async function subscribeToNewsletter(prevState: any, formData: FormData) {
+export async function subscribeToNewsletter(formData: FormData): Promise<{ success: boolean; message: string; }> {
   const validatedFields = newsletterSchema.safeParse({
     email: formData.get('email'),
   });

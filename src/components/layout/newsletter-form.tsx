@@ -1,47 +1,45 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { subscribeToNewsletter } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Mail } from 'lucide-react';
-import { Label } from '../ui/label';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Subscribing...
-        </>
-      ) : (
-        'Subscribe'
-      )}
-    </Button>
-  );
-}
 
 export function NewsletterForm() {
-  const [state, formAction] = useActionState(subscribeToNewsletter, {
-    success: false,
-    message: '',
-  });
+  const [email, setEmail] = useState('');
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (state.message) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsPending(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('email', email);
+
+    const result = await subscribeToNewsletter(formData);
+
+    if (result.message) {
       toast({
-        title: state.success ? 'Success!' : 'Oops!',
-        description: state.message,
-        variant: state.success ? 'default' : 'destructive',
+        title: result.success ? 'Success!' : 'Oops!',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
       });
     }
-  }, [state, toast]);
+
+    if (!result.success) {
+      setError(result.message);
+    } else {
+      setEmail(''); // Clear input on success
+    }
+
+    setIsPending(false);
+  };
 
   return (
     <div className="space-y-4 w-full max-w-sm text-center">
@@ -51,21 +49,33 @@ export function NewsletterForm() {
           Subscribe to our newsletter to get the latest group links and updates delivered to your inbox.
         </p>
       </div>
-      <form action={formAction} className="flex flex-col items-center w-full gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col items-center w-full gap-4">
         <div className="relative w-full">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
             type="email"
             name="email"
             placeholder="Enter your email"
             required
             className="pl-9 w-full"
-            />
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isPending}
+          />
         </div>
-        <SubmitButton />
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Subscribing...
+            </>
+          ) : (
+            'Subscribe'
+          )}
+        </Button>
       </form>
-      {!state.success && state.message && (
-        <p className="text-sm text-destructive">{state.message}</p>
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
       )}
     </div>
   );
