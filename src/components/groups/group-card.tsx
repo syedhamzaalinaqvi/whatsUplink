@@ -19,7 +19,9 @@ type GroupCardProps = {
 };
 
 export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProps) {
-  const timeAgo = group.createdAt ? formatDistanceToNow(new Date(group.createdAt), { addSuffix: true }) : 'recently';
+  const timeAgo = group.createdAt 
+    ? formatDistanceToNow(new Date(group.createdAt), { addSuffix: true }).replace('about ', '')
+    : 'recently';
   
   const typeIcon = group.type === 'channel' 
     ? <RadioTower className="h-3 w-3" /> 
