@@ -1,30 +1,35 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { GroupLink, Category, Country } from '@/lib/data';
-import { Menu, MessagesSquare } from 'lucide-react';
+import { Menu, MessagesSquare, Loader2 } from 'lucide-react';
 import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { getCategories, getCountries } from '@/app/admin/actions';
 
-
-// The `onGroupSubmitted` prop is now optional
 type HeaderProps = {
   onGroupSubmitted?: (group: GroupLink) => void;
   categories?: Category[];
   countries?: Country[];
+  isLoadingFilters?: boolean;
 };
 
-export function Header({ onGroupSubmitted = () => {}, categories: initialCategories, countries: initialCountries }: HeaderProps) {
+export function Header({ 
+    onGroupSubmitted = () => {}, 
+    categories: initialCategories, 
+    countries: initialCountries,
+    isLoadingFilters: initialIsLoading
+}: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [countries, setCountries] = useState<Country[]>(initialCountries || []);
-  const [isLoading, setIsLoading] = useState(!initialCategories || !initialCountries);
+  const [isLoading, setIsLoading] = useState(initialIsLoading ?? (!initialCategories || !initialCountries));
 
   useEffect(() => {
-    // If props are not provided, fetch them. This makes the header self-sufficient.
+    // If props are not provided, fetch them. This makes the header self-sufficient on static pages.
     if (!initialCategories || !initialCountries) {
       const fetchData = async () => {
         setIsLoading(true);
@@ -39,8 +44,12 @@ export function Header({ onGroupSubmitted = () => {}, categories: initialCategor
         }
       }
       fetchData();
+    } else {
+        setCategories(initialCategories);
+        setCountries(initialCountries);
+        setIsLoading(initialIsLoading ?? false);
     }
-  }, [initialCategories, initialCountries]);
+  }, [initialCategories, initialCountries, initialIsLoading]);
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -71,7 +80,7 @@ export function Header({ onGroupSubmitted = () => {}, categories: initialCategor
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-            <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} />
+            <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} isLoading={isLoading} />
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -110,7 +119,7 @@ export function Header({ onGroupSubmitted = () => {}, categories: initialCategor
 
       {/* Mobile Floating Submit Button */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries}/>
+        <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} isLoading={isLoading} />
       </div>
     </>
   );

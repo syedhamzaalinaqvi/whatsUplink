@@ -8,18 +8,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { MessageCirclePlus } from 'lucide-react';
+import { Loader2, MessageCirclePlus } from 'lucide-react';
 import { SubmitGroupDialogContent } from './submit-group-dialog';
 
 
 export function SubmitGroup({ 
     onGroupSubmitted,
     categories,
-    countries 
+    countries,
+    isLoading,
 }: { 
     onGroupSubmitted: (group: GroupLink) => void;
     categories: Category[];
     countries: Country[];
+    isLoading?: boolean;
 }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
@@ -31,12 +33,20 @@ export function SubmitGroup({
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <MessageCirclePlus className="mr-2 h-4 w-4" />
+                <Button disabled={isLoading}>
+                    {isLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <MessageCirclePlus className="mr-2 h-4 w-4" />
+                    )}
                     Submit Group
                 </Button>
             </DialogTrigger>
-            <SubmitGroupDialogContent onGroupSubmitted={handleGroupSubmittedAndClose} categories={categories} countries={countries} />
+            <SubmitGroupDialogContent 
+                onGroupSubmitted={handleGroupSubmittedAndClose} 
+                categories={categories} 
+                countries={countries} 
+            />
         </Dialog>
     );
 }

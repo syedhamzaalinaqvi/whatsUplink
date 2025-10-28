@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -132,7 +133,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header onGroupSubmitted={handleGroupSubmitted} categories={categories} countries={countries} />
+      <Header onGroupSubmitted={handleGroupSubmitted} categories={categories} countries={countries} isLoadingFilters={isFiltersLoading} />
       <main className="flex-1 pb-20 md:pb-0">
         
         {featuredGroups.length > 0 && !isGroupLoading && (

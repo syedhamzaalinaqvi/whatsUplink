@@ -1,3 +1,4 @@
+
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -43,6 +44,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const [isSubmitting, startSubmitting] = useTransition();
 
   const isEditMode = !!groupToEdit;
+  const areFiltersReady = !!categories && !!countries;
   
   // Effect to reset form when editing a new group or closing dialog
   useEffect(() => {
@@ -101,8 +103,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       }
     });
   };
-
-  const areFiltersLoading = !categories || !countries;
 
   return (
     <DialogContent className="sm:max-w-lg grid-rows-[auto_1fr_auto] max-h-[90vh]">
@@ -166,8 +166,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="country">Country</Label>
             <Select name="country" required defaultValue={groupToEdit?.country}>
-                <SelectTrigger id="country" disabled={areFiltersLoading}>
-                    <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a country'} />
+                <SelectTrigger id="country" disabled={!areFiltersReady}>
+                    <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
                 </SelectTrigger>
                 <SelectContent>
                     {countries?.map(country => (
@@ -180,8 +180,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="category">Category</Label>
             <Select name="category" required defaultValue={groupToEdit?.category}>
-                <SelectTrigger id="category" disabled={areFiltersLoading}>
-                    <SelectValue placeholder={areFiltersLoading ? 'Loading...' : 'Select a category'} />
+                <SelectTrigger id="category" disabled={!areFiltersReady}>
+                    <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
                 </SelectTrigger>
                 <SelectContent>
                     {categories?.map(category => (
@@ -200,7 +200,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
 
       <DialogFooter className="pt-4 border-t">
-          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || areFiltersLoading} className="w-full sm:w-auto">
+          <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
           {isSubmitting ? (
               <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -211,7 +211,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Fetching...
               </>
-          ) : areFiltersLoading ? (
+          ) : !areFiltersReady ? (
                <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Loading Filters...

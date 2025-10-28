@@ -61,11 +61,10 @@ export function GroupListControls({
                 <>
                     <Skeleton className="h-10 w-full rounded-full" />
                     <Skeleton className="h-10 w-full rounded-full" />
-                    <Skeleton className="h-10 w-full rounded-full" />
                 </>
             ) : (
                 <>
-                    <Select value={selectedCountry} onValueChange={onCountryChange}>
+                    <Select value={selectedCountry} onValueChange={onCountryChange} disabled={isLoadingFilters}>
                         <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
                             <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
@@ -76,7 +75,7 @@ export function GroupListControls({
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select value={selectedCategory} onValueChange={onCategoryChange}>
+                    <Select value={selectedCategory} onValueChange={onCategoryChange} disabled={isLoadingFilters}>
                         <SelectTrigger className="w-full rounded-full bg-card shadow-sm">
                             <SelectValue placeholder="Select Category" />
                         </SelectTrigger>
