@@ -20,11 +20,19 @@ import {
 
 const GROUPS_PER_PAGE = 20;
 
-export function HomePage() {
+type HomePageProps = {
+  initialShowClicks: boolean;
+};
+
+export function HomePage({ initialShowClicks }: HomePageProps) {
   const { firestore } = useFirestore();
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [visibleCount, setVisibleCount] = useState(GROUPS_PER_PAGE);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
+  
+  // The global `showClicks` setting is now managed here as state.
+  // It is initialized by the server and can be updated by client-side actions if needed.
+  const [showClicks, setShowClicks] = useState(initialShowClicks);
 
   useEffect(() => {
     if (!firestore) {
@@ -84,7 +92,7 @@ export function HomePage() {
                 <CarouselContent>
                   {featuredGroups.map((group) => (
                     <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                       <GroupCard group={group} view="grid" onTagClick={() => {}} />
+                       <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={showClicks} />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -102,6 +110,7 @@ export function HomePage() {
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
             isGroupLoading={isGroupLoading}
+            showClicks={showClicks}
         />
       </main>
     </div>

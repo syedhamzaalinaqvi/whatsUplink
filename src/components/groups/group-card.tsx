@@ -15,9 +15,10 @@ type GroupCardProps = {
   group: GroupLink;
   view: 'grid' | 'list';
   onTagClick: (tag: string) => void;
+  showClicks: boolean; // Directly accept the global setting
 };
 
-export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
+export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProps) {
   const timeAgo = group.createdAt ? formatDistanceToNow(new Date(group.createdAt), { addSuffix: true }) : 'recently';
   
   const typeIcon = group.type === 'channel' 
@@ -52,7 +53,7 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             </Badge>
         </div>
 
-        {group.showClicks && (
+        {showClicks && (
             <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                 <Eye className="h-3 w-3" />
                 <span>{group.clicks ?? 0} views</span>
@@ -116,7 +117,7 @@ export function GroupCard({ group, view, onTagClick }: GroupCardProps) {
             >
                 {group.type}
             </Badge>
-            {group.showClicks && (
+            {showClicks && (
                 <span className="flex items-center gap-1.5">
                     <Eye className="h-3 w-3" />
                     {group.clicks ?? 0}

@@ -100,7 +100,7 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
-        showClicks: settings.showClicks,
+        showClicks: settings.showClicks, // Ensure this is set from global settings
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -147,7 +147,7 @@ export async function submitGroup(
       country,
       type,
       tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-      showClicks: moderationSettings.showClicks, // Explicitly set from global settings
+      // The `showClicks` field is now set inside `addNewGroup` to ensure it uses the latest global setting
     };
     
     const q = query(groupsCollection, where('link', '==', link));
@@ -158,7 +158,7 @@ export async function submitGroup(
     if (!moderationSettings.cooldownEnabled) {
         const submissionCount = existingDocs.length + 1;
         
-        // Add the new group
+        // Add the new group, `showClicks` is now handled inside this function
         const newGroup = await addNewGroup(newGroupPayload, submissionCount);
         
         // Update submission count for all other existing groups with the same link
@@ -300,5 +300,3 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
-
-    

@@ -1,7 +1,11 @@
 
 import { HomePage } from '@/components/groups/home-page';
+import { getModerationSettings } from './admin/actions';
 
-export default function Home() {
-  // HomePage is a client component that will fetch its own data in real-time.
-  return <HomePage />;
+export default async function Home() {
+  // Fetch the global setting on the server.
+  const settings = await getModerationSettings();
+
+  // Pass the global `showClicks` setting to the client component.
+  return <HomePage initialShowClicks={settings.showClicks} />;
 }

@@ -14,9 +14,10 @@ type GroupClientPageProps = {
     onLoadMore: () => void;
     hasMore: boolean;
     isGroupLoading: boolean;
+    showClicks: boolean; // Accept the global showClicks setting
 };
 
-export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore, isGroupLoading }: GroupClientPageProps) {
+export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore, isGroupLoading, showClicks }: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
@@ -70,7 +71,7 @@ export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore,
             <>
                 <div className={gridClass}>
                     {filteredGroups.map(group => (
-                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} />
+                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={showClicks} />
                     ))}
                 </div>
                 {hasMore && (
