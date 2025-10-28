@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { FirebaseProvider } from '@/firebase/provider';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { NewsletterSignup } from '@/components/layout/newsletter-signup';
+import { getModerationSettings } from './admin/actions';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -14,11 +15,13 @@ export const metadata: Metadata = {
   description: 'The ultimate directory to discover and share WhatsApp group links.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getModerationSettings();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-body antialiased`}>
@@ -41,9 +44,11 @@ export default function RootLayout({
                           Built for WhatsUpLink. &copy; {new Date().getFullYear()}
                         </p>
                   </div>
-                  <div className="flex-shrink-0">
-                    <NewsletterSignup />
-                  </div>
+                  {settings.showNewsletter && (
+                    <div className="flex-shrink-0 w-full md:w-auto">
+                        <NewsletterSignup />
+                    </div>
+                  )}
                 </div>
               </div>
             </footer>
@@ -53,3 +58,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

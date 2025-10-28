@@ -28,6 +28,7 @@ export type ModerationSettings = {
     showClicks: boolean;
     groupsPerPage: number;
     featuredGroupsDisplay: 'slider' | 'grid' | 'list';
+    showNewsletter: boolean;
 };
 
 export type Category = {
@@ -164,3 +165,5 @@ export async function getRelatedGroups(firestore: Firestore, currentGroupOrId: G
         return [];
     }
 }
+
+    

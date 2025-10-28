@@ -215,6 +215,7 @@ const moderationSettingsSchema = z.object({
     cooldownUnit: z.enum(['hours', 'days', 'months']),
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot exceed 100'),
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
+    showNewsletter: z.enum(['on', 'off']).transform(val => val === 'on'),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -224,6 +225,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         cooldownUnit: formData.get('cooldownUnit'),
         groupsPerPage: formData.get('groupsPerPage'),
         featuredGroupsDisplay: formData.get('featuredGroupsDisplay'),
+        showNewsletter: formData.get('showNewsletter'),
     });
     
     if (!validatedFields.success) {
@@ -234,11 +236,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         const db = getFirestoreInstance();
         const settingsDocRef = doc(db, 'settings', 'moderation');
         await updateDoc(settingsDocRef, {
-            cooldownEnabled: validatedFields.data.cooldownEnabled,
-            cooldownValue: validatedFields.data.cooldownValue,
-            cooldownUnit: validatedFields.data.cooldownUnit,
-            groupsPerPage: validatedFields.data.groupsPerPage,
-            featuredGroupsDisplay: validatedFields.data.featuredGroupsDisplay,
+            ...validatedFields.data,
         });
         revalidatePath('/admin');
         revalidatePath('/');
@@ -265,6 +263,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 showClicks: data.showClicks ?? true,
                 groupsPerPage: data.groupsPerPage ?? 20,
                 featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
+                showNewsletter: data.showNewsletter ?? false,
             };
         } else {
             // If the document doesn't exist, create it with default values
@@ -275,6 +274,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 showClicks: true,
                 groupsPerPage: 20,
                 featuredGroupsDisplay: 'slider',
+                showNewsletter: false,
             };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
@@ -290,6 +290,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         showClicks: true,
         groupsPerPage: 20,
         featuredGroupsDisplay: 'slider',
+        showNewsletter: false,
     };
 }
 
@@ -479,3 +480,5 @@ export async function seedInitialData() {
         console.log('Initial data seeding complete.');
     }
 }
+
+    

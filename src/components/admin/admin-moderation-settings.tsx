@@ -24,6 +24,7 @@ const moderationSettingsSchema = z.object({
     cooldownUnit: z.enum(['hours', 'days', 'months']),
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot be more than 100'),
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
+    showNewsletter: z.boolean(),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -46,22 +47,21 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             cooldownUnit: initialSettings.cooldownUnit,
             groupsPerPage: initialSettings.groupsPerPage,
             featuredGroupsDisplay: initialSettings.featuredGroupsDisplay || 'slider',
+            showNewsletter: initialSettings.showNewsletter,
         },
     });
-
-    const handleShowClicksChange = (checked: boolean) => {
-        startToggling(async () => {
-            const result = await toggleShowClicks(checked);
-            if (result.success) {
-                onSettingsChange({ ...initialSettings, showClicks: checked });
-            }
-            toast({
-                title: result.success ? 'Success' : 'Error',
-                description: result.message,
-                variant: result.success ? 'default' : 'destructive',
-            });
+     
+    // Watch for form changes to keep state in sync
+    const watchedValues = form.watch();
+    
+    // Sync local state when form values change
+    useState(() => {
+        onSettingsChange({
+            ...initialSettings,
+            ...watchedValues,
         });
-    };
+    }, [watchedValues, onSettingsChange, initialSettings]);
+
 
     const onSubmit = (data: ModerationFormValues) => {
         startSaving(async () => {
@@ -71,6 +71,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('cooldownUnit', data.cooldownUnit);
             formData.append('groupsPerPage', String(data.groupsPerPage));
             formData.append('featuredGroupsDisplay', data.featuredGroupsDisplay);
+            formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
             
             const result = await saveModerationSettings(formData);
             if (result.success) {
@@ -97,20 +98,51 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                             {/* Display Settings Column */}
                             <div className="space-y-6">
                                 <h4 className="font-semibold text-lg">Display Settings</h4>
-                                <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Display join link click counts publicly.
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="show-clicks-toggle"
-                                        checked={initialSettings.showClicks}
-                                        onCheckedChange={handleShowClicksChange}
-                                        disabled={isToggling}
-                                    />
-                                </div>
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="showClicks"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</FormLabel>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Display join link click counts publicly.
+                                                </p>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    id="show-clicks-toggle"
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="showNewsletter"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel htmlFor="show-newsletter-toggle" className="text-base">Show Newsletter Form</FormLabel>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Display newsletter signup form in footer.
+                                                </p>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    id="show-newsletter-toggle"
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
                                 <FormField
                                     control={form.control}
                                     name="groupsPerPage"
@@ -248,3 +280,5 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
         </Card>
     );
 }
+
+    
