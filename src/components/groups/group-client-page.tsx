@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -8,7 +7,6 @@ import type { Category, Country, GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
 import { SubmitGroup } from './submit-group';
 import { Button } from '../ui/button';
-import { getCategories, getCountries } from '@/app/admin/actions';
 
 type GroupClientPageProps = {
     groups: GroupLink[];
@@ -17,29 +15,35 @@ type GroupClientPageProps = {
     hasMore: boolean;
     isGroupLoading: boolean;
     showClicks: boolean;
+    initialCategories: Category[];
+    initialCountries: Country[];
+    isLoadingFilters: boolean;
 };
 
-export function GroupClientPage({ groups, onGroupSubmitted, onLoadMore, hasMore, isGroupLoading, showClicks }: GroupClientPageProps) {
+export function GroupClientPage({
+  groups,
+  onGroupSubmitted,
+  onLoadMore,
+  hasMore,
+  isGroupLoading,
+  showClicks,
+  initialCategories,
+  initialCountries,
+  isLoadingFilters,
+}: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [countries, setCountries] = useState<Country[]>(initialCountries);
 
   useEffect(() => {
-    async function fetchFilters() {
-      setIsLoadingFilters(true);
-      const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-      setCategories(cats);
-      setCountries(counts);
-      setIsLoadingFilters(false);
-    }
-    fetchFilters();
-  }, []);
+    setCategories(initialCategories);
+    setCountries(initialCountries);
+  }, [initialCategories, initialCountries]);
 
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);

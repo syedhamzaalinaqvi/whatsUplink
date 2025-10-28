@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -32,6 +31,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
 
   useEffect(() => {
@@ -54,9 +54,11 @@ export function HomePage({ initialSettings }: HomePageProps) {
     });
     
     async function fetchFilters() {
+      setIsFiltersLoading(true);
       const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
       setCategories(cats);
       setCountries(counts);
+      setIsFiltersLoading(false);
     }
     fetchFilters();
 
@@ -141,6 +143,9 @@ export function HomePage({ initialSettings }: HomePageProps) {
             hasMore={hasMoreGroups}
             isGroupLoading={isGroupLoading}
             showClicks={settings.showClicks}
+            initialCategories={categories}
+            initialCountries={countries}
+            isLoadingFilters={isFiltersLoading}
         />
       </main>
     </div>
