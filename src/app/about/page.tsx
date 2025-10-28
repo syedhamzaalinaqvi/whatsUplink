@@ -5,8 +5,8 @@ export default function AboutPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
-      <main className="flex-1 container">
-        <div className="py-12 md:py-24">
+      <main className="flex-1">
+        <div className="container py-12 md:py-24">
           <div className="mx-auto max-w-3xl space-y-8">
             <div className="space-y-4 text-center">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">About WhatsUpLink</h1>
