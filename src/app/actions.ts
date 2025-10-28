@@ -4,20 +4,22 @@
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch, initializeFirestore } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 import { getModerationSettings } from '@/app/admin/actions';
-import { initializeApp, getApps, App } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
+    let app;
     if (!getApps().length) {
-        initializeApp(firebaseConfig);
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
-    // It's safe to import and use getFirestore here because this is a server action
     const { getFirestore } = require('firebase/firestore');
-    return getFirestore();
+    return getFirestore(app);
 }
 
 const submitGroupSchema = z.object({
@@ -297,3 +299,5 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
+
+    

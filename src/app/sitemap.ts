@@ -2,15 +2,18 @@
 import { MetadataRoute } from 'next';
 import { collection, getDocs } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 function getDb() {
+    let app;
     if (!getApps().length) {
-        initializeApp(firebaseConfig);
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
-    return getFirestore();
+    return getFirestore(app);
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -40,3 +43,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...dynamicRoutes];
 }
+
+    

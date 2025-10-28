@@ -2,15 +2,18 @@
 import { notFound } from 'next/navigation';
 import { getGroupById, getRelatedGroups } from '@/lib/data';
 import { GroupDetailView } from '@/components/groups/group-detail-view';
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { getFirestore } from 'firebase/firestore';
 
 function getDb() {
+    let app;
     if (!getApps().length) {
-        initializeApp(firebaseConfig);
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
-    return getFirestore();
+    return getFirestore(app);
 }
 
 export default async function GroupDetailPage({ params }: { params: { id: string } }) {
@@ -25,3 +28,5 @@ export default async function GroupDetailPage({ params }: { params: { id: string
 
   return <GroupDetailView group={group} relatedGroups={relatedGroups} />;
 }
+
+    

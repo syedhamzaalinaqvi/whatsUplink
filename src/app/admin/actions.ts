@@ -7,17 +7,19 @@ import { z } from 'zod';
 import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { mapDocToGroupLink } from '@/lib/data';
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
+    let app;
     if (!getApps().length) {
-        initializeApp(firebaseConfig);
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
-    // It's safe to import and use getFirestore here because this is a server action
     const { getFirestore } = require('firebase/firestore');
-    return getFirestore();
+    return getFirestore(app);
 }
 
 export async function deleteGroup(groupId: string): Promise<{ success: boolean; message: string }> {
@@ -327,7 +329,9 @@ export async function getPaginatedGroups(
         groups.reverse();
     }
     
-    const hasPrevPage = pageDirection === 'prev' || (pageDirection === 'next' && !!cursorId);
+    const hasPrevPage = pageDirection !== 'first' && !!cursorId;
 
     return { groups, hasNextPage, hasPrevPage };
 }
+
+    
