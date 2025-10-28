@@ -17,7 +17,7 @@ function getDb() {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://whatsuplink.com';
+  const baseUrl = 'https://whatsuplink.online';
 
   const staticRoutes = [
     '/',

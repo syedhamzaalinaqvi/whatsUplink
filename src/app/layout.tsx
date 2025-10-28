@@ -1,5 +1,5 @@
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
@@ -11,9 +11,37 @@ import { getModerationSettings } from './admin/actions';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'WhatsUpLink',
-  description: 'The ultimate directory to discover and share WhatsApp group links.',
+  metadataBase: new URL('https://whatsuplink.online'),
+  title: {
+    default: 'WhatsUpLink: Discover & Share WhatsApp Groups',
+    template: '%s | WhatsUpLink',
+  },
+  description: 'The ultimate directory to discover, share, and join thousands of WhatsApp groups and channels from around the world. Find communities for your hobbies, interests, and more.',
+  openGraph: {
+    title: 'WhatsUpLink: Discover & Share WhatsApp Groups',
+    description: 'The ultimate directory to discover and share WhatsApp group links.',
+    url: 'https://whatsuplink.online',
+    siteName: 'WhatsUpLink',
+    locale: 'en_US',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#25D366',
+};
+
 
 export default async function RootLayout({
   children,
@@ -58,5 +86,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
-    

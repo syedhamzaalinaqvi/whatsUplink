@@ -95,10 +95,38 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
   const categoryLabel = categories.find(c => c.value === group.category)?.label || group.category;
   const countryLabel = countries.find(c => c.value === group.country)?.label || group.country;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: `${group.title} - WhatsApp Group`,
+    description: group.description,
+    url: detailUrl,
+    image: group.imageUrl,
+    mainEntity: {
+      '@type': 'SocialMediaPosting',
+      headline: group.title,
+      text: group.description,
+      sharedContent: {
+        '@type': 'WebPage',
+        headline: `Join ${group.title} on WhatsApp`,
+        url: group.link,
+      },
+      author: {
+        '@type': 'Organization',
+        name: 'WhatsUpLink',
+      },
+      datePublished: group.createdAt,
+    },
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex-1 pb-20 md:pb-0">
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <div className="container py-8 md:py-12">
           <div className="mb-8">
             <Button asChild variant="outline">
@@ -120,6 +148,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                       fill
                       className="object-cover"
                       data-ai-hint={group.imageHint}
+                      priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6">

@@ -6,6 +6,11 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { getFirestore } from 'firebase/firestore';
 import { getCategories, getCountries } from '@/app/admin/actions';
+import type { Metadata } from 'next';
+
+type Props = {
+  params: { id: string };
+};
 
 function getDb() {
     let app;
@@ -17,13 +22,43 @@ function getDb() {
     return getFirestore(app);
 }
 
-export default async function GroupDetailPage({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const db = getDb();
+  const group = await getGroupById(db, params.id);
+
+  if (!group) {
+    return {
+      title: 'Group Not Found | WhatsUpLink',
+      description: 'The WhatsApp group you are looking for could not be found.',
+    };
+  }
+
+  return {
+    title: `${group.title} - WhatsApp Group | WhatsUpLink`,
+    description: group.description.substring(0, 160),
+    openGraph: {
+      title: `${group.title} | WhatsUpLink`,
+      description: group.description,
+      images: [
+        {
+          url: group.imageUrl,
+          width: 512,
+          height: 512,
+          alt: group.title,
+        },
+      ],
+      type: 'website',
+    },
+  };
+}
+
+
+export default async function GroupDetailPage({ params }: Props) {
   const db = getDb();
   
   // Fetch all required data in parallel
-  const [group, relatedGroups, categories, countries] = await Promise.all([
+  const [group, categories, countries] = await Promise.all([
     getGroupById(db, params.id),
-    getRelatedGroups(db, params.id), // Pass ID to fetch related groups based on initial group
     getCategories(),
     getCountries()
   ]);
@@ -32,14 +67,13 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     notFound();
   }
 
-  // Refetch related groups if the initial call depended on group data not yet available.
-  // This is a common pattern when one async call depends on another.
-  const finalRelatedGroups = await getRelatedGroups(db, group);
+  // Refetch related groups now that we have the full group object.
+  const relatedGroups = await getRelatedGroups(db, group);
 
   return (
     <GroupDetailView 
       group={group} 
-      relatedGroups={finalRelatedGroups} 
+      relatedGroups={relatedGroups} 
       categories={categories}
       countries={countries}
     />
