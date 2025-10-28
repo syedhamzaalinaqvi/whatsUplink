@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -88,9 +89,13 @@ function calculateCooldown(settings: ModerationSettings): number {
 }
 
 // Function to add a new group document
-async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount' | 'showClicks'>, submissionCount: number) {
+async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'lastSubmittedAt' | 'submissionCount'>, submissionCount: number) {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
+    
+    // Explicitly read the global showClicks setting
+    const moderationSettings = await getModerationSettings();
+
     const newGroupData = {
         ...groupData,
         createdAt: serverTimestamp(),
@@ -98,6 +103,7 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
         submissionCount: submissionCount,
         clicks: 0,
         featured: false,
+        showClicks: moderationSettings.showClicks, // Set showClicks on creation
     };
     const docRef = await addDoc(groupsCollection, newGroupData);
     const newDoc = await getDoc(docRef);
@@ -295,3 +301,5 @@ export async function subscribeToNewsletter(prevState: any, formData: FormData) 
     return { success: false, message: 'Failed to subscribe. Please try again later.' };
   }
 }
+
+    
