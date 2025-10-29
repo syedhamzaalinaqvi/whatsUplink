@@ -66,7 +66,7 @@ export default async function RootLayout({
             <Toaster />
             <footer className="border-t bg-background/95 backdrop-blur">
               <div className="container py-12">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+                <div className={`flex flex-col md:flex-row items-center gap-12 ${moderationSettings.showNewsletter ? 'justify-between' : 'justify-center'}`}>
                   <div className="flex flex-col items-center md:items-start text-center md:text-left">
                       <h3 className="text-xl font-bold">{layoutSettings.footerContent.heading}</h3>
                       <p className="text-muted-foreground mt-2 max-w-md">
