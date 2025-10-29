@@ -8,23 +8,35 @@ export function getFirebaseAdminApp() {
     return admin.apps[0] as admin.app.App;
   }
   
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    : undefined;
-
-  if (!serviceAccount) {
+  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+  
+  if (!serviceAccountString) {
     throw new Error(
       'Firebase service account credentials are not set in the environment variables.'
     );
   }
-  
-  const app = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  });
 
-  return app;
-}
-
+  try {
+    const serviceAccount = JSON.parse(serviceAccountString);
     
+    // The private key from env vars has '\\n' which needs to be replaced with actual newlines.
+    if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
 
+    const app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    });
+
+    return app;
+
+  } catch (e: any) {
+    console.error("Failed to parse or initialize Firebase Admin SDK:", e);
+    // Rethrow a more specific error to help with debugging
+    if (e.message.includes('private key')) {
+        throw new Error(`Failed to parse private key: ${e.message}`);
+    }
+    throw new Error(`Failed to initialize Firebase Admin: ${e.message}`);
+  }
+}

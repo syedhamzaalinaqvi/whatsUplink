@@ -28,23 +28,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!group) {
     return {
-      title: 'Group Not Found | WhatsUpLink',
-      description: 'The WhatsApp group you are looking for could not be found.',
+      title: 'Group Link Not Found | WhatsUpLink',
+      description: 'The WhatsApp group link you are looking for could not be found.',
     };
   }
 
+  const title = `Join ${group.title} WhatsApp Group Link | WhatsUpLink`;
+  const description = `Find and join the ${group.title} WhatsApp group link. ${group.description.substring(0, 120)}... Discover more groups for ${group.category} and from ${group.country}.`;
+
   return {
-    title: `${group.title} - WhatsApp Group | WhatsUpLink`,
-    description: group.description.substring(0, 160),
+    title: title,
+    description: description,
     openGraph: {
-      title: `${group.title} | WhatsUpLink`,
+      title: title,
       description: group.description,
       images: [
         {
           url: group.imageUrl,
           width: 512,
           height: 512,
-          alt: group.title,
+          alt: `Logo for ${group.title} WhatsApp Group`,
         },
       ],
       type: 'website',

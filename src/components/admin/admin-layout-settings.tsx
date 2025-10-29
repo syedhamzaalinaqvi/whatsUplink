@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -20,10 +19,9 @@ import { Loader2, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { LayoutSettings, NavLink } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { saveLayoutSettings } from '@/app/admin/actions';
-import { ImageUploader } from './image-uploader';
 
 const layoutSettingsSchema = z.object({
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  logoUrl: z.string().optional().or(z.literal('')),
   headerScripts: z.string().optional(),
   navLinks: z.array(
     z.object({
@@ -107,18 +105,11 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
               name="logoUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Site Logo</FormLabel>
+                  <FormLabel>Site Logo URL</FormLabel>
                   <FormControl>
-                    <ImageUploader
-                      currentImageUrl={field.value}
-                      onUploadComplete={(url) => {
-                        field.onChange(url);
-                        form.trigger('logoUrl'); // Trigger validation
-                      }}
-                      onRemove={() => field.onChange('')}
-                    />
+                    <Input {...field} placeholder="/path-to-your-logo.png" />
                   </FormControl>
-                  <p className='text-sm text-muted-foreground'>Upload a logo. This will also be used as the site favicon. Recommended: a square PNG with a transparent background.</p>
+                  <p className='text-sm text-muted-foreground'>Manually enter the path to your logo file in the `public` folder. This will also be used as the site favicon.</p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -139,7 +130,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
                       {...field}
                     />
                   </FormControl>
-                  <p className='text-sm text-muted-foreground'>Add scripts like Google Analytics or AdSense here. They will be injected into the head tag of every page.</p>
+                  <p className='text-sm text-muted-foreground'>Add scripts like Google Analytics here. They will be injected into the page body.</p>
                   <FormMessage />
                 </FormItem>
               )}

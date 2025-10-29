@@ -98,13 +98,13 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: `${group.title} - WhatsApp Group`,
+    name: `Join ${group.title} - WhatsApp Group Link`,
     description: group.description,
     url: detailUrl,
     image: group.imageUrl,
     mainEntity: {
       '@type': 'SocialMediaPosting',
-      headline: group.title,
+      headline: `WhatsApp Group Link for ${group.title}`,
       text: group.description,
       sharedContent: {
         '@type': 'WebPage',
@@ -121,7 +121,6 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header />
       <main className="flex-1 pb-20 md:pb-0">
         <script
             type="application/ld+json"
@@ -132,7 +131,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
             <Button asChild variant="outline">
               <Link href="/">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to All Groups
+                Back to All Group Links
               </Link>
             </Button>
           </div>
@@ -144,7 +143,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                   <div className="relative w-full h-48 sm:h-64">
                     <Image
                       src={group.imageUrl}
-                      alt={`Banner for ${group.title}`}
+                      alt={`Banner for ${group.title} WhatsApp group`}
                       fill
                       className="object-cover"
                       data-ai-hint={group.imageHint}
@@ -153,7 +152,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6">
                       <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                        {group.title}
+                        {group.title} WhatsApp Group
                       </h1>
                     </div>
                   </div>
@@ -192,7 +191,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                       rel="noopener noreferrer"
                       onClick={handleJoinClick}
                     >
-                      Join Now
+                      Join Group Link
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>
@@ -200,7 +199,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                     <SharePopover title={group.title} url={detailUrl}>
                       <Button variant="outline" className="w-full sm:w-auto text-lg py-6">
                         <Share2 className="mr-2 h-5 w-5" />
-                        Share
+                        Share Link
                       </Button>
                     </SharePopover>
                   )}
@@ -212,14 +211,14 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-xl">
                       <Info className="h-5 w-5" />
-                      Before You Join...
+                      Before You Join This Group...
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <h3 className="font-semibold mb-2">How to Join</h3>
+                      <h3 className="font-semibold mb-2">How to Join a WhatsApp Group Link</h3>
                       <p className="text-sm text-muted-foreground">
-                        Clicking the &quot;Join Now&quot; button will redirect
+                        Clicking the &quot;Join Group Link&quot; button will redirect
                         you to WhatsApp to confirm joining the group. Make sure
                         you have WhatsApp installed on your device.
                       </p>
@@ -247,7 +246,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                       <ShieldCheck className="h-4 w-4" />
                       <AlertTitle>Privacy & Safety</AlertTitle>
                       <AlertDescription>
-                        By joining, you agree to the group&apos;s rules and WhatsApp&apos;s terms of service. Admins may remove any member for violating guidelines. Your public profile and phone number will be visible to all members.
+                        By joining this WhatsApp group, you agree to the group&apos;s rules and WhatsApp&apos;s terms of service. Admins may remove any member for violating guidelines. Your public profile and phone number will be visible to all members of the group.
                       </AlertDescription>
                     </Alert>
                   </CardContent>
@@ -256,7 +255,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
             </div>
 
             <div className="lg:col-span-1">
-              <h2 className="text-xl font-semibold mb-4">Related Groups</h2>
+              <h2 className="text-xl font-semibold mb-4">Related Group Links</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
                 {relatedGroups.length > 0 ? (
                   relatedGroups.map(relatedGroup => (
@@ -270,7 +269,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                   ))
                 ) : (
                   <p className="text-muted-foreground">
-                    No related groups found.
+                    No related group links found.
                   </p>
                 )}
               </div>

@@ -10,8 +10,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
-import { getStorage, ref, getSignedUrl } from 'firebase-admin/storage';
-import { getFirebaseAdminApp } from '@/firebase/admin-config';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -221,6 +219,9 @@ const loginSchema = z.object({
 });
 
 export async function login(formData: FormData) {
+    'use server';
+    require('dotenv').config({ path: '.env.local' });
+    
     const validatedFields = loginSchema.safeParse({
         username: formData.get('username'),
         password: formData.get('password'),
@@ -308,48 +309,3 @@ export async function subscribeToNewsletter(
     };
   }
 }
-
-export async function getStorageSasUrl(file: {
-  name: string;
-  type: string;
-  size: number;
-}) {
-  'use server';
-  try {
-    const app = getFirebaseAdminApp();
-    const storage = getStorage(app);
-    const bucket = storage.bucket();
-
-    const filePath = `logos/${Date.now()}-${file.name}`;
-    const storageRef = ref(storage, filePath);
-    const fileRef = bucket.file(storageRef.fullPath);
-
-    const [sasUrl] = await fileRef.getSignedUrl({
-      version: 'v4',
-      action: 'write',
-      expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-      contentType: file.type,
-    });
-
-    // Get public URL after upload
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
-
-    return {
-      success: true,
-      sasUrl,
-      publicUrl,
-    };
-  } catch (e: any) {
-    console.error('SAS URL generation failed:', e);
-    return {
-      success: false,
-      error: e.message || 'Could not get upload URL.',
-    };
-  }
-}
-
-    
-
-    
-
-
