@@ -7,6 +7,7 @@ import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
+import { SubmitGroup } from './submit-group';
 import { GroupCard } from './group-card';
 import { Separator } from '../ui/separator';
 import {
@@ -76,6 +77,8 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
+    // This function can be used to show a toast or scroll to top
+    // The real-time listener will automatically add the group to the list
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -109,6 +112,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
       );
     }
     
+    // Default to 'slider'
     return (
       <Carousel
         opts={{
@@ -133,6 +137,24 @@ export function HomePage({ initialSettings }: HomePageProps) {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex-1 pb-20 md:pb-0">
+        <section className="bg-card/50 border-b border-primary/20">
+            <div className="container py-12 md:py-16 text-center">
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-foreground">
+                The Ultimate WhatsApp Group Directory
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">
+                Discover and join thousands of WhatsApp groups and channels from around the world. Submit your own and connect with new communities!
+              </p>
+              <div className="mt-8 flex justify-center gap-4">
+                <SubmitGroup 
+                    onGroupSubmitted={handleGroupSubmitted}
+                    isLoading={isFiltersLoading}
+                    categories={categories}
+                    countries={countries}
+                />
+              </div>
+            </div>
+        </section>
         
         {featuredGroups.length > 0 && !isGroupLoading && (
           <section className="container py-8 md:py-12">
@@ -146,7 +168,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
         <GroupClientPage 
             groups={visibleGroups} 
-            onGroupSubmitted={handleGroupSubmitted}
             onLoadMore={handleLoadMore}
             hasMore={hasMoreGroups}
             isGroupLoading={isGroupLoading}
