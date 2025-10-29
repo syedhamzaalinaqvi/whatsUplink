@@ -2,7 +2,7 @@
 
 export default async function AboutPage() {
   return (
-    <main className="flex-1">
+    <main className="flex-1 bg-card">
       <div className="container py-12 md:py-24">
         <div className="mx-auto max-w-3xl space-y-8">
           <div className="space-y-4 text-center">

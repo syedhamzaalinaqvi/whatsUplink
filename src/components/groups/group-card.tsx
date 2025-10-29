@@ -31,7 +31,7 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
 
   if (view === 'grid') {
     return (
-      <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-muted/30 group">
+      <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card group">
         <Link href={detailUrl} className="block absolute inset-0 z-0" />
         <Badge className="absolute top-2 left-2 text-xs capitalize bg-primary text-primary-foreground hover:bg-primary/80 z-10">{group.country}</Badge>
         <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground hover:bg-accent/80 z-10">{group.category}</Badge>

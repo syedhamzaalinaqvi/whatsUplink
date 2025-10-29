@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
     --background: 220 14% 95%; /* #F0F2F5 */
@@ -33,7 +29,9 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --background-image: none; /* Default to no image */
   }
+
   .dark {
     --background: 210 15% 12%; /* Dark grey-blue */
     --foreground: 210 40% 98%;
@@ -68,14 +66,23 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    /* The default background is now a CSS variable */
-    background-image: var(--default-background-image);
+    font-family: Arial, Helvetica, sans-serif;
+    /* The background image is now controlled by a CSS variable */
+    background-image: var(--background-image);
     background-attachment: fixed;
     background-size: cover;
     background-position: center;
   }
-}
 
-:root {
-    --default-background-image: url('https://user-images.githubusercontent.com/15277486/46806533-328a6780-cd8c-11e8-8e62-2621a02a3536.png');
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: hsl(var(--background) / 0.8); /* Semi-transparent overlay */
+    backdrop-filter: blur(2px);
+    z-index: -1;
+  }
 }

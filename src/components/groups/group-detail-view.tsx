@@ -121,7 +121,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <main className="flex-1 pb-20 md:pb-0">
+      <main className="flex-1">
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -207,7 +207,7 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
               </Card>
 
               <div className="mt-12">
-                <Card className="bg-muted/30">
+                <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-xl">
                       <Info className="h-5 w-5" />
@@ -255,24 +255,28 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
             </div>
 
             <div className="lg:col-span-1">
-              <h2 className="text-xl font-semibold mb-4">Related Group Links</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                {relatedGroups.length > 0 ? (
-                  relatedGroups.map(relatedGroup => (
-                    <GroupCard
-                      key={relatedGroup.id}
-                      group={relatedGroup}
-                      view="grid"
-                      onTagClick={handleTagClick}
-                      showClicks={relatedGroup.showClicks ?? true}
-                    />
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">
-                    No related group links found.
-                  </p>
-                )}
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Related Group Links</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                  {relatedGroups.length > 0 ? (
+                    relatedGroups.map(relatedGroup => (
+                      <GroupCard
+                        key={relatedGroup.id}
+                        group={relatedGroup}
+                        view="grid"
+                        onTagClick={handleTagClick}
+                        showClicks={relatedGroup.showClicks ?? true}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No related group links found.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
 

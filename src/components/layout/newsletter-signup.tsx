@@ -39,7 +39,7 @@ export function NewsletterSignup() {
   };
 
   return (
-    <Card className="w-full max-w-lg shadow-lg border-primary/20 bg-muted/30">
+    <Card className="w-full max-w-lg shadow-lg border-primary/20">
         <CardHeader className='text-center'>
             <CardTitle className='text-2xl tracking-tight'>Join the Community</CardTitle>
             <CardDescription>Get the latest group links and updates delivered straight to your inbox.</CardDescription>

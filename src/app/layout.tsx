@@ -71,7 +71,9 @@ export default async function RootLayout({
   
   const bodyStyle: React.CSSProperties = {};
   if (layoutSettings.backgroundSettings.bgImageEnabled && layoutSettings.backgroundSettings.bgImageUrl) {
-    bodyStyle.backgroundImage = `url(${layoutSettings.backgroundSettings.bgImageUrl})`;
+    bodyStyle['--background-image' as any] = `url(${layoutSettings.backgroundSettings.bgImageUrl})`;
+  } else {
+    bodyStyle['--background-image' as any] = 'none';
   }
 
 
@@ -85,12 +87,12 @@ export default async function RootLayout({
         <div className="flex flex-col min-h-screen">
           <FirebaseClientProvider>
             <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
-            <div className="flex-1">
+            <main className="flex-1 relative z-10">
               {children}
-            </div>
+            </main>
             <ScrollToTop />
             <Toaster />
-            <footer className="border-t bg-background/95 backdrop-blur">
+            <footer className="border-t bg-card">
               <div className="container py-12">
                 <div className={`flex flex-col md:flex-row items-center gap-12 ${moderationSettings.showNewsletter ? 'justify-between' : 'justify-center'}`}>
                   <div className={`flex flex-col items-center ${moderationSettings.showNewsletter ? 'md:items-start text-center md:text-left' : 'text-center md:items-center md:text-center'}`}>
