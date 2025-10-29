@@ -1,6 +1,5 @@
 
 'use server';
-import 'dotenv/config';
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';

@@ -1,5 +1,4 @@
 
-import 'dotenv/config';
 import * as admin from 'firebase-admin';
 
 // This function initializes and returns the Firebase Admin SDK app instance.
