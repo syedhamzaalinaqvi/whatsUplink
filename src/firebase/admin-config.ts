@@ -1,5 +1,9 @@
 
 import * as admin from 'firebase-admin';
+import { config } from 'dotenv';
+
+// Explicitly load environment variables from .env file
+config();
 
 // This function initializes and returns the Firebase Admin SDK app instance.
 // It ensures that the app is initialized only once (singleton pattern).
@@ -25,5 +29,3 @@ export function getFirebaseAdminApp() {
 
   return app;
 }
-
-    
