@@ -221,6 +221,7 @@ const loginSchema = z.object({
 });
 
 export async function login(formData: FormData) {
+    require('dotenv').config({ path: '.env.local' });
     const validatedFields = loginSchema.safeParse({
         username: formData.get('username'),
         password: formData.get('password'),
@@ -351,3 +352,4 @@ export async function getStorageSasUrl(file: {
     
 
     
+
