@@ -37,9 +37,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     keywords: ['whatsapp group links', 'whatsapp groups', 'usa whatsapp group', 'family whatsapp group link', 'adult whatsapp group links', 'pubg whatsapp group', 'freefire whatsapp groups links', 'entertainment whatsapp group'],
     icons: {
-      icon: logoUrl,
-      shortcut: logoUrl,
-      apple: logoUrl,
+      icon: '/whatsuplink_logo_and_favicon_without_background.png',
+      shortcut: '/whatsuplink_logo_and_favicon_without_background.png',
+      apple: '/whatsuplink_logo_and_favicon_without_background.png',
     },
     robots: {
       index: true,
