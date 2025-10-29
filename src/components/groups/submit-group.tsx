@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, MessageCirclePlus } from 'lucide-react';
 import { SubmitGroupDialogContent } from './submit-group-dialog';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogTrigger } from '../ui/dialog';
 import type { Category, Country, GroupLink } from '@/lib/data';
 
 export function SubmitGroup({ 

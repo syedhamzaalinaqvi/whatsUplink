@@ -23,12 +23,30 @@ export function Header({
     isLoadingFilters: initialIsLoading
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(initialIsLoading);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
   useEffect(() => {
-        setIsLoading(initialIsLoading);
-  }, [initialIsLoading]);
+    async function fetchFilters() {
+      setIsLoading(true);
+      try {
+        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
+        setCategories(cats);
+        setCountries(counts);
+      } catch (error) {
+        console.error("Failed to load header filters", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchFilters();
+  }, []);
+
+  const handleGroupSubmitted = () => {
+    // Maybe show a global toast or something
+  }
 
 
   return (
@@ -59,7 +77,7 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-            <SubmitGroup isLoading={isLoading} />
+            <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isLoading} categories={categories} countries={countries} />
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -105,7 +123,7 @@ export function Header({
 
       {/* Mobile Floating Submit Button */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup isLoading={isLoading} />
+        <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isLoading} categories={categories} countries={countries} />
       </div>
     </>
   );
