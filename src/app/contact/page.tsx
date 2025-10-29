@@ -3,7 +3,7 @@ import { ContactForm } from '@/components/contact/contact-form';
 export default async function ContactPage() {
   return (
     <main className="flex-1">
-      <div className="container py-12 md:py-24">
+      <div className="container py-12 md:py-24 px-4 sm:px-6">
         <div className="mx-auto max-w-xl space-y-8">
           <div className="space-y-4 text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">Contact Us</h1>
