@@ -67,7 +67,7 @@ export default async function RootLayout({
             <footer className="border-t bg-background/95 backdrop-blur">
               <div className="container py-12">
                 <div className={`flex flex-col md:flex-row items-center gap-12 ${moderationSettings.showNewsletter ? 'justify-between' : 'justify-center'}`}>
-                  <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                  <div className={`flex flex-col items-center ${moderationSettings.showNewsletter ? 'md:items-start text-center md:text-left' : 'text-center'}`}>
                       <h3 className="text-xl font-bold">{layoutSettings.footerContent.heading}</h3>
                       <p className="text-muted-foreground mt-2 max-w-md">
                         {layoutSettings.footerContent.paragraph}
