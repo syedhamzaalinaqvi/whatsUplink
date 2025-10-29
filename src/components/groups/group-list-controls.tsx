@@ -21,7 +21,6 @@ type GroupListControlsProps = {
   onCountryChange: (country: string) => void;
   selectedType: 'all' | 'group' | 'channel';
   onTypeChange: (type: 'all' | 'group' | 'channel') => void;
-  submitButton: React.ReactNode;
   categories: Category[];
   countries: Country[];
   isLoadingFilters: boolean;
@@ -38,7 +37,6 @@ export function GroupListControls({
   onCountryChange,
   selectedType,
   onTypeChange,
-  submitButton,
   categories,
   countries,
   isLoadingFilters

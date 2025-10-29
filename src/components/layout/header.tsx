@@ -12,50 +12,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { getCategories, getCountries } from '@/app/admin/actions';
 
 type HeaderProps = {
-  onGroupSubmitted?: (group: GroupLink) => void;
   navLinks?: NavLink[];
   logoUrl?: string;
-  categories?: Category[];
-  countries?: Country[];
   isLoadingFilters?: boolean;
 };
 
 export function Header({ 
-    onGroupSubmitted = () => {}, 
     navLinks = [],
     logoUrl,
-    categories: initialCategories, 
-    countries: initialCountries,
     isLoadingFilters: initialIsLoading
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
-  const [countries, setCountries] = useState<Country[]>(initialCountries || []);
-  const [isLoading, setIsLoading] = useState(initialIsLoading ?? (!initialCategories || !initialCountries));
+  const [isLoading, setIsLoading] = useState(initialIsLoading);
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
   useEffect(() => {
-    // If props are not provided, fetch them. This makes the header self-sufficient on static pages.
-    if (!initialCategories || !initialCountries) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-          setCategories(cats);
-          setCountries(counts);
-        } catch (error) {
-            console.error("Failed to fetch header data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-      }
-      fetchData();
-    } else {
-        setCategories(initialCategories);
-        setCountries(initialCountries);
-        setIsLoading(initialIsLoading ?? false);
-    }
-  }, [initialCategories, initialCountries, initialIsLoading]);
+        setIsLoading(initialIsLoading);
+  }, [initialIsLoading]);
 
 
   return (
@@ -86,7 +59,7 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-            <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} isLoading={isLoading} />
+            <SubmitGroup isLoading={isLoading} />
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -132,7 +105,7 @@ export function Header({
 
       {/* Mobile Floating Submit Button */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} isLoading={isLoading} />
+        <SubmitGroup isLoading={isLoading} />
       </div>
     </>
   );

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -5,12 +6,10 @@ import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
 import type { Category, Country, GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
-import { SubmitGroup } from './submit-group';
 import { Button } from '../ui/button';
 
 type GroupClientPageProps = {
     groups: GroupLink[];
-    onGroupSubmitted: (group: GroupLink) => void;
     onLoadMore: () => void;
     hasMore: boolean;
     isGroupLoading: boolean;
@@ -22,7 +21,6 @@ type GroupClientPageProps = {
 
 export function GroupClientPage({
   groups,
-  onGroupSubmitted,
   onLoadMore,
   hasMore,
   isGroupLoading,
@@ -79,7 +77,6 @@ export function GroupClientPage({
             onCategoryChange={setSelectedCategory}
             selectedType={selectedType}
             onTypeChange={setSelectedType}
-            submitButton={<SubmitGroup onGroupSubmitted={onGroupSubmitted} categories={categories} countries={countries} />}
             categories={categories}
             countries={countries}
             isLoadingFilters={isLoadingFilters}
