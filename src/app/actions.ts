@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
 import { getStorage, ref, getSignedUrl } from 'firebase-admin/storage';
 import { getFirebaseAdminApp } from '@/firebase/admin-config';
+import 'dotenv/config';
 
 
 // Helper function to initialize Firebase on the server
@@ -348,5 +349,7 @@ export async function getStorageSasUrl(file: {
     };
   }
 }
+
+    
 
     
