@@ -10,7 +10,11 @@ import { getModerationSettings, getLayoutSettings } from './admin/actions';
 import { Header } from '@/components/layout/header';
 import Head from 'next/head';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const inter = Inter({ 
+  subsets: ['latin'], 
+  variable: '--font-inter',
+  display: 'swap', // Improves font loading performance
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const layoutSettings = await getLayoutSettings();
@@ -79,6 +83,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+       <Head>
+          <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </Head>
       <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
         {layoutSettings.headerScripts && (

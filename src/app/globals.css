@@ -67,9 +67,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: Arial, Helvetica, sans-serif;
-    /* The background image is now controlled by a CSS variable */
     background-image: var(--background-image);
-    background-attachment: fixed;
+    background-attachment: scroll; /* More performant than 'fixed' */
     background-size: cover;
     background-position: center;
   }
@@ -82,7 +81,7 @@
     right: 0;
     bottom: 0;
     background-color: hsl(var(--background) / 0.8); /* Semi-transparent overlay */
-    backdrop-filter: blur(2px);
+    /* backdrop-filter is removed for performance */
     z-index: -1;
   }
 }

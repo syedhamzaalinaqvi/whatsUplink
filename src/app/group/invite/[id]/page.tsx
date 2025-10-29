@@ -59,19 +59,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GroupDetailPage({ params }: Props) {
   const db = getDb();
   
-  // Fetch all required data in parallel
-  const [group, categories, countries] = await Promise.all([
-    getGroupById(db, params.id),
-    getCategories(),
-    getCountries()
-  ]);
+  // Fetch group first to get its category for related groups query
+  const group = await getGroupById(db, params.id);
   
   if (!group) {
     notFound();
   }
 
-  // Refetch related groups now that we have the full group object.
-  const relatedGroups = await getRelatedGroups(db, group);
+  // Now fetch remaining data in parallel for better performance
+  const [relatedGroups, categories, countries] = await Promise.all([
+    getRelatedGroups(db, group),
+    getCategories(),
+    getCountries()
+  ]);
 
   return (
     <GroupDetailView 
