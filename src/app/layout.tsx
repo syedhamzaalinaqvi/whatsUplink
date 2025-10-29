@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     locale: 'en_US',
     type: 'website',
   },
+  icons: {
+    icon: '/whatsuplink_logo_and_favicon_without_background.png',
+    shortcut: '/whatsuplink_logo_and_favicon_without_background.png',
+    apple: '/whatsuplink_logo_and_favicon_without_background.png',
+  },
   robots: {
     index: true,
     follow: true,
@@ -67,7 +72,7 @@ export default async function RootLayout({
             <footer className="border-t bg-background/95 backdrop-blur">
               <div className="container py-12">
                 <div className={`flex flex-col md:flex-row items-center gap-12 ${moderationSettings.showNewsletter ? 'justify-between' : 'justify-center'}`}>
-                  <div className={`flex flex-col items-center ${moderationSettings.showNewsletter ? 'md:items-start text-center md:text-left' : 'text-center'}`}>
+                  <div className={`flex flex-col items-center ${moderationSettings.showNewsletter ? 'md:items-start text-center md:text-left' : 'text-center md:items-center md:text-center'}`}>
                       <h3 className="text-xl font-bold">{layoutSettings.footerContent.heading}</h3>
                       <p className="text-muted-foreground mt-2 max-w-md">
                         {layoutSettings.footerContent.paragraph}
