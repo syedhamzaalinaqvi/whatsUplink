@@ -14,6 +14,7 @@ import { getCategories, getCountries } from '@/app/admin/actions';
 type HeaderProps = {
   onGroupSubmitted?: (group: GroupLink) => void;
   navLinks?: NavLink[];
+  logoUrl?: string;
   categories?: Category[];
   countries?: Country[];
   isLoadingFilters?: boolean;
@@ -22,6 +23,7 @@ type HeaderProps = {
 export function Header({ 
     onGroupSubmitted = () => {}, 
     navLinks = [],
+    logoUrl,
     categories: initialCategories, 
     countries: initialCountries,
     isLoadingFilters: initialIsLoading
@@ -30,6 +32,7 @@ export function Header({
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [countries, setCountries] = useState<Country[]>(initialCountries || []);
   const [isLoading, setIsLoading] = useState(initialIsLoading ?? (!initialCategories || !initialCountries));
+  const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
   useEffect(() => {
     // If props are not provided, fetch them. This makes the header self-sufficient on static pages.
@@ -61,11 +64,12 @@ export function Header({
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
              <Image
-              src="/whatsuplink_logo_and_favicon_without_background.png"
+              src={finalLogoUrl}
               alt="WhatsUpLink Logo"
               width={36}
               height={36}
-              className="h-9 w-9"
+              className="h-9 w-9 object-contain"
+              unoptimized
             />
             <h1 className="text-2xl font-bold tracking-tighter text-foreground">
               WhatsUp<span className="text-primary">Link</span>
@@ -101,11 +105,12 @@ export function Header({
                 <div className="flex flex-col gap-6 p-6 pt-0">
                     <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                         <Image
-                          src="/whatsuplink_logo_and_favicon_without_background.png"
+                          src={finalLogoUrl}
                           alt="WhatsUpLink Logo"
                           width={36}
                           height={36}
                           className="h-9 w-9"
+                          unoptimized
                         />
                         <h1 className="text-2xl font-bold tracking-tighter text-foreground">
                             WhatsUp<span className="text-primary">Link</span>

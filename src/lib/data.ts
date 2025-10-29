@@ -57,6 +57,7 @@ export type FooterContent = {
 
 export type LayoutSettings = {
   headerScripts: string;
+  logoUrl?: string;
   navLinks: NavLink[];
   footerContent: FooterContent;
 };

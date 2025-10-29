@@ -20,8 +20,10 @@ import { Loader2, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { LayoutSettings, NavLink } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { saveLayoutSettings } from '@/app/admin/actions';
+import { ImageUploader } from './image-uploader';
 
 const layoutSettingsSchema = z.object({
+  logoUrl: z.string().url().optional().or(z.literal('')),
   headerScripts: z.string().optional(),
   navLinks: z.array(
     z.object({
@@ -52,6 +54,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
     resolver: zodResolver(layoutSettingsSchema),
     defaultValues: {
       headerScripts: initialSettings.headerScripts || '',
+      logoUrl: initialSettings.logoUrl || '',
       navLinks: initialSettings.navLinks.map(link => ({...link})), // Ensure mutable copy
       footerContent: { ...initialSettings.footerContent },
     },
@@ -66,6 +69,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
     startSaving(async () => {
         const formData = new FormData();
         formData.append('headerScripts', data.headerScripts || '');
+        formData.append('logoUrl', data.logoUrl || '');
         formData.append('navLinks', JSON.stringify(data.navLinks));
         formData.append('footerHeading', data.footerContent.heading);
         formData.append('footerParagraph', data.footerContent.paragraph);
@@ -90,12 +94,35 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
       <CardHeader>
         <CardTitle>Layout & Appearance</CardTitle>
         <CardDescription>
-          Customize your site's header, footer, navigation, and add tracking scripts.
+          Customize your site's logo, header, footer, navigation, and add tracking scripts.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            
+            {/* Site Logo */}
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Site Logo</FormLabel>
+                  <FormControl>
+                    <ImageUploader
+                      currentImageUrl={field.value}
+                      onUploadComplete={(url) => {
+                        field.onChange(url);
+                        form.trigger('logoUrl'); // Trigger validation
+                      }}
+                      onRemove={() => field.onChange('')}
+                    />
+                  </FormControl>
+                  <p className='text-sm text-muted-foreground'>Upload a logo. This will also be used as the site favicon. Recommended: a square PNG with a transparent background.</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Header Scripts */}
             <FormField

@@ -12,38 +12,45 @@ import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://whatsuplink.online'),
-  title: {
-    default: 'WhatsUpLink: Discover & Share WhatsApp Groups',
-    template: '%s | WhatsUpLink',
-  },
-  description: 'The ultimate directory to discover, share, and join thousands of WhatsApp groups and channels from around the world. Find communities for your hobbies, interests, and more.',
-  openGraph: {
-    title: 'WhatsUpLink: Discover & Share WhatsApp Groups',
-    description: 'The ultimate directory to discover and share WhatsApp group links.',
-    url: 'https://whatsuplink.online',
-    siteName: 'WhatsUpLink',
-    locale: 'en_US',
-    type: 'website',
-  },
-  icons: {
-    icon: '/whatsuplink_logo_and_favicon_without_background.png',
-    shortcut: '/whatsuplink_logo_and_favicon_without_background.png',
-    apple: '/whatsuplink_logo_and_favicon_without_background.png',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const layoutSettings = await getLayoutSettings();
+  const logoUrl = layoutSettings.logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
+
+  return {
+    metadataBase: new URL('https://whatsuplink.online'),
+    title: {
+      default: 'WhatsUpLink: Discover & Share WhatsApp Groups',
+      template: '%s | WhatsUpLink',
+    },
+    description: 'The ultimate directory to discover, share, and join thousands of WhatsApp groups and channels from around the world. Find communities for your hobbies, interests, and more.',
+    openGraph: {
+      title: 'WhatsUpLink: Discover & Share WhatsApp Groups',
+      description: 'The ultimate directory to discover and share WhatsApp group links.',
+      url: 'https://whatsuplink.online',
+      siteName: 'WhatsUpLink',
+      locale: 'en_US',
+      type: 'website',
+      images: [logoUrl],
+    },
+    icons: {
+      icon: logoUrl,
+      shortcut: logoUrl,
+      apple: logoUrl,
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-};
+  };
+}
+
 
 export const viewport: Viewport = {
   themeColor: '#25D366',
@@ -60,10 +67,14 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+       {/* Render custom scripts from admin settings at the end of the body */}
+       {layoutSettings.headerScripts && (
+           <head dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
+        )}
       <body className={`${inter.variable} font-body antialiased`}>
         <div className="flex flex-col min-h-screen">
           <FirebaseClientProvider>
-            <Header navLinks={layoutSettings.navLinks} />
+            <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
             <div className="flex-1">
               {children}
             </div>
@@ -91,10 +102,6 @@ export default async function RootLayout({
             </footer>
           </FirebaseClientProvider>
         </div>
-         {/* Render custom scripts from admin settings at the end of the body */}
-         {layoutSettings.headerScripts && (
-           <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
-        )}
       </body>
     </html>
   );

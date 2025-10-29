@@ -485,6 +485,7 @@ export async function seedInitialData() {
 
 const defaultLayoutSettings: LayoutSettings = {
     headerScripts: '<!-- Add analytics or other scripts here -->',
+    logoUrl: '/whatsuplink_logo_and_favicon_without_background.png',
     navLinks: [
         { id: '1', label: 'Home', href: '/' },
         { id: '2', label: 'About', href: '/about' },
@@ -510,6 +511,7 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
             // Merge with defaults to ensure all fields are present
             return {
                 headerScripts: data.headerScripts ?? defaultLayoutSettings.headerScripts,
+                logoUrl: data.logoUrl ?? defaultLayoutSettings.logoUrl,
                 navLinks: data.navLinks && data.navLinks.length > 0 ? data.navLinks : defaultLayoutSettings.navLinks,
                 footerContent: {
                     ...defaultLayoutSettings.footerContent,
@@ -530,6 +532,7 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
 
 const layoutSettingsSchema = z.object({
   headerScripts: z.string().optional(),
+  logoUrl: z.string().url().optional(),
   navLinks: z.string().transform(val => JSON.parse(val) as NavLink[]),
   footerHeading: z.string(),
   footerParagraph: z.string(),
@@ -539,6 +542,7 @@ const layoutSettingsSchema = z.object({
 export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
     const validatedFields = layoutSettingsSchema.safeParse({
         headerScripts: formData.get('headerScripts'),
+        logoUrl: formData.get('logoUrl'),
         navLinks: formData.get('navLinks'),
         footerHeading: formData.get('footerHeading'),
         footerParagraph: formData.get('footerParagraph'),
@@ -546,14 +550,16 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
     });
 
     if (!validatedFields.success) {
+        console.log(validatedFields.error.flatten());
         return { success: false, message: 'Invalid data format.' };
     }
 
     try {
-        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright } = validatedFields.data;
+        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, logoUrl } = validatedFields.data;
         
-        const settingsToSave: LayoutSettings = {
+        const settingsToSave: Partial<LayoutSettings> = {
             headerScripts: headerScripts || '',
+            logoUrl: logoUrl || '',
             navLinks: navLinks,
             footerContent: {
                 heading: footerHeading,
