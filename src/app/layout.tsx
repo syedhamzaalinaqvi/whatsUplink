@@ -68,10 +68,16 @@ export default async function RootLayout({
 }>) {
   const moderationSettings = await getModerationSettings();
   const layoutSettings = await getLayoutSettings();
+  
+  const bodyStyle: React.CSSProperties = {};
+  if (layoutSettings.backgroundSettings.bgImageEnabled && layoutSettings.backgroundSettings.bgImageUrl) {
+    bodyStyle.backgroundImage = `url(${layoutSettings.backgroundSettings.bgImageUrl})`;
+  }
+
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-body antialiased`}>
+      <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
         {layoutSettings.headerScripts && (
            <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />

@@ -498,6 +498,10 @@ const defaultLayoutSettings: LayoutSettings = {
         paragraph: 'Your number one directory for discovering and sharing WhatsApp group links.',
         copyrightText: `Built for WhatsUpLink. © ${new Date().getFullYear()}`,
     },
+    backgroundSettings: {
+        bgImageEnabled: true,
+        bgImageUrl: '/whatsapp_background_official_image.png',
+    },
 };
 
 export async function getLayoutSettings(): Promise<LayoutSettings> {
@@ -517,6 +521,10 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
                     ...defaultLayoutSettings.footerContent,
                     ...data.footerContent,
                 },
+                backgroundSettings: {
+                    ...defaultLayoutSettings.backgroundSettings,
+                    ...data.backgroundSettings,
+                },
             };
         } else {
             // Document doesn't exist, create it with defaults
@@ -532,11 +540,13 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
 
 const layoutSettingsSchema = z.object({
   headerScripts: z.string().optional(),
-  logoUrl: z.string().url().optional(),
+  logoUrl: z.string().optional(),
   navLinks: z.string().transform(val => JSON.parse(val) as NavLink[]),
   footerHeading: z.string(),
   footerParagraph: z.string(),
   footerCopyright: z.string(),
+  bgImageEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
+  bgImageUrl: z.string().optional(),
 });
 
 export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -547,6 +557,8 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
         footerHeading: formData.get('footerHeading'),
         footerParagraph: formData.get('footerParagraph'),
         footerCopyright: formData.get('footerCopyright'),
+        bgImageEnabled: formData.get('bgImageEnabled'),
+        bgImageUrl: formData.get('bgImageUrl'),
     });
 
     if (!validatedFields.success) {
@@ -555,7 +567,7 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
     }
 
     try {
-        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, logoUrl } = validatedFields.data;
+        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, logoUrl, bgImageEnabled, bgImageUrl } = validatedFields.data;
         
         const settingsToSave: Partial<LayoutSettings> = {
             headerScripts: headerScripts || '',
@@ -566,6 +578,10 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
                 paragraph: footerParagraph,
                 copyrightText: footerCopyright,
             },
+            backgroundSettings: {
+                bgImageEnabled,
+                bgImageUrl: bgImageUrl || '',
+            }
         };
 
         const db = getFirestoreInstance();

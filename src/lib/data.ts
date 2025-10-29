@@ -55,11 +55,17 @@ export type FooterContent = {
   copyrightText: string;
 };
 
+export type BackgroundSettings = {
+  bgImageEnabled: boolean;
+  bgImageUrl: string;
+};
+
 export type LayoutSettings = {
   headerScripts: string;
   logoUrl?: string;
   navLinks: NavLink[];
   footerContent: FooterContent;
+  backgroundSettings: BackgroundSettings;
 };
 
 // This function now robustly handles Timestamps from the server

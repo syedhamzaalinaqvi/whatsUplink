@@ -15,10 +15,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Plus, Trash2, GripVertical } from 'lucide-react';
+import { Loader2, Plus, Trash2, GripVertical, Image as ImageIcon } from 'lucide-react';
 import type { LayoutSettings, NavLink } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { saveLayoutSettings } from '@/app/admin/actions';
+import { Switch } from '../ui/switch';
+import { Separator } from '../ui/separator';
 
 const layoutSettingsSchema = z.object({
   logoUrl: z.string().optional().or(z.literal('')),
@@ -34,6 +36,10 @@ const layoutSettingsSchema = z.object({
     heading: z.string().min(1, 'Heading is required.'),
     paragraph: z.string().min(1, 'Paragraph is required.'),
     copyrightText: z.string().min(1, 'Copyright text is required.'),
+  }),
+  backgroundSettings: z.object({
+    bgImageEnabled: z.boolean(),
+    bgImageUrl: z.string().optional(),
   }),
 });
 
@@ -55,6 +61,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
       logoUrl: initialSettings.logoUrl || '',
       navLinks: initialSettings.navLinks.map(link => ({...link})), // Ensure mutable copy
       footerContent: { ...initialSettings.footerContent },
+      backgroundSettings: { ...initialSettings.backgroundSettings },
     },
   });
   
@@ -72,6 +79,8 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
         formData.append('footerHeading', data.footerContent.heading);
         formData.append('footerParagraph', data.footerContent.paragraph);
         formData.append('footerCopyright', data.footerContent.copyrightText);
+        formData.append('bgImageEnabled', data.backgroundSettings.bgImageEnabled ? 'on' : 'off');
+        formData.append('bgImageUrl', data.backgroundSettings.bgImageUrl || '');
         
         const result = await saveLayoutSettings(formData);
 
@@ -92,12 +101,57 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
       <CardHeader>
         <CardTitle>Layout & Appearance</CardTitle>
         <CardDescription>
-          Customize your site's logo, header, footer, navigation, and add tracking scripts.
+          Customize your site's logo, background, header, footer, navigation, and add tracking scripts.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><ImageIcon className='h-5 w-5'/> Background</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="backgroundSettings.bgImageEnabled"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                    <FormLabel htmlFor="bg-toggle" className="text-base">Enable Custom Background Image</FormLabel>
+                                    <p className="text-sm text-muted-foreground">
+                                        Use a custom image for the site background.
+                                    </p>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        id="bg-toggle"
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    {form.watch('backgroundSettings.bgImageEnabled') && (
+                        <FormField
+                            control={form.control}
+                            name="backgroundSettings.bgImageUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Background Image URL</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="/your-background.png" />
+                                </FormControl>
+                                <p className='text-sm text-muted-foreground'>Enter the path to your image file in the `public` folder.</p>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </CardContent>
+            </Card>
             
             {/* Site Logo */}
             <FormField
