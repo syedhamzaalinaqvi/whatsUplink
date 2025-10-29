@@ -67,11 +67,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-       {/* Render custom scripts from admin settings at the end of the body */}
-       {layoutSettings.headerScripts && (
-           <head dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
-        )}
       <body className={`${inter.variable} font-body antialiased`}>
+        {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
+        {layoutSettings.headerScripts && (
+           <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
+        )}
         <div className="flex flex-col min-h-screen">
           <FirebaseClientProvider>
             <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
