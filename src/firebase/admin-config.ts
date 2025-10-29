@@ -7,7 +7,7 @@ export function getFirebaseAdminApp() {
   if (admin.apps.length > 0) {
     return admin.apps[0] as admin.app.App;
   }
-
+  
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
     : undefined;
