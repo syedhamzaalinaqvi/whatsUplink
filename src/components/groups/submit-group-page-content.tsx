@@ -1,27 +1,38 @@
 
 'use client';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
+import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, getGroupPreview } from '@/app/actions';
+import { submitGroup, getGroupPreview, type FormState } from '@/app/actions';
 import type { Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { useFormStatus } from 'react-dom';
 
 type SubmitGroupPageContentProps = {
     categories: Category[];
     countries: Country[];
 }
 
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Submit Entry
+        </Button>
+    );
+}
+
 export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPageContentProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [isSubmitting, startSubmitTransition] = useTransition();
   const [isFetchingPreview, setIsFetchingPreview] = useState(false);
 
   const [link, setLink] = useState('');
@@ -32,6 +43,28 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState('');
   const [type, setType] = useState<'group' | 'channel'>('group');
+  
+  const initialState: FormState = { message: '', errors: {} };
+  const [state, formAction] = useActionState(submitGroup, initialState);
+  
+  useEffect(() => {
+    if (state.message) {
+      if (state.group) {
+        toast({
+          title: 'Success!',
+          description: state.message,
+        });
+        router.push(`/group/invite/${state.group.id}`);
+      } else {
+        const errorMsg = state.errors ? Object.values(state.errors).flat().join('\n') : state.message;
+        toast({
+          title: 'Error',
+          description: errorMsg || 'An unknown error occurred.',
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [state, router, toast]);
 
   const handleLinkChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLink = e.target.value;
@@ -59,42 +92,10 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    startSubmitTransition(async () => {
-      const formData = new FormData(e.target as HTMLFormElement);
-       // Manually append state values to ensure they are correct
-      formData.set('link', link);
-      formData.set('title', title);
-      formData.set('description', description);
-      formData.set('imageUrl', imageUrl);
-      formData.set('country', country);
-      formData.set('category', category);
-      formData.set('tags', tags);
-      formData.set('type', type);
-
-      const result = await submitGroup({ message: '' }, formData);
-
-      if (result.group) {
-        toast({
-            title: 'Success!',
-            description: result.message,
-        });
-        router.push(`/group/invite/${result.group.id}`);
-      } else {
-        toast({
-            title: 'Error',
-            description: result.message || 'An unknown error occurred.',
-            variant: 'destructive',
-        });
-      }
-    });
-  };
-
   const areFiltersReady = !!categories && !!countries;
 
   return (
-    <form id="submit-group-page-form" onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+    <form action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
@@ -116,16 +117,19 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
                 <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." value={link} onChange={handleLinkChange} />
                 {isFetchingPreview && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
             </div>
+            {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
           <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" value={title} onChange={(e) => setTitle(e.target.value)} />
+          {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
           <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." value={description} onChange={(e) => setDescription(e.target.value)} />
+          {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
          <div className="space-y-2 col-span-2">
@@ -146,6 +150,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
                   ))}
               </SelectContent>
           </Select>
+          {state.errors?.country && <p className="text-sm font-medium text-destructive">{state.errors.country[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
@@ -160,6 +165,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
                   ))}
               </SelectContent>
           </Select>
+          {state.errors?.category && <p className="text-sm font-medium text-destructive">{state.errors.category[0]}</p>}
         </div>
         
         <div className="space-y-2 col-span-2">
@@ -169,13 +175,8 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
-           <Button type="submit" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
-            {(isSubmitting || isFetchingPreview) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Submit Entry
-           </Button>
+           <SubmitButton />
         </div>
     </form>
   );
 }
-
-    
