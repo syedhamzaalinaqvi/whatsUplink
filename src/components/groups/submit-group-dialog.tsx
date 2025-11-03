@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -13,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { submitGroup, getGroupPreview, type FormState } from '@/app/actions';
@@ -77,10 +77,10 @@ function SubmitButton({ isEditMode, isFetchingPreview, areFiltersReady }: { isEd
 export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const linkInputRef = useRef<HTMLInputElement>(null);
   const isEditMode = !!groupToEdit;
   
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
+  const [link, setLink] = useState(groupToEdit?.link || '');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
 
@@ -124,6 +124,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   useEffect(() => {
     if (groupToEdit) {
       setType(groupToEdit.type);
+      setLink(groupToEdit.link);
       setPreview({
         title: groupToEdit.title,
         description: groupToEdit.description,
@@ -131,23 +132,24 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       });
     } else {
         setType('group');
+        setLink('');
         setPreview(null);
         if (formRef.current) formRef.current.reset();
     }
   }, [groupToEdit]);
 
 
-  const handleFetchPreview = () => {
-    const link = linkInputRef.current?.value || '';
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLink = e.target.value;
+    setLink(newLink);
 
-    const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = link.includes('whatsapp.com/channel');
-
+    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = newLink.includes('whatsapp.com/channel');
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
     if (isValidForType) {
         startFetchingPreview(async () => {
-            const result = await getGroupPreview(link);
+            const result = await getGroupPreview(newLink);
             if (result && !result.error) {
                 setPreview(result);
                  if (formRef.current) {
@@ -157,21 +159,9 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                 }
             } else {
                 setPreview(null);
-                if (result.error) {
-                    toast({
-                        title: 'Preview Error',
-                        description: result.error,
-                        variant: 'destructive'
-                    });
-                }
             }
         });
     } else {
-        toast({
-            title: 'Invalid Link',
-            description: `Please enter a valid WhatsApp ${type} link.`,
-            variant: 'destructive'
-        });
         setPreview(null);
     }
   };
@@ -200,7 +190,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
                   setType(v);
                   setPreview(null);
-                  if (linkInputRef.current) linkInputRef.current.value = '';
+                  setLink('');
               }} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
@@ -215,12 +205,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
                 <Label htmlFor="link">Link</Label>
-                <div className="flex items-center gap-2">
-                    <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} defaultValue={groupToEdit?.link} />
-                    <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
-                        {isFetchingPreview ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Fetch'}
-                    </Button>
-                </div>
+                <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} required />
                 {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
 
@@ -244,13 +229,13 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} />
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} required />
               {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} required />
               {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
             
@@ -258,7 +243,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
-              <Select name="country" defaultValue={groupToEdit?.country}>
+              <Select name="country" defaultValue={groupToEdit?.country} required>
                   <SelectTrigger id="country" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
                   </SelectTrigger>
@@ -273,7 +258,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="category">Category</Label>
-              <Select name="category" defaultValue={groupToEdit?.category}>
+              <Select name="category" defaultValue={groupToEdit?.category} required>
                   <SelectTrigger id="category" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
                   </SelectTrigger>
@@ -295,6 +280,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
 
       <DialogFooter className="p-6 pt-4 border-t bg-background">
+        <DialogClose asChild>
+          <Button type="button" variant="outline">
+            Cancel
+          </Button>
+        </DialogClose>
         <SubmitButton isEditMode={isEditMode} isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
       </DialogFooter>
     </>

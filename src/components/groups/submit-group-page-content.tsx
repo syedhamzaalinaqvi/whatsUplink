@@ -69,9 +69,9 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const linkInputRef = useRef<HTMLInputElement>(null);
   
   const [type, setType] = useState<'group' | 'channel'>('group');
+  const [link, setLink] = useState('');
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
 
@@ -92,7 +92,6 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
           title: 'Success!',
           description: state.message,
         });
-        // Redirect to detail page after successful submission
         router.push(`/group/invite/${state.group.id}`);
       } else {
         const errorMsg = 
@@ -111,20 +110,19 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     }
   }, [state, router, toast]);
 
-  const handleFetchPreview = () => {
-    const link = linkInputRef.current?.value || '';
-    
-    const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = link.includes('whatsapp.com/channel');
+  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLink = e.target.value;
+    setLink(newLink);
 
+    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = newLink.includes('whatsapp.com/channel');
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
     if (isValidForType) {
         startFetchingPreview(async () => {
-            const result = await getGroupPreview(link);
+            const result = await getGroupPreview(newLink);
             if (result && !result.error) {
                 setPreview(result);
-                // Manually update form fields that the formAction will use
                 if (formRef.current) {
                     (formRef.current.elements.namedItem('title') as HTMLInputElement).value = result.title || '';
                     (formRef.current.elements.namedItem('description') as HTMLTextAreaElement).value = result.description || '';
@@ -132,21 +130,9 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
                 }
             } else {
                 setPreview(null);
-                if (result.error) {
-                    toast({
-                        title: 'Preview Error',
-                        description: result.error,
-                        variant: 'destructive'
-                    });
-                }
             }
         });
     } else {
-         toast({
-            title: 'Invalid Link',
-            description: `Please enter a valid WhatsApp ${type} link.`,
-            variant: 'destructive'
-        });
         setPreview(null);
     }
   };
@@ -159,7 +145,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
             <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
                 setType(v);
                 setPreview(null);
-                if(linkInputRef.current) linkInputRef.current.value = '';
+                setLink('');
             }} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
@@ -174,12 +160,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>
-            <div className="flex items-center gap-2">
-              <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} />
-              <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
-                  {isFetchingPreview ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Fetch'}
-              </Button>
-            </div>
+          <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} required />
           {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
 
@@ -202,13 +183,13 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} />
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} required />
            {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} required />
            {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
@@ -216,7 +197,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>
-          <Select name="country">
+          <Select name="country" required>
               <SelectTrigger id="country" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
               </SelectTrigger>
@@ -231,7 +212,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="category">Category</Label>
-          <Select name="category">
+          <Select name="category" required>
               <SelectTrigger id="category" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
               </SelectTrigger>
