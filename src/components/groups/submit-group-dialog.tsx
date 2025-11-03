@@ -1,8 +1,6 @@
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { Loader2, Link as LinkIcon, Search } from 'lucide-react';
+import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,42 +33,14 @@ type SubmitGroupDialogContentProps = {
   countries: Country[];
 }
 
-function SubmitButton({ isEditMode, areFiltersReady }: { isEditMode: boolean; areFiltersReady: boolean; }) {
-    const { pending } = useFormStatus();
-    
-    const getButtonContent = () => {
-        if (pending) {
-            return (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditMode ? 'Saving...' : 'Processing...'}
-                </>
-            );
-        }
-        if (!areFiltersReady) {
-             return (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading Filters...
-                </>
-            );
-        }
-        return isEditMode ? 'Save Changes' : 'Submit Entry';
-    }
-
-    return (
-        <Button form="submit-group-form" type="submit" disabled={pending || !areFiltersReady}>
-            {getButtonContent()}
-        </Button>
-    );
-}
-
-
 export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const isEditMode = !!groupToEdit;
-  
+  const [isPending, startTransition] = useTransition();
+  const [isFetchingPreview, startFetchingPreview] = useTransition();
+
+  const [link, setLink] = useState(groupToEdit?.link || '');
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
 
@@ -78,41 +48,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   
   const placeholders = {
     group: "https://chat.whatsapp.com/...",
-    channel: "https://www.whatsapp.com/channel/..."
+    channel: "https://whatsapp.com/channel/..."
   };
-
-  const initialState: FormState = { message: '', errors: {} };
-  const action = isEditMode ? updateGroup : submitGroup;
-  const [state, formAction] = useActionState(action, initialState);
-
-  useEffect(() => {
-    if (state.message) {
-      if (state.group) {
-        toast({
-          title: 'Success!',
-          description: state.message,
-        });
-        onGroupSubmitted(state.group);
-      } else {
-        const errorMsg = 
-            state.errors?.link?.[0] || 
-            state.errors?.title?.[0] || 
-            state.errors?.description?.[0] || 
-            state.errors?.category?.[0] || 
-            state.errors?.country?.[0] || 
-            state.errors?._form?.[0] ||
-            state.message;
-        toast({
-          title: 'Error',
-          description: errorMsg,
-          variant: 'destructive',
-        });
-      }
-    }
-  }, [state, onGroupSubmitted, toast]);
-
+  
   useEffect(() => {
     if (groupToEdit) {
+      setLink(groupToEdit.link);
       setType(groupToEdit.type);
       setPreview({
         title: groupToEdit.title,
@@ -120,12 +61,87 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
         image: groupToEdit.imageUrl,
       });
     } else {
+        setLink('');
         setType('group');
         setPreview(null);
         if (formRef.current) formRef.current.reset();
     }
   }, [groupToEdit]);
 
+  const handleFetchPreview = () => {
+    if (!link) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a link to fetch its preview.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    startFetchingPreview(async () => {
+      const result = await getGroupPreview(link);
+      if (result.error) {
+        toast({
+          title: 'Preview Error',
+          description: result.error,
+          variant: 'destructive',
+        });
+      } else {
+        setPreview(result);
+        if (formRef.current) {
+          (formRef.current.elements.namedItem('title') as HTMLInputElement).value = result.title || '';
+          (formRef.current.elements.namedItem('description') as HTMLTextAreaElement).value = result.description || '';
+        }
+        toast({
+          title: 'Success',
+          description: 'Preview fetched successfully!',
+        });
+      }
+    });
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const rawData = Object.fromEntries(formData.entries());
+    
+    // Manually add the link from state
+    rawData.link = link;
+
+    const action = isEditMode ? updateGroup : submitGroup;
+
+    startTransition(async () => {
+      // The `updateGroup` action expects FormData, so we reconstruct it
+      if (isEditMode) {
+        const fullFormData = new FormData();
+        Object.keys(rawData).forEach(key => {
+            fullFormData.append(key, rawData[key] as string);
+        });
+         if(groupToEdit?.id) {
+           fullFormData.append('id', groupToEdit.id);
+        }
+        
+        const result = await updateGroup({ message: '', errors: {}}, fullFormData);
+        if (result.group) {
+            toast({ title: 'Success!', description: result.message });
+            onGroupSubmitted(result.group);
+        } else {
+            const errorMsg = result.errors?.link?.[0] || result.message;
+            toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
+        }
+      } else {
+        // submitGroup expects a plain object
+        const result = await submitGroup(rawData);
+        if (result.group) {
+            toast({ title: 'Success!', description: result.message });
+            onGroupSubmitted(result.group);
+        } else {
+            const errorMsg = result.errors?.link?.[0] || result.message;
+            toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
+        }
+      }
+    });
+  };
 
   const title = isEditMode ? 'Edit Group or Channel' : 'Submit a New Group or Channel';
   const description = isEditMode
@@ -142,12 +158,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
       
       <div className="flex-1 overflow-y-auto px-6">
-        <form ref={formRef} action={formAction} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
-            {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
+        <form ref={formRef} onSubmit={handleSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
-              <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
+              <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
                       <Label htmlFor="type-group">Group</Label>
@@ -161,8 +176,13 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
                 <Label htmlFor="link">Link</Label>
-                <Input id="link" name="link" type="url" placeholder={placeholders[type]} defaultValue={groupToEdit?.link || ''} />
-                {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
+                <div className="flex items-center gap-2">
+                    <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={e => setLink(e.target.value)} />
+                    <Button type="button" variant="outline" size="sm" onClick={handleFetchPreview} disabled={isFetchingPreview}>
+                      {isFetchingPreview ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
+                      <span className="ml-2 hidden sm:inline">Fetch Preview</span>
+                    </Button>
+                </div>
             </div>
 
             {preview?.image && (
@@ -173,17 +193,15 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={groupToEdit?.title || ''} />
-              {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title || ''} />
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={groupToEdit?.description || ''} />
-              {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description || ''} />
             </div>
             
-            <input type="hidden" name="imageUrl" defaultValue={groupToEdit?.imageUrl || 'https://picsum.photos/seed/placeholder/512/512'} />
+            <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || 'https://picsum.photos/seed/placeholder/512/512'} />
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
@@ -197,7 +215,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                       ))}
                   </SelectContent>
               </Select>
-               {state.errors?.country && <p className="text-sm font-medium text-destructive">{state.errors.country[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
@@ -212,7 +229,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                       ))}
                   </SelectContent>
               </Select>
-              {state.errors?.category && <p className="text-sm font-medium text-destructive">{state.errors.category[0]}</p>}
             </div>
             
             <div className="space-y-2 col-span-2">
@@ -229,7 +245,10 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             Cancel
           </Button>
         </DialogClose>
-        <SubmitButton isEditMode={isEditMode} areFiltersReady={areFiltersReady} />
+        <Button form="submit-group-form" type="submit" disabled={isPending || !areFiltersReady}>
+           {(isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+           {isEditMode ? 'Save Changes' : 'Submit Entry'}
+        </Button>
       </DialogFooter>
     </>
   );

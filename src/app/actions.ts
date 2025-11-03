@@ -127,20 +127,8 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
 
 
 export async function submitGroup(
-  prevState: FormState,
-  formData: FormData
+  rawData: any
 ): Promise<FormState> {
-  
-  const rawData = {
-    link: formData.get('link'),
-    title: formData.get('title'),
-    description: formData.get('description'),
-    category: formData.get('category'),
-    country: formData.get('country'),
-    type: formData.get('type'),
-    tags: formData.get('tags'),
-    imageUrl: formData.get('imageUrl'),
-  };
   
   const validatedFields = submitGroupSchema.safeParse(rawData);
 
@@ -393,5 +381,3 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
-
-    
