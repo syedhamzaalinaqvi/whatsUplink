@@ -9,7 +9,7 @@ import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
-import { updateGroupSchema } from '@/lib/schemas';
+import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 
 // Helper function to initialize Firebase on the server
@@ -45,6 +45,9 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
   }
 }
 
+const updateGroupSchema = submitGroupSchema.extend({
+  id: z.string(),
+});
 type UpdateGroupPayload = z.infer<typeof updateGroupSchema>;
 
 export async function updateGroup(
@@ -603,3 +606,5 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
         return { success: false, message: 'Failed to delete report.' };
     }
 }
+
+    

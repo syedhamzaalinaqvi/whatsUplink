@@ -10,7 +10,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
-import { submitGroupSchema } from '@/lib/schemas';
+import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 
 // Helper function to initialize Firebase on the server
@@ -346,21 +346,3 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-
