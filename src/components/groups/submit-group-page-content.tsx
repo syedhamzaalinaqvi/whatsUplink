@@ -1,13 +1,13 @@
+
 'use client';
-import { useRef, useEffect, useState } from 'react';
-import { useActionState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, type FormState } from '@/app/actions';
+import { submitGroup, getGroupPreview } from '@/app/actions';
 import type { Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
@@ -18,71 +18,87 @@ type SubmitGroupPageContentProps = {
     countries: Country[];
 }
 
-function SubmitButton() {
-    const [isPending, setIsPending] = useState(false);
-    // This is a workaround to get form status since useFormStatus is not reliable in all cases.
-    useEffect(() => {
-        const form = document.getElementById('submit-group-page-form');
-        if (!form) return;
-
-        const handleStart = () => setIsPending(true);
-        const handleEnd = () => setIsPending(false);
-
-        form.addEventListener('submit', handleStart);
-        // We need a way to know when submission ends. We'll use a custom event.
-        form.addEventListener('submit-complete', handleEnd);
-
-        return () => {
-            form.removeEventListener('submit', handleStart);
-            form.removeEventListener('submit-complete', handleEnd);
-        };
-    }, []);
-
-    return (
-        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Submit Entry'}
-        </Button>
-    );
-}
-
 export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPageContentProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  
-  const areFiltersReady = !!categories && !!countries;
+  const [isSubmitting, startSubmitTransition] = useTransition();
+  const [isFetchingPreview, setIsFetchingPreview] = useState(false);
 
-  const initialState: FormState = { message: '', errors: {} };
-  const [state, formAction] = useActionState(submitGroup, initialState);
+  const [link, setLink] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [country, setCountry] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState('');
+  const [type, setType] = useState<'group' | 'channel'>('group');
 
-  useEffect(() => {
-    // Dispatch event to stop pending state on button
-    if (formRef.current) {
-        formRef.current.dispatchEvent(new Event('submit-complete'));
+  const handleLinkChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLink = e.target.value;
+    setLink(newLink);
+
+    const isFullLink = newLink.startsWith('https://chat.whatsapp.com/') || newLink.includes('whatsapp.com/channel');
+    if (isFullLink) {
+        setIsFetchingPreview(true);
+        try {
+            const preview = await getGroupPreview(newLink);
+            if (preview && !preview.error) {
+                setTitle(preview.title || '');
+                setDescription(preview.description || '');
+                setImageUrl(preview.image || '');
+            } else {
+                toast({
+                    title: 'Preview Failed',
+                    description: preview.error || 'Could not fetch group preview.',
+                    variant: 'destructive',
+                });
+            }
+        } finally {
+            setIsFetchingPreview(false);
+        }
     }
+  };
 
-    if (state.message && !state.group) {
-        toast({
-            title: 'Error',
-            description: state.message,
-            variant: 'destructive',
-        });
-    }
-    if (state.group) {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    startSubmitTransition(async () => {
+      const formData = new FormData(e.target as HTMLFormElement);
+       // Manually append state values to ensure they are correct
+      formData.set('link', link);
+      formData.set('title', title);
+      formData.set('description', description);
+      formData.set('imageUrl', imageUrl);
+      formData.set('country', country);
+      formData.set('category', category);
+      formData.set('tags', tags);
+      formData.set('type', type);
+
+      const result = await submitGroup({ message: '' }, formData);
+
+      if (result.group) {
         toast({
             title: 'Success!',
-            description: state.message,
+            description: result.message,
         });
-        router.push(`/group/invite/${state.group.id}`);
-    }
-  }, [state, router, toast]);
+        router.push(`/group/invite/${result.group.id}`);
+      } else {
+        toast({
+            title: 'Error',
+            description: result.message || 'An unknown error occurred.',
+            variant: 'destructive',
+        });
+      }
+    });
+  };
+
+  const areFiltersReady = !!categories && !!countries;
 
   return (
-    <form ref={formRef} action={formAction} id="submit-group-page-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+    <form id="submit-group-page-form" onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
-            <RadioGroup name="type" defaultValue="group" className="flex gap-4">
+            <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
                     <Label htmlFor="type-group-page">Group</Label>
@@ -96,69 +112,70 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>
-            <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." />
-            {state?.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
+            <div className="relative">
+                <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." value={link} onChange={handleLinkChange} />
+                {isFetchingPreview && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+            </div>
         </div>
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" />
-          {state?.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." />
-          {state?.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         
          <div className="space-y-2 col-span-2">
               <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-              <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png"/>
+              <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}/>
               <p className="text-xs text-muted-foreground">If left blank, a default image will be used.</p>
-              {state?.errors?.imageUrl && <p className="text-sm font-medium text-destructive">{state.errors.imageUrl[0]}</p>}
         </div>
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>
-          <Select name="country">
+          <Select name="country" value={country} onValueChange={setCountry}>
               <SelectTrigger id="country" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
               </SelectTrigger>
               <SelectContent>
-                  {countries?.map(country => (
-                      <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                  {countries?.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
               </SelectContent>
           </Select>
-           {state?.errors?.country && <p className="text-sm font-medium text-destructive">{state.errors.country[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="category">Category</Label>
-          <Select name="category">
+          <Select name="category" value={category} onValueChange={setCategory}>
               <SelectTrigger id="category" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
               </SelectTrigger>
               <SelectContent>
-                  {categories?.map(category => (
-                      <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                  {categories?.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
               </SelectContent>
           </Select>
-           {state?.errors?.category && <p className="text-sm font-medium text-destructive">{state.errors.category[0]}</p>}
         </div>
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="tags">Tags (Optional)</Label>
-          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" />
+          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" value={tags} onChange={(e) => setTags(e.target.value)} />
           <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
-            {state?.errors?.tags && <p className="text-sm font-medium text-destructive">{state.errors.tags[0]}</p>}
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
-           <SubmitButton />
+           <Button type="submit" disabled={isSubmitting || isFetchingPreview} className="w-full sm:w-auto">
+            {(isSubmitting || isFetchingPreview) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Submit Entry
+           </Button>
         </div>
     </form>
   );
 }
+
+    
