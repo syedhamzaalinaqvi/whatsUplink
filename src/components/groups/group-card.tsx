@@ -35,6 +35,10 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
   const handlePrefetch = () => {
     router.prefetch(detailUrl);
   };
+  
+  const handleCardClick = () => {
+    sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+  };
 
   if (view === 'grid') {
     return (
@@ -42,7 +46,7 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
         className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card group"
         onMouseEnter={handlePrefetch}
       >
-        <Link href={detailUrl} className="block absolute inset-0 z-0" />
+        <Link href={detailUrl} className="block absolute inset-0 z-0" onClick={handleCardClick} />
         <Badge className="absolute top-2 left-2 text-xs capitalize bg-primary text-primary-foreground hover:bg-primary/80 z-10">{group.country}</Badge>
         <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground hover:bg-accent/80 z-10">{group.category}</Badge>
         <Avatar className="h-24 w-24 text-primary border-2 border-primary/20">
@@ -146,7 +150,7 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
                     <span className="sr-only">Share</span>
                 </Button>
             </SharePopover>
-            <Button asChild className="w-full" variant="secondary">
+            <Button asChild className="w-full" variant="secondary" onClick={handleCardClick}>
                 <Link href={detailUrl}>
                 View Details
                 <ExternalLink className="ml-2 h-4 w-4" />
