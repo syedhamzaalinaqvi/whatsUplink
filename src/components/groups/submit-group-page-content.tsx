@@ -137,7 +137,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   };
 
   return (
-    <form ref={formRef} action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+    <form ref={formRef} action={formAction} id="submit-group-page-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
@@ -158,8 +158,10 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="link">Link</Label>
-          <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
+          <Label htmlFor="link-display">Link</Label>
+          <Input id="link-display" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
+          {/* This hidden input ensures the link value is submitted with the form */}
+          <input type="hidden" name="link" value={link} />
           {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
 
@@ -231,7 +233,9 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
-            <SubmitButton isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
+            <Button type="submit" form="submit-group-page-form" disabled={isFetchingPreview || !areFiltersReady}>
+                <SubmitButton isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
+            </Button>
         </div>
     </form>
   );

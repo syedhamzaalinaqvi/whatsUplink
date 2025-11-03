@@ -204,8 +204,10 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             </div>
             
             <div className="space-y-2 col-span-2">
-                <Label htmlFor="link">Link</Label>
-                <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
+                <Label htmlFor="link-display">Link</Label>
+                <Input id="link-display" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
+                {/* This hidden input ensures the link value is submitted with the form */}
+                <input type="hidden" name="link" value={link} />
                 {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
 
