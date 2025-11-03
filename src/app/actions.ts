@@ -24,7 +24,7 @@ function getFirestoreInstance() {
 }
 
 const submitGroupSchema = z.object({
-  link: z.string().url('Please enter a valid WhatsApp group or channel link'),
+  link: z.string().url({ message: 'Please enter a valid WhatsApp link.' }),
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
@@ -37,14 +37,14 @@ const submitGroupSchema = z.object({
         return data.link.startsWith('https://chat.whatsapp.com/');
     }
     if (data.type === 'channel') {
-        // Handles both www. and non-www links
         return data.link.includes('whatsapp.com/channel');
     }
     return false;
 }, {
-    message: "The link format doesn't match the selected type.",
+    message: "The link format doesn't match the selected type (group or channel).",
     path: ['link'],
 });
+
 
 export type FormState = {
   message: string;
@@ -58,6 +58,7 @@ export type FormState = {
     type?: string[];
     tags?: string[];
     imageUrl?: string[];
+    _form?: string[];
   };
 };
 
@@ -67,7 +68,12 @@ export async function getGroupPreview(link: string) {
     return { error: 'Invalid WhatsApp group or channel link.' };
   }
   try {
-    const preview = await getLinkPreview(link, {
+    // Automatically add 'www.' for channel links if missing for the preview API
+    const previewLink = link.startsWith('https://whatsapp.com/channel') 
+        ? link.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel')
+        : link;
+
+    const preview = await getLinkPreview(previewLink, {
       headers: {
         'X-Link-Preview-Api-Key': process.env.LINK_PREVIEW_API_KEY,
       },
@@ -84,7 +90,7 @@ export async function getGroupPreview(link: string) {
 
   } catch (e: any) {
     console.error('Link preview error:', e);
-    return { error: 'fetch failed' };
+    return { error: 'Could not fetch group preview. The link may be invalid or private.' };
   }
 }
 
@@ -124,25 +130,24 @@ export async function submitGroup(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  let linkValue = formData.get('link') as string;
-  const typeValue = formData.get('type') as string;
-
-  // Automatically add 'www.' if it's a channel link and it's missing
-  if (typeValue === 'channel' && linkValue && linkValue.startsWith('https://whatsapp.com/channel')) {
-    linkValue = linkValue.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
-    formData.set('link', linkValue);
-  }
   
-  const validatedFields = submitGroupSchema.safeParse({
-    link: linkValue,
+  const rawData = {
+    link: formData.get('link'),
     title: formData.get('title'),
     description: formData.get('description'),
     category: formData.get('category'),
     country: formData.get('country'),
-    type: typeValue,
+    type: formData.get('type'),
     tags: formData.get('tags'),
     imageUrl: formData.get('imageUrl'),
-  });
+  };
+
+  // Automatically add 'www.' to channel links for validation consistency
+  if (rawData.type === 'channel' && typeof rawData.link === 'string' && rawData.link.startsWith('https://whatsapp.com/channel')) {
+    rawData.link = rawData.link.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
+  }
+  
+  const validatedFields = submitGroupSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -393,5 +398,3 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
-
-    

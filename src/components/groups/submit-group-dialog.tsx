@@ -1,6 +1,7 @@
 
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, getGroupPreview } from '@/app/actions';
+import { submitGroup, getGroupPreview, type FormState } from '@/app/actions';
 import type { GroupLink, Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
@@ -34,6 +35,45 @@ type SubmitGroupDialogContentProps = {
   countries: Country[];
 }
 
+function SubmitButton({ isEditMode, isFetchingPreview, areFiltersReady }: { isEditMode: boolean; isFetchingPreview: boolean; areFiltersReady: boolean; }) {
+    const { pending } = useFormStatus();
+    
+    const getButtonContent = () => {
+        if (pending) {
+            return (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isEditMode ? 'Saving...' : 'Processing...'}
+                </>
+            );
+        }
+        if (isFetchingPreview) {
+            return (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Fetching...
+                </>
+            );
+        }
+        if (!areFiltersReady) {
+             return (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading Filters...
+                </>
+            );
+        }
+        return isEditMode ? 'Save Changes' : 'Submit Entry';
+    }
+
+    return (
+        <Button type="submit" disabled={pending || isFetchingPreview || !areFiltersReady}>
+            {getButtonContent()}
+        </Button>
+    );
+}
+
+
 export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,7 +82,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
-  const [isSubmitting, startSubmitting] = useTransition();
 
   const areFiltersReady = categories && categories.length > 0 && countries && countries.length > 0;
   
@@ -51,9 +90,42 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     channel: "https://www.whatsapp.com/channel/..."
   };
 
+  const [linkInput, setLinkInput] = useState(groupToEdit?.link || '');
+
+  const initialState: FormState = { message: '', errors: {} };
+  const action = isEditMode ? updateGroup : submitGroup;
+  const [state, formAction] = useFormState(action, initialState);
+
+  useEffect(() => {
+    if (state.message) {
+      if (state.group) {
+        toast({
+          title: 'Success!',
+          description: state.message,
+        });
+        onGroupSubmitted(state.group);
+      } else {
+        const errorMsg = 
+            state.errors?.link?.[0] || 
+            state.errors?.title?.[0] || 
+            state.errors?.description?.[0] || 
+            state.errors?.category?.[0] || 
+            state.errors?.country?.[0] || 
+            state.errors?._form?.[0] ||
+            state.message;
+        toast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [state, onGroupSubmitted, toast]);
+
   useEffect(() => {
     if (groupToEdit) {
       setType(groupToEdit.type);
+      setLinkInput(groupToEdit.link);
       setPreview({
         title: groupToEdit.title,
         description: groupToEdit.description,
@@ -61,6 +133,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       });
     } else {
         setType('group');
+        setLinkInput('');
         setPreview(null);
         formRef.current?.reset();
     }
@@ -69,7 +142,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const link = e.target.value;
-    
+    setLinkInput(link); // Keep state in sync
+
     const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = link.includes('whatsapp.com/channel');
 
@@ -80,6 +154,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             const result = await getGroupPreview(link);
             if (result && !result.error) {
                 setPreview(result);
+                 if (formRef.current) {
+                    (formRef.current.elements.namedItem('title') as HTMLInputElement).value = result.title || '';
+                    (formRef.current.elements.namedItem('description') as HTMLTextAreaElement).value = result.description || '';
+                    (formRef.current.elements.namedItem('imageUrl') as HTMLInputElement).value = result.image || '';
+                }
             } else {
                 setPreview(null);
                 if (result.error) {
@@ -96,29 +175,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    startSubmitting(async () => {
-      const action = isEditMode ? updateGroup : submitGroup;
-      const result = await action({ message: '' }, formData);
-
-      if (result.group) {
-        toast({
-          title: 'Success!',
-          description: result.message,
-        });
-        onGroupSubmitted(result.group);
-      } else {
-        toast({
-          title: 'Error',
-          description: result.errors?.link?.[0] || result.errors?.title?.[0] || result.errors?.description?.[0] || result.message,
-          variant: 'destructive',
-        });
-      }
-    });
-  };
 
   const title = isEditMode ? 'Edit Group or Channel' : 'Submit a New Group or Channel';
   const description = isEditMode
@@ -133,7 +189,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </DialogHeader>
       
       <div className="flex-1 overflow-y-auto px-6">
-        <form ref={formRef} onSubmit={handleFormSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
+        <form ref={formRef} action={formAction} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
             
             <div className="space-y-2 col-span-2">
@@ -141,10 +197,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => {
                   setType(v);
                   setPreview(null);
-                  if (formRef.current) {
-                    const linkInput = formRef.current.elements.namedItem('link') as HTMLInputElement;
-                    if(linkInput) linkInput.value = '';
-                  }
+                  setLinkInput('');
               }} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
@@ -159,7 +212,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="link">Link</Label>          
-              <Input id="link" name="link" type="url" placeholder={placeholders[type]} defaultValue={groupToEdit?.link || ''} onChange={handleLinkChange} />
+              <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={linkInput} onChange={handleLinkChange} />
+               {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
 
             {(isFetchingPreview || preview) && (
@@ -181,15 +235,17 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} key={`title-${preview?.title || groupToEdit?.id}`}/>
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} key={`title-${groupToEdit?.id}-${preview?.title}`} />
+              {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} key={`desc-${preview?.description || groupToEdit?.id}`} />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} key={`desc-${groupToEdit?.id}-${preview?.description}`} />
+              {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
             
-            <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
+            <input type="hidden" name="imageUrl" defaultValue={preview?.image || groupToEdit?.imageUrl || ''} key={`img-${groupToEdit?.id}-${preview?.image}`} />
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
@@ -203,6 +259,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                       ))}
                   </SelectContent>
               </Select>
+               {state.errors?.country && <p className="text-sm font-medium text-destructive">{state.errors.country[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
@@ -217,6 +274,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                       ))}
                   </SelectContent>
               </Select>
+              {state.errors?.category && <p className="text-sm font-medium text-destructive">{state.errors.category[0]}</p>}
             </div>
             
             <div className="space-y-2 col-span-2">
@@ -228,27 +286,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
 
       <DialogFooter className="p-6 pt-4 border-t bg-background">
-        <Button type="submit" form="submit-group-form" disabled={isSubmitting || isFetchingPreview || !areFiltersReady}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditMode ? 'Saving...' : 'Processing...'}
-            </>
-          ) : isFetchingPreview ? (
-             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Fetching...
-            </>
-          ) : !areFiltersReady ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading Filters...
-            </>
-          )
-           : (
-            isEditMode ? 'Save Changes' : 'Submit Entry'
-          )}
-        </Button>
+        <SubmitButton isEditMode={isEditMode} isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
       </DialogFooter>
     </>
   );

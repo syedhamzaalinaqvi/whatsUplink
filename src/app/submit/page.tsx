@@ -24,7 +24,7 @@ export default async function SubmitPage() {
             <CardHeader>
               <CardTitle className="text-2xl">Submit a New Group or Channel</CardTitle>
               <CardDescription>
-                Paste a WhatsApp group or channel link to fetch its details automatically, then fill out the rest of the form.
+                Select a type, then paste a WhatsApp link to fetch its details automatically.
               </CardDescription>
             </CardHeader>
             <CardContent>
