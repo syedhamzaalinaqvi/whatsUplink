@@ -1,3 +1,4 @@
+
 'use client';
 import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -228,13 +229,13 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} required />
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} />
               {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} required />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} />
               {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
             
@@ -242,7 +243,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
-              <Select name="country" defaultValue={groupToEdit?.country} required>
+              <Select name="country" defaultValue={groupToEdit?.country}>
                   <SelectTrigger id="country" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
                   </SelectTrigger>
@@ -257,7 +258,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="category">Category</Label>
-              <Select name="category" defaultValue={groupToEdit?.category} required>
+              <Select name="category" defaultValue={groupToEdit?.category}>
                   <SelectTrigger id="category" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
                   </SelectTrigger>
@@ -289,5 +290,3 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
-
-    

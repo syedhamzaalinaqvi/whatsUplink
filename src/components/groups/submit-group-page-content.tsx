@@ -58,7 +58,7 @@ function SubmitButton({ isFetchingPreview, areFiltersReady }: { isFetchingPrevie
     }
 
     return (
-        <Button form="submit-group-form" type="submit" disabled={pending || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
+        <Button type="submit" disabled={pending || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
             {getButtonContent()}
         </Button>
     );
@@ -137,7 +137,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   };
 
   return (
-    <form ref={formRef} action={formAction} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+    <form ref={formRef} action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
@@ -182,13 +182,13 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} required />
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} />
            {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} required />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} />
            {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
@@ -196,7 +196,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>
-          <Select name="country" required>
+          <Select name="country">
               <SelectTrigger id="country" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
               </SelectTrigger>
@@ -211,7 +211,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="category">Category</Label>
-          <Select name="category" required>
+          <Select name="category">
               <SelectTrigger id="category" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
               </SelectTrigger>
@@ -236,5 +236,3 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
-
-    
