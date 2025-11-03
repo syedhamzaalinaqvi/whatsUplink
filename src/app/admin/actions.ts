@@ -4,13 +4,13 @@
 import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
-import type { FormState, SubmitGroupPayload } from '../actions';
+import type { FormState } from '../actions';
 import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink, Report } from '@/lib/data';
 import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
-import { submitGroupSchema } from '../actions';
+import { updateGroupSchema } from '@/lib/schemas';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -44,10 +44,6 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
     return { success: false, message: `Failed to delete group: ${errorMessage}` };
   }
 }
-
-const updateGroupSchema = submitGroupSchema.extend({
-  id: z.string(),
-});
 
 type UpdateGroupPayload = z.infer<typeof updateGroupSchema>;
 
