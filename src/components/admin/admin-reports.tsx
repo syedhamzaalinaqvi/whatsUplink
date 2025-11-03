@@ -95,7 +95,11 @@ export function AdminReports({ reports, onReportDeleted }: AdminReportsProps) {
                   <TableRow key={report.id}>
                     <TableCell className="font-medium">{report.groupTitle}</TableCell>
                     <TableCell>
-                      <Badge variant="destructive">{report.reason}</Badge>
+                      {report.reason.startsWith('Other:') ? (
+                        <span className="text-sm">{report.reason}</span>
+                      ) : (
+                        <Badge variant="destructive">{report.reason}</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {report.createdAt ? formatDistanceToNow(new Date(report.createdAt), { addSuffix: true }) : 'N/A'}

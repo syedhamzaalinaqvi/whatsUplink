@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,7 +18,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
@@ -33,7 +33,18 @@ const REPORT_REASONS = [
 
 const reportSchema = z.object({
   reason: z.string({ required_error: 'Please select a reason.' }),
+  otherReason: z.string().optional(),
+}).refine(data => {
+    // If reason is 'Other', then otherReason must have content.
+    if (data.reason === 'Other' && (!data.otherReason || data.otherReason.trim().length < 10)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Please provide a detailed reason (at least 10 characters).",
+    path: ["otherReason"], // This specifies which field the error message is associated with.
 });
+
 
 type ReportFormValues = z.infer<typeof reportSchema>;
 
@@ -46,7 +57,15 @@ type GroupReportDialogProps = {
 export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, startSubmitting] = useTransition();
-  const form = useForm<ReportFormValues>({ resolver: zodResolver(reportSchema) });
+  const form = useForm<ReportFormValues>({ 
+    resolver: zodResolver(reportSchema),
+    defaultValues: {
+        reason: '',
+        otherReason: '',
+    }
+  });
+
+  const selectedReason = form.watch('reason');
 
   const onSubmit = (data: ReportFormValues) => {
     startSubmitting(async () => {
@@ -54,6 +73,9 @@ export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDi
       formData.append('groupId', group.id);
       formData.append('groupTitle', group.title);
       formData.append('reason', data.reason);
+      if (data.reason === 'Other' && data.otherReason) {
+        formData.append('otherReason', data.otherReason);
+      }
 
       const result = await reportGroup(formData);
       
@@ -107,6 +129,24 @@ export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDi
                 </FormItem>
               )}
             />
+            {selectedReason === 'Other' && (
+              <FormField
+                control={form.control}
+                name="otherReason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Please provide more details</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell us more about the issue..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </form>
         </Form>
         <DialogFooter>

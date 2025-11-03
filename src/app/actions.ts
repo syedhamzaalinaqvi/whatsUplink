@@ -84,7 +84,7 @@ export async function getGroupPreview(link: string) {
 
   } catch (e: any) {
     console.error('Link preview error:', e);
-    return { error: e.message || 'Failed to fetch link preview.' };
+    return { error: 'fetch failed' };
   }
 }
 
@@ -335,6 +335,16 @@ const reportGroupSchema = z.object({
   groupId: z.string().min(1),
   groupTitle: z.string().min(1),
   reason: z.string().min(1, 'Please select a reason for reporting.'),
+  otherReason: z.string().optional(),
+}).refine(data => {
+    // If reason is 'Other', then otherReason must have content.
+    if (data.reason === 'Other' && (!data.otherReason || data.otherReason.trim().length < 10)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Please provide a detailed reason (at least 10 characters).",
+    path: ["otherReason"], // This specifies which field the error message is associated with.
 });
 
 export async function reportGroup(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -342,18 +352,28 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     groupId: formData.get('groupId'),
     groupTitle: formData.get('groupTitle'),
     reason: formData.get('reason'),
+    otherReason: formData.get('otherReason'),
   });
   
   if (!validatedFields.success) {
-    return { success: false, message: 'Invalid report data. Please try again.' };
+      const fieldErrors = validatedFields.error.flatten().fieldErrors;
+      const errorMessage = fieldErrors.otherReason?.[0] || 'Invalid report data. Please try again.';
+      return { success: false, message: errorMessage };
   }
+
+  const { groupId, groupTitle, reason, otherReason } = validatedFields.data;
 
   try {
     const db = getFirestoreInstance();
     const reportsCollection = collection(db, 'reports');
+    
+    // Combine reason and otherReason if 'Other' is selected.
+    const finalReason = reason === 'Other' ? `Other: ${otherReason}` : reason;
 
     const reportData: Omit<Report, 'id' | 'createdAt'> = {
-      ...validatedFields.data,
+      groupId,
+      groupTitle,
+      reason: finalReason,
       status: 'pending',
     };
     
@@ -362,11 +382,9 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
       createdAt: serverTimestamp(),
     });
 
-    return { success: true, message: `Thank you for your report. We will review "${validatedFields.data.groupTitle}" shortly.` };
+    return { success: true, message: `Thank you for your report. We will review "${groupTitle}" shortly.` };
   } catch (error) {
     console.error('Error submitting report:', error);
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
-
-    
