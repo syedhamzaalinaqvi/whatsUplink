@@ -33,6 +33,9 @@ import { AdminTaxonomyManager } from './admin-taxonomy-manager';
 import { AdminLayoutSettings } from './admin-layout-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AdminReports } from './admin-reports';
+import { useFirestore } from '@/firebase/provider';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { mapDocToGroupLink, mapDocToReport } from '@/lib/data';
 
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
@@ -63,6 +66,7 @@ export function AdminDashboard({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { firestore } = useFirestore();
 
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
   const [reports, setReports] = useState<Report[]>(initialReports);
@@ -89,16 +93,52 @@ export function AdminDashboard({
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
 
   useEffect(() => {
+    // This effect ensures that if the user navigates (e.g., pagination), the new props are reflected.
     setGroups(initialGroups);
+    setReports(initialReports);
     setHasNextPage(initialHasNextPage);
     setHasPrevPage(initialHasPrevPage);
-    setModerationSettings(initialModerationSettings);
-    setLayoutSettings(initialLayoutSettings);
-    setCategories(initialCategories);
-    setCountries(initialCountries);
-    setReports(initialReports);
     setIsLoading(false);
-  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries, initialReports]);
+  }, [initialGroups, initialReports, initialHasNextPage, initialHasPrevPage]);
+
+  useEffect(() => {
+      // These setters are for non-paginated data that can also be updated within the dashboard.
+      setModerationSettings(initialModerationSettings);
+      setLayoutSettings(initialLayoutSettings);
+      setCategories(initialCategories);
+      setCountries(initialCountries);
+  }, [initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
+
+  useEffect(() => {
+    if (!firestore) return;
+
+    // Real-time listener for Reports
+    const reportsQuery = query(collection(firestore, 'reports'), orderBy('createdAt', 'desc'));
+    const unsubscribeReports = onSnapshot(reportsQuery, (snapshot) => {
+      const updatedReports = snapshot.docs.map(mapDocToReport);
+      setReports(updatedReports);
+    });
+
+    // Real-time listener for Groups
+    // This listener will only add new groups to the top of the existing list to avoid pagination conflicts.
+    // Full reloads happen on navigation.
+    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
+    const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
+       const serverGroups = snapshot.docs.map(mapDocToGroupLink);
+       setGroups(prevGroups => {
+         // A simple merge strategy: add new groups to the front.
+         // This avoids disrupting the user's paginated view but shows new data.
+         const existingIds = new Set(prevGroups.map(g => g.id));
+         const newGroups = serverGroups.filter(g => !existingIds.has(g.id));
+         return [...newGroups, ...prevGroups].slice(0, rowsPerPage);
+       });
+    });
+
+    return () => {
+      unsubscribeReports();
+      unsubscribeGroups();
+    };
+  }, [firestore, rowsPerPage]);
 
 
   const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
@@ -202,7 +242,7 @@ export function AdminDashboard({
         <AdminStats groups={groups} />
 
         <Tabs defaultValue="groups" className="mt-6">
-            <TabsList className="h-auto w-full md:w-fit md:h-10 flex flex-col md:inline-flex md:flex-row">
+             <TabsList className="h-auto w-full md:w-fit md:h-10 flex flex-col md:inline-flex md:flex-row">
                 <TabsTrigger value="groups">Groups</TabsTrigger>
                 <TabsTrigger value="settings">Settings & Layout</TabsTrigger>
                 <TabsTrigger value="reports">
