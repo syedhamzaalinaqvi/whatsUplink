@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect } from 'react';
 import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
 import type { Category, Country, GroupLink } from '@/lib/data';
@@ -37,6 +37,18 @@ export function GroupClientPage({
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
+
+  // This hook handles restoring the scroll position
+  useLayoutEffect(() => {
+    const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+    if (savedScrollPosition) {
+      // A small timeout can sometimes help ensure the content is rendered before scrolling
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScrollPosition, 10));
+        sessionStorage.removeItem('scrollPosition');
+      }, 0);
+    }
+  }, []); // Empty dependency array ensures it only runs once on mount
 
   useEffect(() => {
     setCategories(initialCategories);
@@ -82,7 +94,7 @@ export function GroupClientPage({
             isLoadingFilters={isLoadingFilters}
         />
         
-        {isGroupLoading ? (
+        {isGroupLoading && filteredGroups.length === 0 ? (
             <div className={gridClass}>
                 {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />

@@ -35,14 +35,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
-  useLayoutEffect(() => {
-    const savedScrollPosition = sessionStorage.getItem('scrollPosition');
-    if (savedScrollPosition) {
-      window.scrollTo(0, parseInt(savedScrollPosition, 10));
-      sessionStorage.removeItem('scrollPosition');
-    }
-  }, []);
-
   useEffect(() => {
     async function fetchInitialData() {
       if (!firestore) {
