@@ -13,7 +13,10 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, updateGroup, getGroupPreview, type FormState, type SubmitGroupPayload } from '@/app/actions';
+import { submitGroup, type FormState, type SubmitGroupPayload } from '@/app/actions';
+import { updateGroup } from '@/app/admin/update-group-action';
+import { getGroupPreview } from '@/app/actions';
+
 import type { GroupLink, Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
@@ -88,7 +91,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     e.preventDefault();
     setErrors(undefined);
     startTransition(async () => {
-        const payload: SubmitGroupPayload = {
+        const payload: SubmitGroupPayload & { id?: string } = {
             link,
             title,
             description,
@@ -100,7 +103,15 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
         };
 
         const action = isEditMode ? updateGroup : submitGroup;
-        const result = isEditMode ? await action({ id: groupToEdit.id, ...payload }) : await action(payload);
+        
+        let result;
+        if (isEditMode) {
+          payload.id = groupToEdit.id;
+          result = await updateGroup(payload as payload & { id: string });
+        } else {
+          result = await submitGroup(payload);
+        }
+
 
         if (result.group) {
             toast({
@@ -245,3 +256,5 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
+
+    

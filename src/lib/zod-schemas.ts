@@ -22,7 +22,3 @@ export const submitGroupSchema = z.object({
     message: "Please enter a valid WhatsApp Group or Channel link.",
     path: ['link'],
 });
-
-export const updateGroupSchema = submitGroupSchema.extend({
-  id: z.string(),
-});

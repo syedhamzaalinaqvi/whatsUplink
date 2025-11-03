@@ -9,8 +9,6 @@ import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
-import { getModerationSettings } from '@/lib/admin-settings';
-import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 
 // Helper function to initialize Firebase on the server
@@ -43,56 +41,6 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
     console.error('Error deleting group:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Failed to delete group: ${errorMessage}` };
-  }
-}
-
-const updateGroupSchema = submitGroupSchema.extend({
-  id: z.string(),
-});
-type UpdateGroupPayload = z.infer<typeof updateGroupSchema>;
-
-export async function updateGroup(
-  payload: UpdateGroupPayload
-): Promise<FormState> {
-  const validatedFields = updateGroupSchema.safeParse(payload);
-
-  if (!validatedFields.success) {
-    return {
-      message: 'Validation failed. Please check your input.',
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-  
-  const { id, ...dataToUpdate } = validatedFields.data;
-
-  try {
-    const db = getFirestoreInstance();
-    const groupDocRef = doc(db, 'groups', id);
-
-    const dataForDb: { [key: string]: any } = {
-      ...dataToUpdate,
-      tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [],
-      imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
-      updatedAt: serverTimestamp(),
-    };
-
-    await updateDoc(groupDocRef, dataForDb);
-
-    revalidatePath('/admin');
-    revalidatePath('/');
-    revalidatePath(`/group/invite/${id}`);
-
-    const updatedDoc = await getDoc(groupDocRef);
-    const updatedGroup = mapDocToGroupLink(updatedDoc);
-
-    return {
-      message: 'Group updated successfully!',
-      group: updatedGroup,
-    };
-
-  } catch (error) {
-    console.error('Update processing failed:', error);
-    return { message: 'Failed to update group. Please try again.' };
   }
 }
 
@@ -560,3 +508,5 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
         return { success: false, message: 'Failed to delete report.' };
     }
 }
+
+    
