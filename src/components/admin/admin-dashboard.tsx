@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
@@ -34,7 +33,7 @@ import { AdminLayoutSettings } from './admin-layout-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AdminReports } from './admin-reports';
 import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, limit } from 'firebase/firestore';
 import { mapDocToGroupLink, mapDocToReport } from '@/lib/data';
 
 
@@ -122,15 +121,18 @@ export function AdminDashboard({
     // Real-time listener for Groups
     // This listener will only add new groups to the top of the existing list to avoid pagination conflicts.
     // Full reloads happen on navigation.
-    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
+    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'), limit(rowsPerPage));
     const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
        const serverGroups = snapshot.docs.map(mapDocToGroupLink);
        setGroups(prevGroups => {
-         // A simple merge strategy: add new groups to the front.
-         // This avoids disrupting the user's paginated view but shows new data.
-         const existingIds = new Set(prevGroups.map(g => g.id));
-         const newGroups = serverGroups.filter(g => !existingIds.has(g.id));
-         return [...newGroups, ...prevGroups].slice(0, rowsPerPage);
+         const newGroups = serverGroups.filter(g => !prevGroups.some(pg => pg.id === g.id));
+         const updatedGroups = prevGroups.map(pg => {
+            const updated = serverGroups.find(sg => sg.id === pg.id);
+            return updated || pg;
+         });
+         return [...newGroups, ...updatedGroups]
+            .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+            .slice(0, rowsPerPage);
        });
     });
 
@@ -521,5 +523,3 @@ export function AdminDashboard({
     </div>
   );
 }
-
-    
