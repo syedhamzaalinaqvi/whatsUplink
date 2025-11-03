@@ -31,7 +31,7 @@ export const submitGroupSchema = z.object({
   country: z.string().min(1, 'Please select a country'),
   type: z.enum(['group', 'channel'], { required_error: 'Please select a type' }),
   tags: z.string().optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().url().optional()
 }).refine(data => {
     if (data.type === 'group') {
         return data.link.startsWith('https://chat.whatsapp.com/');
