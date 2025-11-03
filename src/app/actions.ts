@@ -24,7 +24,7 @@ function getFirestoreInstance() {
 }
 
 const submitGroupSchema = z.object({
-  link: z.string().min(1, { message: 'Please enter a valid WhatsApp link.' }).url({ message: 'Please enter a valid WhatsApp link.' }),
+  link: z.string().url({ message: 'Please enter a valid URL.' }),
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
@@ -37,11 +37,12 @@ const submitGroupSchema = z.object({
         return data.link.startsWith('https://chat.whatsapp.com/');
     }
     if (data.type === 'channel') {
-        return data.link.includes('whatsapp.com/channel');
+        // This accepts both 'whatsapp.com/channel' and 'www.whatsapp.com/channel'
+        return data.link.includes('whatsapp.com/channel'); 
     }
     return false;
 }, {
-    message: "The link format doesn't match the selected type (group or channel).",
+    message: "Please enter a valid WhatsApp Group or Channel link.",
     path: ['link'],
 });
 

@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect } from 'react';
-import { useActionState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,6 @@ import type { GroupLink, Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 
 type SubmitGroupDialogContentProps = {
@@ -56,7 +55,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   
   const initialState: FormState = { message: '', errors: {} };
   const action = isEditMode ? updateGroup : submitGroup;
-  const [state, formAction] = useActionState(action, initialState);
+  const [state, formAction] = useFormState(action, initialState);
 
   useEffect(() => {
     // When opening the dialog, reset the state to match the group to edit, or clear it for a new entry.
@@ -141,6 +140,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
         <form action={formAction} id="group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             
             {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
+            <input type="hidden" name="imageUrl" value={imageUrl} />
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
@@ -163,6 +163,21 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                     {isFetchingPreview && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                 </div>
                 {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
+                
+                {imageUrl && (
+                    <div className="mt-4 flex items-center gap-4 p-4 border rounded-md bg-muted/50">
+                        <Image
+                            src={imageUrl}
+                            alt="Fetched Preview"
+                            width={64}
+                            height={64}
+                            className="w-16 h-16 object-contain rounded-md"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Image preview fetched successfully. You can update the title and description if needed.
+                        </p>
+                    </div>
+                )}
             </div>
             
             <div className="space-y-2 col-span-2">
@@ -176,27 +191,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." value={description} onChange={(e) => setDescription(e.target.value)} />
               {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
-            
-            <div className="space-y-2 col-span-2">
-                <Label>Image Preview</Label>
-                <div className="flex items-center gap-4">
-                    <div className="relative w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/50 flex items-center justify-center bg-muted/50">
-                        {imageUrl ? (
-                        <Image
-                            src={imageUrl}
-                            alt="Logo Preview"
-                            fill
-                            className="object-contain rounded-md"
-                        />
-                        ) : (
-                        <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                        )}
-                    </div>
-                     <p className="text-xs text-muted-foreground">An image will be automatically fetched from the link. If it's incorrect, you can edit it later.</p>
-                </div>
-                <input type="hidden" name="imageUrl" value={imageUrl} />
-            </div>
-
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>

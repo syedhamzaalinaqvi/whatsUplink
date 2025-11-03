@@ -1,9 +1,9 @@
 
 'use client';
 import { useEffect, useState } from 'react';
-import { useActionState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,6 @@ import type { Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 
 type SubmitGroupPageContentProps = {
@@ -46,7 +45,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const [type, setType] = useState<'group' | 'channel'>('group');
   
   const initialState: FormState = { message: '', errors: {} };
-  const [state, formAction] = useActionState(submitGroup, initialState);
+  const [state, formAction] = useFormState(submitGroup, initialState);
   
   useEffect(() => {
     if (state.message) {
@@ -95,9 +94,16 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
   const areFiltersReady = !!categories && !!countries;
 
+  const placeholders = {
+    group: "https://chat.whatsapp.com/...",
+    channel: "https://whatsapp.com/channel/..."
+  };
+
   return (
     <form action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
+        <input type="hidden" name="imageUrl" value={imageUrl} />
+
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
             <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
@@ -115,10 +121,25 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>
             <div className="relative">
-                <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." value={link} onChange={handleLinkChange} />
+                <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
                 {isFetchingPreview && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
             </div>
             {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
+            
+            {imageUrl && (
+                <div className="mt-4 flex items-center gap-4 p-4 border rounded-md bg-muted/50">
+                    <Image
+                        src={imageUrl}
+                        alt="Fetched Preview"
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 object-contain rounded-md"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Image preview fetched successfully. You can update the title and description if needed.
+                    </p>
+                </div>
+            )}
         </div>
         
         <div className="space-y-2 col-span-2">
@@ -131,26 +152,6 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
           <Label htmlFor="description">Description</Label>
           <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." value={description} onChange={(e) => setDescription(e.target.value)} />
           {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
-        </div>
-        
-         <div className="space-y-2 col-span-2">
-            <Label>Image Preview</Label>
-            <div className="flex items-center gap-4">
-                <div className="relative w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/50 flex items-center justify-center bg-muted/50">
-                    {imageUrl ? (
-                    <Image
-                        src={imageUrl}
-                        alt="Logo Preview"
-                        fill
-                        className="object-contain rounded-md"
-                    />
-                    ) : (
-                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                    )}
-                </div>
-                <p className="text-xs text-muted-foreground">An image will be automatically fetched from the link. If it's incorrect, you can edit it later.</p>
-            </div>
-            <input type="hidden" name="imageUrl" value={imageUrl} />
         </div>
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
