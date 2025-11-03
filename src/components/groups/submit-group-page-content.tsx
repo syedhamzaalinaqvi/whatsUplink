@@ -1,9 +1,8 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { Loader2, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Search } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,9 +67,9 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
   
   const [type, setType] = useState<'group' | 'channel'>('group');
-  const [link, setLink] = useState('');
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
 
@@ -109,9 +108,9 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     }
   }, [state, router, toast]);
 
-  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLink = e.target.value;
-    setLink(newLink);
+  const handleFetchPreview = () => {
+    const newLink = linkInputRef.current?.value || '';
+    if (!newLink) return;
 
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = newLink.includes('whatsapp.com/channel');
@@ -128,10 +127,20 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
                     (formRef.current.elements.namedItem('imageUrl') as HTMLInputElement).value = result.image || '';
                 }
             } else {
+                toast({
+                  title: 'Error Fetching Preview',
+                  description: result.error || 'Could not fetch group preview. The link may be invalid or private.',
+                  variant: 'destructive',
+                });
                 setPreview(null);
             }
         });
     } else {
+        toast({
+          title: 'Invalid Link Type',
+          description: "The link format doesn't match the selected type (group or channel).",
+          variant: 'destructive',
+        });
         setPreview(null);
     }
   };
@@ -144,7 +153,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
             <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
                 setType(v);
                 setPreview(null);
-                setLink('');
+                if (linkInputRef.current) linkInputRef.current.value = '';
             }} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
@@ -158,10 +167,14 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="link-display">Link</Label>
-          <Input id="link-display" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
-          {/* This hidden input ensures the link value is submitted with the form */}
-          <input type="hidden" name="link" value={link} />
+          <Label htmlFor="link">Link</Label>
+            <div className="flex items-center gap-2">
+                <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} />
+                <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Fetch Preview</span>
+                </Button>
+            </div>
           {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
 
@@ -233,9 +246,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
-            <Button type="submit" form="submit-group-page-form" disabled={isFetchingPreview || !areFiltersReady}>
-                <SubmitButton isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
-            </Button>
+            <SubmitButton isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
         </div>
     </form>
   );

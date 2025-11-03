@@ -1,8 +1,7 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Loader2, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Link as LinkIcon, Search } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,10 +76,10 @@ function SubmitButton({ isEditMode, isFetchingPreview, areFiltersReady }: { isEd
 export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
   const isEditMode = !!groupToEdit;
   
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
-  const [link, setLink] = useState(groupToEdit?.link || '');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
 
@@ -124,24 +123,26 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   useEffect(() => {
     if (groupToEdit) {
       setType(groupToEdit.type);
-      setLink(groupToEdit.link);
       setPreview({
         title: groupToEdit.title,
         description: groupToEdit.description,
         image: groupToEdit.imageUrl,
       });
+      // We set the value directly on the uncontrolled input
+      if (linkInputRef.current) {
+        linkInputRef.current.value = groupToEdit.link;
+      }
     } else {
         setType('group');
-        setLink('');
         setPreview(null);
         if (formRef.current) formRef.current.reset();
     }
   }, [groupToEdit]);
 
 
-  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLink = e.target.value;
-    setLink(newLink);
+  const handleFetchPreview = () => {
+    const newLink = linkInputRef.current?.value || '';
+    if (!newLink) return;
 
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = newLink.includes('whatsapp.com/channel');
@@ -158,10 +159,20 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
                     (formRef.current.elements.namedItem('imageUrl') as HTMLInputElement).value = result.image || '';
                 }
             } else {
+                toast({
+                  title: 'Error Fetching Preview',
+                  description: result.error || 'Could not fetch group preview. The link may be invalid or private.',
+                  variant: 'destructive',
+                })
                 setPreview(null);
             }
         });
     } else {
+        toast({
+          title: 'Invalid Link Type',
+          description: "The link format doesn't match the selected type (group or channel).",
+          variant: 'destructive',
+        })
         setPreview(null);
     }
   };
@@ -190,7 +201,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
                   setType(v);
                   setPreview(null);
-                  setLink('');
+                   if (linkInputRef.current) linkInputRef.current.value = '';
               }} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
@@ -204,10 +215,14 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             </div>
             
             <div className="space-y-2 col-span-2">
-                <Label htmlFor="link-display">Link</Label>
-                <Input id="link-display" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
-                {/* This hidden input ensures the link value is submitted with the form */}
-                <input type="hidden" name="link" value={link} />
+                <Label htmlFor="link">Link</Label>
+                <div className="flex items-center gap-2">
+                    <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} defaultValue={groupToEdit?.link || ''} />
+                    <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">Fetch Preview</span>
+                    </Button>
+                </div>
                 {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
 
