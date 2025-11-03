@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -101,22 +100,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   };
 
   const handleFormSubmit = async (formData: FormData) => {
-    
-    const linkValue = formData.get('link') as string;
-    const typeValue = formData.get('type') as string;
-
-    const isGroupLink = linkValue.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = linkValue.includes('whatsapp.com/channel');
-
-    if ((typeValue === 'group' && !isGroupLink) || (typeValue === 'channel' && !isChannelLink)) {
-        toast({
-            title: 'Invalid Link',
-            description: "The link format does not match the selected type (Group or Channel).",
-            variant: 'destructive'
-        });
-        return;
-    }
-    
     startSubmitting(async () => {
       const action = isEditMode ? updateGroup : submitGroup;
       const result = await action({ message: '' }, formData);
@@ -155,7 +138,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
-              <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
+              <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => {
+                  setType(v);
+                  setLink(''); // Reset link on type change
+                  setPreview(null);
+              }} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
                       <Label htmlFor="type-group">Group</Label>
