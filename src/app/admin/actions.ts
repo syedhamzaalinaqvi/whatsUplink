@@ -4,12 +4,13 @@
 import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
-import type { FormState } from '../actions';
+import type { FormState, SubmitGroupPayload } from '../actions';
 import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink, Report } from '@/lib/data';
 import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
+import { submitGroupSchema } from '../actions';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -44,34 +45,16 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
   }
 }
 
-const updateGroupSchema = z.object({
+const updateGroupSchema = submitGroupSchema.extend({
   id: z.string(),
-  link: z.string().url('Please enter a valid WhatsApp group link'),
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.string().min(1, 'Please select a category'),
-  country: z.string().min(1, 'Please select a country'),
-  type: z.enum(['group', 'channel']),
-  tags: z.string().optional(),
-  imageUrl: z.string().url().optional(),
 });
 
+type UpdateGroupPayload = z.infer<typeof updateGroupSchema>;
 
 export async function updateGroup(
-  prevState: FormState,
-  formData: FormData
+  payload: UpdateGroupPayload
 ): Promise<FormState> {
-  const validatedFields = updateGroupSchema.safeParse({
-    id: formData.get('id'),
-    link: formData.get('link'),
-    title: formData.get('title'),
-    description: formData.get('description'),
-    category: formData.get('category'),
-    country: formData.get('country'),
-    type: formData.get('type'),
-    tags: formData.get('tags'),
-    imageUrl: formData.get('imageUrl'),
-  });
+  const validatedFields = updateGroupSchema.safeParse(payload);
 
   if (!validatedFields.success) {
     return {

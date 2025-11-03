@@ -23,7 +23,7 @@ function getFirestoreInstance() {
     return getFirestore(app);
 }
 
-const submitGroupSchema = z.object({
+export const submitGroupSchema = z.object({
   link: z.string().url({ message: 'Please enter a valid URL.' }),
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -37,7 +37,6 @@ const submitGroupSchema = z.object({
         return data.link.startsWith('https://chat.whatsapp.com/');
     }
     if (data.type === 'channel') {
-        // This accepts both 'whatsapp.com/channel' and 'www.whatsapp.com/channel'
         return data.link.includes('whatsapp.com/channel'); 
     }
     return false;
@@ -46,6 +45,7 @@ const submitGroupSchema = z.object({
     path: ['link'],
 });
 
+export type SubmitGroupPayload = z.infer<typeof submitGroupSchema>;
 
 export type FormState = {
   message: string;
@@ -128,12 +128,10 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
 
 
 export async function submitGroup(
-  prevState: FormState,
-  formData: FormData
+  payload: SubmitGroupPayload
 ): Promise<FormState> {
   
-  const rawData = Object.fromEntries(formData.entries());
-  const validatedFields = submitGroupSchema.safeParse(rawData);
+  const validatedFields = submitGroupSchema.safeParse(payload);
 
   if (!validatedFields.success) {
     return {
@@ -384,3 +382,5 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
+
+    
