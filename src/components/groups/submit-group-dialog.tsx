@@ -1,7 +1,7 @@
 
 'use client';
-import { useRef, useState, useTransition, useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
   const initialState: FormState = { message: '', errors: {} };
   const action = isEditMode ? updateGroup : submitGroup;
-  const [state, formAction] = useFormState(action, initialState);
+  const [state, formAction] = useActionState(action, initialState);
 
   useEffect(() => {
     if (state.message) {

@@ -1,8 +1,8 @@
 
 'use client';
-import { useRef, useState, useTransition, useEffect } from 'react';
+import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -83,7 +83,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   };
 
   const initialState: FormState = { message: '', errors: {} };
-  const [state, formAction] = useFormState(submitGroup, initialState);
+  const [state, formAction] = useActionState(submitGroup, initialState);
 
   useEffect(() => {
     if (state.message) {
