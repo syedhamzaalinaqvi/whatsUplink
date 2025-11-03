@@ -1,8 +1,9 @@
 
 'use client';
-import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -58,7 +59,7 @@ function SubmitButton({ isFetchingPreview, areFiltersReady }: { isFetchingPrevie
     }
 
     return (
-        <Button type="submit" disabled={pending || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
+        <Button form="submit-group-form" type="submit" disabled={pending || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
             {getButtonContent()}
         </Button>
     );
@@ -193,17 +194,17 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} key={`title-${preview?.title}`} />
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} />
            {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} key={`desc-${preview?.description}`} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} />
            {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
-        <input type="hidden" name="imageUrl" defaultValue={preview?.image || ''} key={`img-${preview?.image}`} />
+        <input type="hidden" name="imageUrl" defaultValue={preview?.image || ''} />
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>

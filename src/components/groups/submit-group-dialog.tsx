@@ -1,7 +1,8 @@
 
 'use client';
-import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ function SubmitButton({ isEditMode, isFetchingPreview, areFiltersReady }: { isEd
     }
 
     return (
-        <Button type="submit" disabled={pending || isFetchingPreview || !areFiltersReady}>
+        <Button form="submit-group-form" type="submit" disabled={pending || isFetchingPreview || !areFiltersReady}>
             {getButtonContent()}
         </Button>
     );
@@ -235,17 +236,17 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} key={`title-${groupToEdit?.id}-${preview?.title}`} />
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} />
               {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} key={`desc-${groupToEdit?.id}-${preview?.description}`} />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} />
               {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
             
-            <input type="hidden" name="imageUrl" defaultValue={preview?.image || groupToEdit?.imageUrl || ''} key={`img-${groupToEdit?.id}-${preview?.image}`} />
+            <input type="hidden" name="imageUrl" defaultValue={preview?.image || groupToEdit?.imageUrl || ''} />
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
