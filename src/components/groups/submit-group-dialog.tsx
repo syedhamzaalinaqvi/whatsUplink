@@ -13,7 +13,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, type FormState, updateGroup } from '@/app/admin/actions';
+import { submitGroup, updateGroup, type FormState } from '@/app/actions';
 import type { GroupLink, Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
@@ -27,44 +27,33 @@ type SubmitGroupDialogContentProps = {
 }
 
 function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
-    const { pending } = useFormStatus();
+    const [isPending, setIsPending] = useState(false);
+    
+    // This is a workaround to get form status.
+    useEffect(() => {
+        const form = document.getElementById('submit-group-dialog-form');
+        if (!form) return;
+
+        const handleStart = () => setIsPending(true);
+        const handleEnd = () => setIsPending(false);
+
+        form.addEventListener('submit', handleStart);
+        // We'll use a custom event to signal when submission is complete.
+        form.addEventListener('submit-complete', handleEnd);
+
+        return () => {
+            form.removeEventListener('submit', handleStart);
+            form.removeEventListener('submit-complete', handleEnd);
+        };
+    }, []);
+
     return (
-        <Button form="submit-group-form" type="submit" disabled={pending}>
-            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button form="submit-group-dialog-form" type="submit" disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditMode ? 'Save Changes' : 'Submit Entry'}
         </Button>
     );
 }
-
-// This hook is no longer part of React's public API in this form. We'll use a direct effect.
-const useFormStatus = () => {
-  const [pending, setPending] = useState(false);
-  const formRef = useRef<HTMLFormElement | null>(null);
-
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-
-    const handleSubmit = (event: Event) => {
-      setPending(true);
-    };
-
-    const handleReset = () => {
-      setPending(false);
-    };
-
-    form.addEventListener('submit', handleSubmit);
-    // You might need a way to signal form submission end, e.g., via a custom event
-    // or by observing the form's state if the library you use provides it.
-    // For now, we'll just reset on unmount.
-    return () => {
-      form.removeEventListener('submit', handleSubmit);
-      handleReset(); // Reset on unmount
-    };
-  }, []);
-
-  return { pending, formRef };
-};
 
 
 export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, categories, countries }: SubmitGroupDialogContentProps) {
@@ -86,6 +75,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const [state, formAction] = useActionState(actionToUse, initialState);
 
   useEffect(() => {
+    // Dispatch event to stop pending state on button
+    if (formRef.current) {
+        formRef.current.dispatchEvent(new Event('submit-complete'));
+    }
+
     if (state.message) {
         const variant = state.group ? 'default' : 'destructive';
         toast({
@@ -124,7 +118,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
       
       <div className="flex-1 overflow-y-auto px-6">
-        <form ref={formRef} action={formAction} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
+        <form ref={formRef} action={formAction} id="submit-group-dialog-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             
             {isEditMode && groupToEdit?.id && <input type="hidden" name="id" value={groupToEdit.id} />}
 
@@ -144,19 +138,19 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
                 <Label htmlFor="link">Link</Label>
-                <Input id="link" name="link" type="url" placeholder={placeholders[type]} defaultValue={groupToEdit?.link} required />
+                <Input id="link" name="link" type="url" placeholder={placeholders[type]} defaultValue={groupToEdit?.link} />
                  {state?.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={groupToEdit?.title || ''} required/>
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={groupToEdit?.title || ''} />
                {state?.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={groupToEdit?.description || ''} required/>
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={groupToEdit?.description || ''} />
               {state?.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
             </div>
             
@@ -169,7 +163,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
-              <Select name="country" defaultValue={groupToEdit?.country} required>
+              <Select name="country" defaultValue={groupToEdit?.country}>
                   <SelectTrigger id="country" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
                   </SelectTrigger>
@@ -184,7 +178,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="category">Category</Label>
-              <Select name="category" defaultValue={groupToEdit?.category} required>
+              <Select name="category" defaultValue={groupToEdit?.category}>
                   <SelectTrigger id="category" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
                   </SelectTrigger>

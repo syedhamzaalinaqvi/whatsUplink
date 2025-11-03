@@ -18,42 +18,29 @@ type SubmitGroupPageContentProps = {
     countries: Country[];
 }
 
-// This hook is no longer part of React's public API in this form. We'll use a direct effect.
-const useFormStatus = () => {
-  const [pending, setPending] = useState(false);
-  const formRef = useRef<HTMLFormElement | null>(null);
-
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-
-    const handleSubmit = (event: Event) => {
-      setPending(true);
-    };
-
-    const handleReset = () => {
-      setPending(false);
-    };
-
-    form.addEventListener('submit', handleSubmit);
-    // You might need a way to signal form submission end, e.g., via a custom event
-    // or by observing the form's state if the library you use provides it.
-    // For now, we'll just reset on unmount.
-    return () => {
-      form.removeEventListener('submit', handleSubmit);
-      handleReset(); // Reset on unmount
-    };
-  }, []);
-
-  return { pending, formRef };
-};
-
-
 function SubmitButton() {
-    const { pending } = useFormStatus();
+    const [isPending, setIsPending] = useState(false);
+    // This is a workaround to get form status since useFormStatus is not reliable in all cases.
+    useEffect(() => {
+        const form = document.getElementById('submit-group-page-form');
+        if (!form) return;
+
+        const handleStart = () => setIsPending(true);
+        const handleEnd = () => setIsPending(false);
+
+        form.addEventListener('submit', handleStart);
+        // We need a way to know when submission ends. We'll use a custom event.
+        form.addEventListener('submit-complete', handleEnd);
+
+        return () => {
+            form.removeEventListener('submit', handleStart);
+            form.removeEventListener('submit-complete', handleEnd);
+        };
+    }, []);
+
     return (
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Submit Entry'}
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Submit Entry'}
         </Button>
     );
 }
@@ -69,6 +56,11 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const [state, formAction] = useActionState(submitGroup, initialState);
 
   useEffect(() => {
+    // Dispatch event to stop pending state on button
+    if (formRef.current) {
+        formRef.current.dispatchEvent(new Event('submit-complete'));
+    }
+
     if (state.message && !state.group) {
         toast({
             title: 'Error',
@@ -104,19 +96,19 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>
-            <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required />
+            <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." />
             {state?.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required />
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" />
           {state?.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." />
           {state?.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
@@ -129,7 +121,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>
-          <Select name="country" required>
+          <Select name="country">
               <SelectTrigger id="country" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
               </SelectTrigger>
@@ -144,7 +136,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="category">Category</Label>
-          <Select name="category" required>
+          <Select name="category">
               <SelectTrigger id="category" disabled={!areFiltersReady}>
                   <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
               </SelectTrigger>
