@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings, Report } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -32,6 +32,7 @@ import { Switch } from '../ui/switch';
 import { AdminTaxonomyManager } from './admin-taxonomy-manager';
 import { AdminLayoutSettings } from './admin-layout-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { AdminReports } from './admin-reports';
 
 
 const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
@@ -44,6 +45,7 @@ type AdminDashboardProps = {
   initialCategories: Category[];
   initialCountries: Country[];
   initialLayoutSettings: LayoutSettings;
+  initialReports: Report[];
 };
 
 export function AdminDashboard({
@@ -54,6 +56,7 @@ export function AdminDashboard({
   initialCategories,
   initialCountries,
   initialLayoutSettings,
+  initialReports,
 }: AdminDashboardProps) {
   'use client';
   
@@ -62,6 +65,7 @@ export function AdminDashboard({
   const { toast } = useToast();
 
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+  const [reports, setReports] = useState<Report[]>(initialReports);
   const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
   const [hasPrevPage, setHasPrevPage] = useState(initialHasPrevPage);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
@@ -92,8 +96,9 @@ export function AdminDashboard({
     setLayoutSettings(initialLayoutSettings);
     setCategories(initialCategories);
     setCountries(initialCountries);
+    setReports(initialReports);
     setIsLoading(false);
-  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
+  }, [initialGroups, initialHasNextPage, initialHasPrevPage, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries, initialReports]);
 
 
   const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
@@ -197,17 +202,236 @@ export function AdminDashboard({
         <AdminStats groups={groups} />
 
         <Tabs defaultValue="groups" className="mt-6">
-            <TabsList className="grid w-full grid-cols-2 lg:w-1/2">
-                <TabsTrigger value="groups">Groups & Moderation</TabsTrigger>
-                <TabsTrigger value="layout">Layout & Appearance</TabsTrigger>
+             <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 lg:w-fit">
+                <TabsTrigger value="groups">Groups</TabsTrigger>
+                <TabsTrigger value="settings">Settings & Layout</TabsTrigger>
+                <TabsTrigger value="reports">
+                    Reports
+                    {reports.length > 0 && (
+                        <Badge variant="destructive" className="ml-2 rounded-full px-2">
+                            {reports.length}
+                        </Badge>
+                    )}
+                </TabsTrigger>
             </TabsList>
             <TabsContent value="groups">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                    <div className="lg:col-span-2">
+                <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="relative lg:col-span-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        placeholder="Search by title..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                        />
+                    </div>
+                    <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filter by Country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Countries</SelectItem>
+                            {countries.map(country => (
+                                <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filter by Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {categories.map(category => (
+                                <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={selectedType} onValueChange={(v) => setSelectedType(v as any)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Filter by Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {GROUP_TYPES.map(type => (
+                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+                </div>
+                
+                {selectedRows.length > 0 && (
+                <div className="mb-4 flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">{selectedRows.length} group(s) selected</p>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleBulkFeature(true)} disabled={isUpdating}>
+                            <Star className="mr-2 h-4 w-4" />
+                            Mark as Featured
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleBulkFeature(false)} disabled={isUpdating}>
+                            <Star className="mr-2 h-4 w-4" />
+                            Remove from Featured
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Selected
+                        </Button>
+                    </div>
+                </div>
+                )}
+
+                <div className="border rounded-lg bg-background">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead padding="checkbox">
+                        <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                            aria-label="Select all rows"
+                        />
+                        </TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Country</TableHead>
+                        <TableHead>Clicks</TableHead>
+                        <TableHead>Submissions</TableHead>
+                        <TableHead>Featured</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {isLoading ? (
+                        Array.from({ length: rowsPerPage }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-5" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-11" /></TableCell>
+                            <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        filteredGroups.map((group) => (
+                        <TableRow key={group.id} data-state={selectedRows.includes(group.id) && 'selected'}>
+                            <TableCell padding="checkbox">
+                            <Checkbox
+                                checked={selectedRows.includes(group.id)}
+                                onCheckedChange={() => handleSelectRow(group.id)}
+                                aria-label={`Select row ${group.title}`}
+                            />
+                            </TableCell>
+                            <TableCell className="font-medium">
+                                {group.title}
+                            </TableCell>
+                            <TableCell>
+                            <Badge variant={group.type === 'channel' ? 'default' : 'secondary'} className="capitalize">{group.type}</Badge>
+                            </TableCell>
+                            <TableCell>
+                            <Badge variant="outline">{group.category}</Badge>
+                            </TableCell>
+                            <TableCell>
+                            <Badge variant="secondary" className="capitalize">{group.country}</Badge>
+                            </TableCell>
+                            <TableCell>
+                                <div className='flex items-center gap-1.5'>
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-mono text-sm">{group.clicks ?? 0}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className='flex items-center gap-1.5'>
+                                    <Repeat className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-mono text-sm">{group.submissionCount ?? 1}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                            <Switch
+                                checked={group.featured}
+                                onCheckedChange={() => handleToggleFeatured(group)}
+                                disabled={isUpdating}
+                                aria-label={`Mark ${group.title} as featured`}
+                            />
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(group)}>Edit</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDelete(group)} className="text-destructive">Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    )}
+                    </TableBody>
+                </Table>
+                </div>
+                
+                <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-muted-foreground">
+                        {selectedRows.length} of {filteredGroups.length} row(s) selected.
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className='flex items-center gap-2'>
+                            <span className="text-sm">Rows per page:</span>
+                            <Select value={`${rowsPerPage}`} onValueChange={(value) => navigate('first', Number(value))}>
+                                <SelectTrigger className='w-20'>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ROWS_PER_PAGE_OPTIONS.map(opt => (
+                                        <SelectItem key={opt} value={`${opt}`}>{opt}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => navigate('prev')}
+                                disabled={!hasPrevPage || isLoading}
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => navigate('next')}
+                                disabled={!hasNextPage || isLoading}
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {filteredGroups.length === 0 && !isLoading && (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>No groups found for the selected filters.</p>
+                    </div>
+                )}
+            </TabsContent>
+            <TabsContent value="settings">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <div className="lg:col-span-2 space-y-6">
                         <AdminModerationSettings
                             initialSettings={moderationSettings}
                             onSettingsChange={setModerationSettings}
                         />
+                         <AdminLayoutSettings initialSettings={layoutSettings} onSettingsChange={setLayoutSettings} />
                     </div>
                     <div className="lg:col-span-1">
                         <AdminTaxonomyManager
@@ -219,220 +443,10 @@ export function AdminDashboard({
                     </div>
                 </div>
             </TabsContent>
-            <TabsContent value="layout">
-                <AdminLayoutSettings initialSettings={layoutSettings} onSettingsChange={setLayoutSettings} />
+            <TabsContent value="reports">
+                <AdminReports reports={reports} onReportDeleted={id => setReports(r => r.filter(rep => rep.id !== id))}/>
             </TabsContent>
         </Tabs>
-
-
-        <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative lg:col-span-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                placeholder="Search by title..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-                />
-            </div>
-             <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Filter by Country" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
-                    {countries.map(country => (
-                        <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Filter by Category" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select value={selectedType} onValueChange={(v) => setSelectedType(v as any)}>
-              <SelectTrigger>
-                  <SelectValue placeholder="Filter by Type" />
-              </SelectTrigger>
-              <SelectContent>
-                  {GROUP_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        {selectedRows.length > 0 && (
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{selectedRows.length} group(s) selected</p>
-            <div className="flex items-center gap-2">
-                 <Button variant="outline" size="sm" onClick={() => handleBulkFeature(true)} disabled={isUpdating}>
-                    <Star className="mr-2 h-4 w-4" />
-                    Mark as Featured
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleBulkFeature(false)} disabled={isUpdating}>
-                    <Star className="mr-2 h-4 w-4" />
-                    Remove from Featured
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteDialogOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Selected
-                </Button>
-            </div>
-          </div>
-        )}
-
-        <div className="border rounded-lg bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead padding="checkbox">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
-                    aria-label="Select all rows"
-                  />
-                </TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Clicks</TableHead>
-                <TableHead>Submissions</TableHead>
-                <TableHead>Featured</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: rowsPerPage }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-5" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-11" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                filteredGroups.map((group) => (
-                  <TableRow key={group.id} data-state={selectedRows.includes(group.id) && 'selected'}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedRows.includes(group.id)}
-                        onCheckedChange={() => handleSelectRow(group.id)}
-                        aria-label={`Select row ${group.title}`}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                        {group.title}
-                    </TableCell>
-                     <TableCell>
-                      <Badge variant={group.type === 'channel' ? 'default' : 'secondary'} className="capitalize">{group.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{group.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="capitalize">{group.country}</Badge>
-                    </TableCell>
-                    <TableCell>
-                        <div className='flex items-center gap-1.5'>
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-mono text-sm">{group.clicks ?? 0}</span>
-                        </div>
-                    </TableCell>
-                     <TableCell>
-                        <div className='flex items-center gap-1.5'>
-                            <Repeat className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-mono text-sm">{group.submissionCount ?? 1}</span>
-                        </div>
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={group.featured}
-                        onCheckedChange={() => handleToggleFeatured(group)}
-                        disabled={isUpdating}
-                        aria-label={`Mark ${group.title} as featured`}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(group)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(group)} className="text-destructive">Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        <div className="flex items-center justify-between mt-4">
-             <div className="text-sm text-muted-foreground">
-                {selectedRows.length} of {filteredGroups.length} row(s) selected.
-            </div>
-            <div className="flex items-center gap-4">
-                <div className='flex items-center gap-2'>
-                    <span className="text-sm">Rows per page:</span>
-                    <Select value={`${rowsPerPage}`} onValueChange={(value) => navigate('first', Number(value))}>
-                        <SelectTrigger className='w-20'>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ROWS_PER_PAGE_OPTIONS.map(opt => (
-                                <SelectItem key={opt} value={`${opt}`}>{opt}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate('prev')}
-                        disabled={!hasPrevPage || isLoading}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate('next')}
-                        disabled={!hasNextPage || isLoading}
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        </div>
-
-        {filteredGroups.length === 0 && !isLoading && (
-            <div className="text-center py-12 text-muted-foreground">
-                <p>No groups found for the selected filters.</p>
-            </div>
-        )}
       </main>
 
       {selectedGroup && isDeleteDialogOpen && (

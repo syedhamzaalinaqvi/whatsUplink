@@ -35,6 +35,17 @@ export function HomePage({ initialSettings }: HomePageProps) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
+  // This is used for tag-based filtering from the detail page
+  const [initialSearchTag, setInitialSearchTag] = useState('');
+
+  useEffect(() => {
+    const tag = sessionStorage.getItem('tagSearch');
+    if (tag) {
+      setInitialSearchTag(tag);
+      sessionStorage.removeItem('tagSearch');
+    }
+  }, []);
+
   useEffect(() => {
     async function fetchInitialData() {
       if (!firestore) {
@@ -185,6 +196,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
             initialCategories={categories}
             initialCountries={countries}
             isLoadingFilters={isFiltersLoading}
+            initialSearchQuery={initialSearchTag}
         />
       </main>
     </div>

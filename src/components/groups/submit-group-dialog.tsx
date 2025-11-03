@@ -113,7 +113,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     : 'Paste a WhatsApp group or channel link to fetch its details automatically, then fill out the rest of the form.';
 
   return (
-    <DialogContent className="flex flex-col h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl p-0">
+    <>
       <DialogHeader className="p-6 pb-4">
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
@@ -202,7 +202,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             <div className="space-y-2 col-span-2">
               <Label htmlFor="tags">Tags</Label>
               <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" defaultValue={groupToEdit?.tags?.join(', ')} />
-              <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
+              <p className="text-xs text-muted-foreground">Separate tags with a comma. All tags will be converted to lowercase.</p>
             </div>
         </form>
       </div>
@@ -230,6 +230,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
           )}
         </Button>
       </DialogFooter>
-    </DialogContent>
+    </>
   );
 }

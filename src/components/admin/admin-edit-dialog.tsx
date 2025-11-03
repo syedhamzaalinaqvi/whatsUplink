@@ -24,12 +24,14 @@ export function AdminEditDialog({ group, isOpen, onOpenChange, categories, count
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <SubmitGroupDialogContent 
-                onGroupSubmitted={handleGroupSubmittedAndClose}
-                groupToEdit={group}
-                categories={categories}
-                countries={countries}
-            />
+            <DialogContent className="flex flex-col h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl p-0">
+                <SubmitGroupDialogContent 
+                    onGroupSubmitted={handleGroupSubmittedAndClose}
+                    groupToEdit={group}
+                    categories={categories}
+                    countries={countries}
+                />
+            </DialogContent>
         </Dialog>
     );
 }

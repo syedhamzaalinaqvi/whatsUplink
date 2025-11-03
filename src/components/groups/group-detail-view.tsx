@@ -13,9 +13,10 @@ import {
   Users,
   Share2,
   RadioTower,
+  Flag,
+  Tag
 } from 'lucide-react';
 import type { GroupLink, Category, Country } from '@/lib/data';
-import { Header } from '@/components/layout/header';
 import {
   Card,
   CardContent,
@@ -32,6 +33,8 @@ import { SharePopover } from './share-popover';
 import { useEffect, useState } from 'react';
 import { useFirestore } from '@/firebase/provider';
 import { doc, increment, updateDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { GroupReportDialog } from './group-report-dialog';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -42,7 +45,9 @@ type GroupDetailViewProps = {
 
 export function GroupDetailView({ group, relatedGroups, categories, countries }: GroupDetailViewProps) {
   const [detailUrl, setDetailUrl] = useState('');
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const { firestore } = useFirestore();
+  const router = useRouter();
 
   useEffect(() => {
     // Ensure this runs only on the client
@@ -57,10 +62,11 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
       }).catch(err => console.error("Failed to increment click count", err));
     }
   };
-
-  // We need a dummy onTagClick for the GroupCard since it's required,
-  // but there's no filtering on the detail page.
-  const handleTagClick = () => {};
+  
+  const handleTagClick = (tag: string) => {
+    sessionStorage.setItem('tagSearch', tag);
+    router.push('/');
+  };
 
 
   const rules = [
@@ -182,9 +188,21 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                   <p className="text-base text-foreground/80 whitespace-pre-wrap">
                     {group.description}
                   </p>
+                  
+                  {group.tags && group.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center mt-6">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        {group.tags.map(tag => (
+                            <button key={tag} onClick={() => handleTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                                <Badge variant="default" className="cursor-pointer bg-primary/90 hover:bg-primary/80">{tag}</Badge>
+                            </button>
+                        ))}
+                    </div>
+                  )}
+
                 </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row gap-2">
-                  <Button asChild className="w-full text-lg py-6 flex-1">
+                <CardFooter className="flex-wrap gap-2">
+                  <Button asChild className="w-full text-lg py-6 flex-1 sm:w-auto">
                     <a
                       href={group.link}
                       target="_blank"
@@ -195,14 +213,20 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>
-                  {detailUrl && (
-                    <SharePopover title={group.title} url={detailUrl}>
-                      <Button variant="outline" className="w-full sm:w-auto text-lg py-6">
-                        <Share2 className="mr-2 h-5 w-5" />
-                        Share Link
-                      </Button>
-                    </SharePopover>
-                  )}
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {detailUrl && (
+                        <SharePopover title={group.title} url={detailUrl}>
+                        <Button variant="outline" className="w-full text-lg py-6 sm:w-auto">
+                            <Share2 className="mr-2 h-5 w-5" />
+                            Share
+                        </Button>
+                        </SharePopover>
+                    )}
+                     <Button variant="destructive" className="w-full text-lg py-6 sm:w-auto" onClick={() => setIsReportOpen(true)}>
+                        <Flag className="mr-2 h-5 w-5" />
+                        Report
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
 
@@ -283,6 +307,11 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
           <Separator className="my-12" />
         </div>
       </main>
+      <GroupReportDialog
+        group={group}
+        isOpen={isReportOpen}
+        onOpenChange={setIsReportOpen}
+      />
     </div>
   );
 }

@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
 import { z } from 'zod';
 import type { FormState } from '../actions';
-import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink } from '@/lib/data';
-import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry } from '@/lib/data';
+import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink, Report } from '@/lib/data';
+import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
@@ -88,7 +88,7 @@ export async function updateGroup(
 
     const dataForDb: { [key: string]: any } = {
       ...dataToUpdate,
-      tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+      tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [],
       imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
       updatedAt: serverTimestamp(),
     };
@@ -598,4 +598,29 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
     }
 }
 
-    
+// ------ Report Management Actions ------
+
+export async function getReports(): Promise<Report[]> {
+    const db = getFirestoreInstance();
+    const reportsCollection = collection(db, 'reports');
+    const q = query(reportsCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return [];
+    return snapshot.docs.map(mapDocToReport);
+}
+
+export async function deleteReport(reportId: string): Promise<{ success: boolean; message: string }> {
+    if (!reportId) {
+        return { success: false, message: 'Report ID is required.' };
+    }
+
+    try {
+        const db = getFirestoreInstance();
+        await deleteDoc(doc(db, 'reports', reportId));
+        revalidatePath('/admin');
+        return { success: true, message: 'Report deleted successfully.' };
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        return { success: false, message: 'Failed to delete report.' };
+    }
+}

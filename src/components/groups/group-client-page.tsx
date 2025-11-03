@@ -17,6 +17,7 @@ type GroupClientPageProps = {
     initialCategories: Category[];
     initialCountries: Country[];
     isLoadingFilters: boolean;
+    initialSearchQuery?: string;
 };
 
 export function GroupClientPage({
@@ -28,9 +29,10 @@ export function GroupClientPage({
   initialCategories,
   initialCountries,
   isLoadingFilters,
+  initialSearchQuery = '',
 }: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');

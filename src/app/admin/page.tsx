@@ -1,5 +1,5 @@
 
-import { getPaginatedGroups, getModerationSettings, getCategories, getCountries, seedInitialData, getLayoutSettings } from './actions';
+import { getPaginatedGroups, getModerationSettings, getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
 
@@ -21,12 +21,13 @@ export default async function AdminPage({
     // Seed data if necessary, then fetch everything
     await seedInitialData();
     
-    const [initialData, moderationSettings, categories, countries, layoutSettings] = await Promise.all([
+    const [initialData, moderationSettings, categories, countries, layoutSettings, reports] = await Promise.all([
       getPaginatedGroups(rowsPerPage, pageDirection, cursor),
       getModerationSettings(),
       getCategories(),
       getCountries(),
       getLayoutSettings(),
+      getReports(),
     ]);
 
     return (
@@ -38,6 +39,7 @@ export default async function AdminPage({
         initialCategories={categories}
         initialCountries={countries}
         initialLayoutSettings={layoutSettings}
+        initialReports={reports}
       />
     );
   } catch (error) {

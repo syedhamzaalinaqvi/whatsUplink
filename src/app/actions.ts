@@ -1,7 +1,7 @@
 
 'use server';
 import { z } from 'zod';
-import type { GroupLink, ModerationSettings } from '@/lib/data';
+import type { GroupLink, ModerationSettings, Report } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
@@ -146,7 +146,7 @@ export async function submitGroup(
       category,
       country,
       type,
-      tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+      tags: tags ? tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [],
     };
     
     const q = query(groupsCollection, where('link', '==', link));
@@ -197,7 +197,7 @@ export async function submitGroup(
               category,
               country,
               type,
-              tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+              tags: tags ? tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [],
               imageUrl: imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
           });
           
@@ -309,3 +309,42 @@ export async function subscribeToNewsletter(
     };
   }
 }
+
+const reportGroupSchema = z.object({
+  groupId: z.string().min(1),
+  groupTitle: z.string().min(1),
+  reason: z.string().min(1, 'Please select a reason for reporting.'),
+});
+
+export async function reportGroup(formData: FormData): Promise<{ success: boolean; message: string }> {
+  const validatedFields = reportGroupSchema.safeParse({
+    groupId: formData.get('groupId'),
+    groupTitle: formData.get('groupTitle'),
+    reason: formData.get('reason'),
+  });
+  
+  if (!validatedFields.success) {
+    return { success: false, message: 'Invalid report data. Please try again.' };
+  }
+
+  try {
+    const db = getFirestoreInstance();
+    const reportsCollection = collection(db, 'reports');
+
+    const reportData: Omit<Report, 'id' | 'createdAt'> = {
+      ...validatedFields.data,
+      status: 'pending',
+    };
+    
+    await addDoc(reportsCollection, {
+      ...reportData,
+      createdAt: serverTimestamp(),
+    });
+
+    return { success: true, message: `Thank you for your report. We will review "${validatedFields.data.groupTitle}" shortly.` };
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    return { success: false, message: 'Failed to submit report. Please try again later.' };
+  }
+}
+

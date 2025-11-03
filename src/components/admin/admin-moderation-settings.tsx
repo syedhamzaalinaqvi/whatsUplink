@@ -94,10 +94,10 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
     };
 
     return (
-        <Card className="mb-6">
+        <Card>
             <CardHeader>
-                <CardTitle>Settings</CardTitle>
-                <CardDescription>Manage global settings for your directory.</CardDescription>
+                <CardTitle>Global Settings</CardTitle>
+                <CardDescription>Manage display and submission settings for your directory.</CardDescription>
             </CardHeader>
             <CardContent>
                  <Form {...form}>

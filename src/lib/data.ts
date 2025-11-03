@@ -22,6 +22,15 @@ export type GroupLink = {
   lastSubmittedAt?: string | null;
 };
 
+export type Report = {
+    id: string;
+    groupId: string;
+    groupTitle: string;
+    reason: string;
+    status: 'pending' | 'resolved';
+    createdAt: string | null;
+}
+
 export type ModerationSettings = {
     cooldownEnabled: boolean;
     cooldownValue: number;
@@ -69,28 +78,28 @@ export type LayoutSettings = {
   backgroundSettings: BackgroundSettings;
 };
 
+const formatTimestamp = (timestamp: any): string | null => {
+    if (!timestamp) return null;
+    if (timestamp instanceof Timestamp) {
+        return timestamp.toDate().toISOString();
+    }
+    // Handle cases where it might already be a string from a previous serialization
+    if (typeof timestamp === 'string') {
+        const date = new Date(timestamp);
+        return !isNaN(date.getTime()) ? date.toISOString() : null;
+    }
+    // Handle Firestore server timestamp object before it's converted
+    if (typeof timestamp === 'object' && timestamp.seconds !== undefined && timestamp.nanoseconds !== undefined) {
+        return new Date(timestamp.seconds * 1000).toISOString();
+    }
+    return null;
+}
+
 // This function now robustly handles Timestamps from the server
 // and ensures a serializable string is always returned.
 export function mapDocToGroupLink(doc: DocumentData): GroupLink {
     const data = doc.data();
     
-    const formatTimestamp = (timestamp: any): string | null => {
-        if (!timestamp) return null;
-        if (timestamp instanceof Timestamp) {
-            return timestamp.toDate().toISOString();
-        }
-        // Handle cases where it might already be a string from a previous serialization
-        if (typeof timestamp === 'string') {
-            const date = new Date(timestamp);
-            return !isNaN(date.getTime()) ? date.toISOString() : null;
-        }
-        // Handle Firestore server timestamp object before it's converted
-        if (typeof timestamp === 'object' && timestamp.seconds !== undefined && timestamp.nanoseconds !== undefined) {
-            return new Date(timestamp.seconds * 1000).toISOString();
-        }
-        return null;
-    }
-
     return {
         id: doc.id,
         title: data.title || 'Untitled',
@@ -112,6 +121,19 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         lastSubmittedAt: formatTimestamp(data.lastSubmittedAt),
     };
 }
+
+export function mapDocToReport(doc: DocumentData): Report {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        groupId: data.groupId || '',
+        groupTitle: data.groupTitle || 'Unknown Group',
+        reason: data.reason || 'No reason given',
+        status: data.status || 'pending',
+        createdAt: formatTimestamp(data.createdAt),
+    };
+}
+
 
 export function mapDocToCategory(doc: DocumentData): Category {
     const data = doc.data();
