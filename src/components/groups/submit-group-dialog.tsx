@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -39,7 +38,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const formRef = useRef<HTMLFormElement>(null);
   const isEditMode = !!groupToEdit;
   
-  const [link, setLink] = useState(groupToEdit?.link || '');
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
@@ -54,7 +52,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
   useEffect(() => {
     if (groupToEdit) {
-      setLink(groupToEdit.link);
       setType(groupToEdit.type);
       setPreview({
         title: groupToEdit.title,
@@ -62,7 +59,6 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
         image: groupToEdit.imageUrl,
       });
     } else {
-        setLink('');
         setType('group');
         setPreview(null);
         formRef.current?.reset();
@@ -71,13 +67,15 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newLink = e.target.value;
+    const input = e.target;
+    let newLink = input.value;
     
     // Automatically add 'www.' if it's a channel link and it's missing
     if (type === 'channel' && newLink.startsWith('https://whatsapp.com/channel')) {
         newLink = newLink.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
+        // Update the input value directly in the DOM
+        input.value = newLink;
     }
-    setLink(newLink);
     
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = newLink.startsWith('https://www.whatsapp.com/channel');
@@ -146,8 +144,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <Label>Type</Label>
               <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => {
                   setType(v);
-                  setLink(''); // Reset link on type change
                   setPreview(null);
+                  if (formRef.current) {
+                    const linkInput = formRef.current.elements.namedItem('link') as HTMLInputElement;
+                    if(linkInput) linkInput.value = '';
+                  }
               }} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
@@ -162,7 +163,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="link">Link</Label>          
-              <Input id="link" name="link" type="url" placeholder={placeholders[type]} required value={link} onChange={handleLinkChange} />
+              <Input id="link" name="link" type="url" placeholder={placeholders[type]} required defaultValue={groupToEdit?.link || ''} onChange={handleLinkChange} />
             </div>
 
             {(isFetchingPreview || preview) && (
@@ -256,5 +257,3 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
-
-    

@@ -30,7 +30,6 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   
-  const [link, setLink] = useState('');
   const [type, setType] = useState<'group' | 'channel'>('group');
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
@@ -44,13 +43,14 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   };
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newLink = e.target.value;
+    const input = e.target;
+    let newLink = input.value;
 
     // Automatically add 'www.' if it's a channel link and it's missing
     if (type === 'channel' && newLink.startsWith('https://whatsapp.com/channel')) {
         newLink = newLink.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
+        input.value = newLink;
     }
-    setLink(newLink);
 
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = newLink.startsWith('https://www.whatsapp.com/channel');
@@ -107,8 +107,11 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
             <Label>Type</Label>
             <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => {
                 setType(v);
-                setLink(''); // Reset link on type change
                 setPreview(null);
+                if (formRef.current) {
+                    const linkInput = formRef.current.elements.namedItem('link') as HTMLInputElement;
+                    if(linkInput) linkInput.value = '';
+                }
             }} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
@@ -123,7 +126,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>          
-          <Input id="link" name="link" type="url" placeholder={placeholders[type]} required value={link} onChange={handleLinkChange} />
+          <Input id="link" name="link" type="url" placeholder={placeholders[type]} required onChange={handleLinkChange} />
         </div>
 
         {(isFetchingPreview || preview) && (
@@ -215,5 +218,3 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
-
-    
