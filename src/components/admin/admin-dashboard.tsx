@@ -202,7 +202,7 @@ export function AdminDashboard({
         <AdminStats groups={groups} />
 
         <Tabs defaultValue="groups" className="mt-6">
-             <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 lg:w-fit">
+            <TabsList className="h-auto w-full md:w-fit md:h-10 flex flex-col md:inline-flex md:flex-row">
                 <TabsTrigger value="groups">Groups</TabsTrigger>
                 <TabsTrigger value="settings">Settings & Layout</TabsTrigger>
                 <TabsTrigger value="reports">
@@ -481,3 +481,5 @@ export function AdminDashboard({
     </div>
   );
 }
+
+    
