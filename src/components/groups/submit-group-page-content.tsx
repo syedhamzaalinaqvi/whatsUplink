@@ -69,12 +69,11 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
   
   const [type, setType] = useState<'group' | 'channel'>('group');
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
-
-  const [linkInput, setLinkInput] = useState('');
 
   const areFiltersReady = !!categories && !!countries;
   
@@ -112,9 +111,8 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     }
   }, [state, router, toast]);
 
-  const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const link = e.target.value;
-    setLinkInput(link);
+  const handleFetchPreview = () => {
+    const link = linkInputRef.current?.value || '';
     
     const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
     const isChannelLink = link.includes('whatsapp.com/channel');
@@ -144,6 +142,11 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
             }
         });
     } else {
+         toast({
+            title: 'Invalid Link',
+            description: `Please enter a valid WhatsApp ${type} link.`,
+            variant: 'destructive'
+        });
         setPreview(null);
     }
   };
@@ -153,10 +156,10 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
-            <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => {
+            <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
                 setType(v);
                 setPreview(null);
-                setLinkInput('');
+                if(linkInputRef.current) linkInputRef.current.value = '';
             }} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
@@ -170,8 +173,13 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="space-y-2 col-span-2">
-          <Label htmlFor="link">Link</Label>          
-          <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={linkInput} onChange={handleLinkChange} />
+          <Label htmlFor="link">Link</Label>
+            <div className="flex items-center gap-2">
+              <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} />
+              <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
+                  {isFetchingPreview ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Fetch'}
+              </Button>
+            </div>
           {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
 
