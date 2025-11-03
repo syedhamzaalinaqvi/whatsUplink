@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/carousel"
 import { getCategories, getCountries } from '@/app/admin/actions';
 import { Skeleton } from '../ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -26,6 +27,7 @@ type HomePageProps = {
 
 export function HomePage({ initialSettings }: HomePageProps) {
   const { firestore } = useFirestore();
+  const router = useRouter();
   const [groups, setGroups] = useState<GroupLink[]>([]);
   const [visibleCount, setVisibleCount] = useState(initialSettings.groupsPerPage);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
@@ -87,7 +89,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    router.push(`/group/invite/${newGroup.id}`);
   };
 
   const handleLoadMore = () => {
@@ -166,14 +168,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">
                 Discover and join thousands of WhatsApp groups and channels from around the world. Submit your own and connect with new communities!
               </p>
-              <div className="mt-8 flex justify-center gap-4">
-                <SubmitGroup 
-                    onGroupSubmitted={handleGroupSubmitted}
-                    isLoading={isFiltersLoading}
-                    categories={categories}
-                    countries={countries}
-                />
-              </div>
             </div>
         </section>
         
@@ -199,6 +193,11 @@ export function HomePage({ initialSettings }: HomePageProps) {
             initialSearchQuery={initialSearchTag}
         />
       </main>
+      
+      {/* Mobile Floating Submit Button - Placed here to only show on homepage */}
+      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isFiltersLoading} categories={categories} countries={countries} />
+      </div>
     </div>
   );
 }

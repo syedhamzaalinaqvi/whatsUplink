@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -44,8 +43,11 @@ export function Header({
     fetchFilters();
   }, []);
 
-  const handleGroupSubmitted = () => {
+  const handleGroupSubmitted = (newGroup: GroupLink) => {
     // Maybe show a global toast or something
+    if (typeof window !== 'undefined') {
+      window.location.href = `/group/invite/${newGroup.id}`;
+    }
   }
 
 
@@ -120,11 +122,6 @@ export function Header({
           </div>
         </div>
       </header>
-
-      {/* Mobile Floating Submit Button */}
-      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isLoading} categories={categories} countries={countries} />
-      </div>
     </>
   );
 }

@@ -433,7 +433,7 @@ export function AdminDashboard({
                         />
                          <AdminLayoutSettings initialSettings={layoutSettings} onSettingsChange={setLayoutSettings} />
                     </div>
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1 space-y-6">
                         <AdminTaxonomyManager
                             initialCategories={categories}
                             initialCountries={countries}
