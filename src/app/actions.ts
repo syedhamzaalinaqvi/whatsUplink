@@ -337,12 +337,14 @@ const reportGroupSchema = z.object({
   reason: z.string().min(1, 'Please select a reason for reporting.'),
   otherReason: z.string().optional(),
 }).refine(data => {
-    // If reason is 'Other', then otherReason must have content.
-    if (data.reason === 'Other' && (!data.otherReason || data.otherReason.trim().length < 10)) {
-        return false;
+    // If reason is 'Other', then otherReason must have content and be at least 10 chars.
+    if (data.reason === 'Other') {
+        return !!data.otherReason && data.otherReason.trim().length >= 10;
     }
+    // For other reasons, validation passes.
     return true;
 }, {
+    // This message is shown if the .refine() check fails.
     message: "Please provide a detailed reason (at least 10 characters).",
     path: ["otherReason"], // This specifies which field the error message is associated with.
 });
@@ -388,3 +390,5 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
+
+    
