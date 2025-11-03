@@ -78,7 +78,7 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
             </div>
         )}
 
-        <div className="absolute bottom-2 right-2 z-10 h-8 w-8 rounded-full bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 right-2 z-10 h-8 w-8 rounded-full bg-background/50 transition-opacity">
             <SharePopover title={group.title} url={detailUrl}>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                     <Share2 className="h-4 w-4" />
