@@ -141,12 +141,12 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || ''} key={preview?.title} readOnly={!!preview?.title}/>
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || ''} key={`title-${preview?.title}`} readOnly={!!preview?.title}/>
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || ''} key={preview?.description} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || ''} key={`desc-${preview?.description}`} />
         </div>
         
         <input type="hidden" name="imageUrl" value={preview?.image || ''} />
@@ -211,5 +211,3 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
-
-    

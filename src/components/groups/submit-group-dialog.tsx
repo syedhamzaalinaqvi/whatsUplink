@@ -40,7 +40,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const isEditMode = !!groupToEdit;
   
   const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
-  const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl } : null);
+  const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl, title: groupToEdit.title, description: groupToEdit.description } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
   const [isSubmitting, startSubmitting] = useTransition();
 
@@ -178,12 +178,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || groupToEdit?.title} key={preview?.title || groupToEdit?.title} readOnly={!isEditMode && !!preview?.title}/>
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || groupToEdit?.title} key={`title-${preview?.title || groupToEdit?.id}`} readOnly={!isEditMode && !!preview?.title}/>
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || groupToEdit?.description} key={preview?.description || groupToEdit?.description} />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || groupToEdit?.description} key={`desc-${preview?.description || groupToEdit?.id}`} />
             </div>
             
             <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
@@ -250,5 +250,3 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
-
-    
