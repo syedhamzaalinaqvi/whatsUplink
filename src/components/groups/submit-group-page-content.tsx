@@ -40,7 +40,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLink = e.target.value;
     setLink(newLink);
-    if (newLink.startsWith('https://chat.whatsapp.com/')) {
+    if (newLink.startsWith('https://chat.whatsapp.com/') || newLink.includes('whatsapp.com/channel')) {
         startFetchingPreview(async () => {
             const result = await getGroupPreview(newLink);
             if (result && !result.error) {
@@ -85,9 +85,24 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
 
   return (
     <form ref={formRef} action={handleFormSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
+        
         <div className="space-y-2 col-span-2">
-        <Label htmlFor="link">Group or Channel Link</Label>          
-        <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
+            <Label>Type</Label>
+            <RadioGroup name="type" required defaultValue={'group'} className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="group" id="type-group-page" />
+                    <Label htmlFor="type-group-page">Group</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="channel" id="type-channel-page" />
+                    <Label htmlFor="type-channel-page">Channel</Label>
+                </div>
+            </RadioGroup>
+        </div>
+
+        <div className="space-y-2 col-span-2">
+          <Label htmlFor="link">Group or Channel Link</Label>          
+          <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
         </div>
 
         {(isFetchingPreview || preview) && (
@@ -108,64 +123,49 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         )}
         
         <div className="space-y-2 col-span-2">
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title} key={preview?.title} readOnly={!!preview?.title}/>
+          <Label htmlFor="title">Title</Label>
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title} key={preview?.title} readOnly={!!preview?.title}/>
         </div>
 
         <div className="space-y-2 col-span-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description} key={preview?.description} />
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description} key={preview?.description} />
         </div>
         
         <input type="hidden" name="imageUrl" value={preview?.image || ''} />
         
-        <div className="space-y-2 col-span-2">
-        <Label>Type</Label>
-        <RadioGroup name="type" required defaultValue={'group'} className="flex gap-4">
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="group" id="type-group" />
-                <Label htmlFor="type-group">Group</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <RadioGroupItem value="channel" id="type-channel" />
-                <Label htmlFor="type-channel">Channel</Label>
-            </div>
-        </RadioGroup>
-        </div>
-
-
         <div className="space-y-2 col-span-2 sm:col-span-1">
-        <Label htmlFor="country">Country</Label>
-        <Select name="country" required>
-            <SelectTrigger id="country" disabled={!areFiltersReady}>
-                <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
-            </SelectTrigger>
-            <SelectContent>
-                {countries?.map(country => (
-                    <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
+          <Label htmlFor="country">Country</Label>
+          <Select name="country" required>
+              <SelectTrigger id="country" disabled={!areFiltersReady}>
+                  <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
+              </SelectTrigger>
+              <SelectContent>
+                  {countries?.map(country => (
+                      <SelectItem key={country.value} value={country.value}>{country.label}</SelectItem>
+                  ))}
+              </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2 col-span-2 sm:col-span-1">
-        <Label htmlFor="category">Category</Label>
-        <Select name="category" required>
-            <SelectTrigger id="category" disabled={!areFiltersReady}>
-                <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
-            </SelectTrigger>
-            <SelectContent>
-                {categories?.map(category => (
-                    <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
+          <Label htmlFor="category">Category</Label>
+          <Select name="category" required>
+              <SelectTrigger id="category" disabled={!areFiltersReady}>
+                  <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
+              </SelectTrigger>
+              <SelectContent>
+                  {categories?.map(category => (
+                      <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                  ))}
+              </SelectContent>
+          </Select>
         </div>
         
         <div className="space-y-2 col-span-2">
-        <Label htmlFor="tags">Tags</Label>
-        <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" />
-        <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
+          <Label htmlFor="tags">Tags</Label>
+          <Input id="tags" name="tags" placeholder="e.g., education, lifestyle, crypto" />
+          <p className="text-xs text-muted-foreground">Separate tags with a comma.</p>
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
