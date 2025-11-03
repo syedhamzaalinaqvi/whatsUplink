@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -142,10 +142,11 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
             <input type="hidden" name="imageUrl" value={imageUrl} />
+            <input type="hidden" name="type" value={type} />
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
-              <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
+              <RadioGroup value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
                       <Label htmlFor="type-group">Group</Label>
@@ -242,3 +243,5 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
+
+    

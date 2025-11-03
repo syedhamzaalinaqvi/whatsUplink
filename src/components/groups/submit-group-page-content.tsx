@@ -105,10 +105,11 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     <form action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <input type="hidden" name="imageUrl" value={imageUrl} />
+        <input type="hidden" name="type" value={type} />
 
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
-            <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
+            <RadioGroup value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
                     <Label htmlFor="type-group-page">Group</Label>
@@ -198,3 +199,5 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
+
+    
