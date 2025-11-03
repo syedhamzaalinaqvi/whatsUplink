@@ -1,31 +1,26 @@
 'use client';
-import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
+import { useRef, useEffect } from 'react';
+import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
-import { Loader2, Link as LinkIcon, Search } from 'lucide-react';
+import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { submitGroup, getGroupPreview, type FormState } from '@/app/actions';
+import { submitGroup, type FormState } from '@/app/actions';
 import type { Category, Country } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-
-type PreviewData = {
-    title?: string;
-    description?: string;
-    image?: string;
-};
 
 type SubmitGroupPageContentProps = {
     categories: Category[];
     countries: Country[];
 }
 
-function SubmitButton({ isFetchingPreview, areFiltersReady }: { isFetchingPreview: boolean; areFiltersReady: boolean; }) {
+function SubmitButton({ areFiltersReady }: { areFiltersReady: boolean; }) {
     const { pending } = useFormStatus();
 
     const getButtonContent = () => {
@@ -34,14 +29,6 @@ function SubmitButton({ isFetchingPreview, areFiltersReady }: { isFetchingPrevie
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processing...
-                </>
-            );
-        }
-        if (isFetchingPreview) {
-            return (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Fetching...
                 </>
             );
         }
@@ -57,7 +44,7 @@ function SubmitButton({ isFetchingPreview, areFiltersReady }: { isFetchingPrevie
     }
 
     return (
-        <Button type="submit" disabled={pending || isFetchingPreview || !areFiltersReady} className="w-full sm:w-auto">
+        <Button type="submit" disabled={pending || !areFiltersReady} className="w-full sm:w-auto">
             {getButtonContent()}
         </Button>
     );
@@ -67,12 +54,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const linkInputRef = useRef<HTMLInputElement>(null);
   
-  const [type, setType] = useState<'group' | 'channel'>('group');
-  const [preview, setPreview] = useState<PreviewData | null>(null);
-  const [isFetchingPreview, startFetchingPreview] = useTransition();
-
   const areFiltersReady = !!categories && !!countries;
   
   const placeholders = {
@@ -108,53 +90,12 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     }
   }, [state, router, toast]);
 
-  const handleFetchPreview = () => {
-    const newLink = linkInputRef.current?.value || '';
-    if (!newLink) return;
-
-    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = newLink.includes('whatsapp.com/channel');
-    const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
-
-    if (isValidForType) {
-        startFetchingPreview(async () => {
-            const result = await getGroupPreview(newLink);
-            if (result && !result.error) {
-                setPreview(result);
-                if (formRef.current) {
-                    (formRef.current.elements.namedItem('title') as HTMLInputElement).value = result.title || '';
-                    (formRef.current.elements.namedItem('description') as HTMLTextAreaElement).value = result.description || '';
-                    (formRef.current.elements.namedItem('imageUrl') as HTMLInputElement).value = result.image || '';
-                }
-            } else {
-                toast({
-                  title: 'Error Fetching Preview',
-                  description: result.error || 'Could not fetch group preview. The link may be invalid or private.',
-                  variant: 'destructive',
-                });
-                setPreview(null);
-            }
-        });
-    } else {
-        toast({
-          title: 'Invalid Link Type',
-          description: "The link format doesn't match the selected type (group or channel).",
-          variant: 'destructive',
-        });
-        setPreview(null);
-    }
-  };
-
   return (
     <form ref={formRef} action={formAction} id="submit-group-page-form" className="grid grid-cols-2 gap-x-4 gap-y-6 py-4">
         
         <div className="space-y-2 col-span-2">
             <Label>Type</Label>
-            <RadioGroup name="type" defaultValue={type} onValueChange={(v: 'group' | 'channel') => {
-                setType(v);
-                setPreview(null);
-                if (linkInputRef.current) linkInputRef.current.value = '';
-            }} className="flex gap-4">
+            <RadioGroup name="type" defaultValue="group" className="flex gap-4">
                 <div className="flex items-center space-x-2">
                     <RadioGroupItem value="group" id="type-group-page" />
                     <Label htmlFor="type-group-page">Group</Label>
@@ -169,45 +110,24 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         <div className="space-y-2 col-span-2">
           <Label htmlFor="link">Link</Label>
             <div className="flex items-center gap-2">
-                <Input id="link" name="link" type="url" placeholder={placeholders[type]} ref={linkInputRef} />
-                <Button type="button" variant="secondary" onClick={handleFetchPreview} disabled={isFetchingPreview}>
-                    <Search className="h-4 w-4" />
-                    <span className="sr-only">Fetch Preview</span>
-                </Button>
+                <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." />
             </div>
           {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
         </div>
-
-        {(isFetchingPreview || preview) && (
-            <div className="col-span-2 p-4 border rounded-lg bg-muted/50 flex flex-col items-center gap-4">
-                {isFetchingPreview ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Fetching preview...</span>
-                    </div>
-                ) : preview?.image ? (
-                    <Image src={preview.image} alt="Group Preview" width={100} height={100} className="rounded-lg object-cover" />
-                ) : (
-                    <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
-                        <LinkIcon className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                )}
-            </div>
-        )}
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || ''} />
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" />
            {state.errors?.title && <p className="text-sm font-medium text-destructive">{state.errors.title[0]}</p>}
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || ''} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." />
            {state.errors?.description && <p className="text-sm font-medium text-destructive">{state.errors.description[0]}</p>}
         </div>
         
-        <input type="hidden" name="imageUrl" defaultValue={preview?.image || ''} />
+        <input type="hidden" name="imageUrl" defaultValue="https://picsum.photos/seed/placeholder/512/512" />
         
         <div className="space-y-2 col-span-2 sm:col-span-1">
           <Label htmlFor="country">Country</Label>
@@ -246,7 +166,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
 
         <div className="col-span-2 flex justify-end pt-4">
-            <SubmitButton isFetchingPreview={isFetchingPreview} areFiltersReady={areFiltersReady} />
+            <SubmitButton areFiltersReady={areFiltersReady} />
         </div>
     </form>
   );
