@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Trash2, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorageSasUrl } from '@/app/actions';
+import { getStorageSasUrl } from '@/app/storage-actions';
 
 type ImageUploaderProps = {
   currentImageUrl?: string | null;

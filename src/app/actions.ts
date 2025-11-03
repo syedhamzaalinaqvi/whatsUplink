@@ -5,7 +5,7 @@ import type { GroupLink, ModerationSettings, Report } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
-import { getModerationSettings } from '@/app/admin/actions';
+import { getModerationSettings } from '@/lib/admin-settings';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';

@@ -1,5 +1,6 @@
 
-import { getPaginatedGroups, getModerationSettings, getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
+import { getPaginatedGroups, getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
+import { getModerationSettings } from '@/lib/admin-settings';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
 

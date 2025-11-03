@@ -9,6 +9,7 @@ import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
+import { getModerationSettings } from '@/lib/admin-settings';
 import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 
@@ -229,53 +230,6 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         return { success: false, message: `Failed to save settings: ${errorMessage}` };
     }
 }
-
-export async function getModerationSettings(): Promise<ModerationSettings> {
-    try {
-        const db = getFirestoreInstance();
-        const settingsDocRef = doc(db, 'settings', 'moderation');
-        const docSnap = await getDoc(settingsDocRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Return existing data with defaults for any missing fields
-            return {
-                cooldownEnabled: data.cooldownEnabled ?? true,
-                cooldownValue: data.cooldownValue ?? 6,
-                cooldownUnit: data.cooldownUnit ?? 'hours',
-                showClicks: data.showClicks ?? true,
-                groupsPerPage: data.groupsPerPage ?? 20,
-                featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
-                showNewsletter: data.showNewsletter ?? false,
-            };
-        } else {
-            // If the document doesn't exist, create it with default values
-            const defaultSettings: ModerationSettings = {
-                cooldownEnabled: true,
-                cooldownValue: 6,
-                cooldownUnit: 'hours',
-                showClicks: true,
-                groupsPerPage: 20,
-                featuredGroupsDisplay: 'slider',
-                showNewsletter: false,
-            };
-            await setDoc(settingsDocRef, defaultSettings);
-            return defaultSettings;
-        }
-    } catch (error) {
-        console.error('Error fetching moderation settings:', error);
-    }
-    // Return default settings if not found or on error
-    return {
-        cooldownEnabled: true,
-        cooldownValue: 6,
-        cooldownUnit: 'hours',
-        showClicks: true,
-        groupsPerPage: 20,
-        featuredGroupsDisplay: 'slider',
-        showNewsletter: false,
-    };
-}
-
 
 export async function getPaginatedGroups(
     rowsPerPage: number,
@@ -606,5 +560,3 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
         return { success: false, message: 'Failed to delete report.' };
     }
 }
-
-    

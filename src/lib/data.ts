@@ -1,6 +1,6 @@
 
 import { getDoc, doc, collection, getDocs, query, where, limit, Timestamp, Firestore, DocumentData } from 'firebase/firestore';
-import { getModerationSettings as getGlobalModerationSettings } from '@/app/admin/actions';
+import { getModerationSettings as getGlobalModerationSettings } from '@/lib/admin-settings';
 import { unstable_cache } from 'next/cache';
 
 export type GroupLink = {

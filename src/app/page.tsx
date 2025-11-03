@@ -1,6 +1,6 @@
 
 import { HomePage } from '@/components/groups/home-page';
-import { getModerationSettings } from './admin/actions';
+import { getModerationSettings } from '@/lib/admin-settings';
 
 export default async function Home() {
   // Fetch the global settings on the server.
