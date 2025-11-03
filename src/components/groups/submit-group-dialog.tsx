@@ -40,15 +40,22 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const isEditMode = !!groupToEdit;
   
   const [link, setLink] = useState(groupToEdit?.link || '');
+  const [type, setType] = useState<'group' | 'channel'>(groupToEdit?.type || 'group');
   const [preview, setPreview] = useState<PreviewData | null>(groupToEdit ? { image: groupToEdit.imageUrl } : null);
   const [isFetchingPreview, startFetchingPreview] = useTransition();
   const [isSubmitting, startSubmitting] = useTransition();
 
   const areFiltersReady = categories && categories.length > 0 && countries && countries.length > 0;
+  
+  const placeholders = {
+    group: "https://chat.whatsapp.com/...",
+    channel: "https://whatsapp.com/channel/..."
+  };
 
   useEffect(() => {
     if (groupToEdit) {
       setLink(groupToEdit.link);
+      setType(groupToEdit.type);
       setPreview({
         title: groupToEdit.title,
         description: groupToEdit.description,
@@ -56,6 +63,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       });
     } else {
         setLink('');
+        setType('group');
         setPreview(null);
         formRef.current?.reset();
     }
@@ -65,7 +73,13 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLink = e.target.value;
     setLink(newLink);
-    if (newLink.startsWith('https://chat.whatsapp.com/') || newLink.includes('whatsapp.com/channel')) {
+    
+    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = newLink.includes('whatsapp.com/channel');
+
+    const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
+
+    if (isValidForType) {
         startFetchingPreview(async () => {
             const result = await getGroupPreview(newLink);
             if (result && !result.error) {
@@ -87,6 +101,22 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   };
 
   const handleFormSubmit = async (formData: FormData) => {
+    
+    const linkValue = formData.get('link') as string;
+    const typeValue = formData.get('type') as string;
+
+    const isGroupLink = linkValue.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = linkValue.includes('whatsapp.com/channel');
+
+    if ((typeValue === 'group' && !isGroupLink) || (typeValue === 'channel' && !isChannelLink)) {
+        toast({
+            title: 'Invalid Link',
+            description: "The link format does not match the selected type (Group or Channel).",
+            variant: 'destructive'
+        });
+        return;
+    }
+    
     startSubmitting(async () => {
       const action = isEditMode ? updateGroup : submitGroup;
       const result = await action({ message: '' }, formData);
@@ -100,7 +130,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       } else {
         toast({
           title: 'Error',
-          description: result.message,
+          description: result.errors?.link?.[0] || result.message,
           variant: 'destructive',
         });
       }
@@ -110,7 +140,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
   const title = isEditMode ? 'Edit Group or Channel' : 'Submit a New Group or Channel';
   const description = isEditMode
     ? 'Update the details for this entry.'
-    : 'Paste a WhatsApp group or channel link to fetch its details automatically, then fill out the rest of the form.';
+    : 'Select a type, then paste a WhatsApp link to fetch its details automatically.';
 
   return (
     <>
@@ -125,7 +155,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
-              <RadioGroup name="type" required defaultValue={groupToEdit?.type || 'group'} className="flex gap-4">
+              <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => setType(v)} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                       <RadioGroupItem value="group" id="type-group" />
                       <Label htmlFor="type-group">Group</Label>
@@ -138,8 +168,8 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             </div>
             
             <div className="space-y-2 col-span-2">
-              <Label htmlFor="link">Group or Channel Link</Label>          
-              <Input id="link" name="link" type="url" placeholder="https://chat.whatsapp.com/..." required value={link} onChange={handleLinkChange} />
+              <Label htmlFor="link">Link</Label>          
+              <Input id="link" name="link" type="url" placeholder={placeholders[type]} required value={link} onChange={handleLinkChange} />
             </div>
 
             {(isFetchingPreview || preview) && (

@@ -32,6 +32,17 @@ const submitGroupSchema = z.object({
   type: z.enum(['group', 'channel'], { required_error: 'Please select a type' }),
   tags: z.string().optional(),
   imageUrl: z.string().url().optional(),
+}).refine(data => {
+    if (data.type === 'group') {
+        return data.link.startsWith('https://chat.whatsapp.com/');
+    }
+    if (data.type === 'channel') {
+        return data.link.includes('whatsapp.com/channel');
+    }
+    return false;
+}, {
+    message: "The link format doesn't match the selected type.",
+    path: ['link'],
 });
 
 export type FormState = {
