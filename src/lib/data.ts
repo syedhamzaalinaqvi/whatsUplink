@@ -157,7 +157,7 @@ export const getGroupById = unstable_cache(
         }
     },
     ['group-by-id'], // Cache key prefix
-    { revalidate: 3600 } // Revalidate cache every hour
+    { revalidate: 600 } // Revalidate cache every 10 minutes
 );
 
 
@@ -190,5 +190,5 @@ export const getRelatedGroups = unstable_cache(
         }
     },
     ['related-groups'], // Cache key prefix
-    { revalidate: 3600 } // Revalidate cache every hour
+    { revalidate: 600 } // Revalidate cache every 10 minutes
 );

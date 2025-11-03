@@ -1,6 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ExternalLink, Tag, Share2, Users, Clock, RadioTower, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +17,11 @@ type GroupCardProps = {
   group: GroupLink;
   view: 'grid' | 'list';
   onTagClick: (tag: string) => void;
-  showClicks: boolean; // Directly accept the global setting
+  showClicks: boolean;
 };
 
 export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProps) {
+  const router = useRouter();
   const timeAgo = group.createdAt 
     ? formatDistanceToNow(new Date(group.createdAt), { addSuffix: true }).replace('about ', '')
     : 'recently';
@@ -29,9 +32,16 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
 
   const detailUrl = `/group/invite/${group.id}`;
 
+  const handlePrefetch = () => {
+    router.prefetch(detailUrl);
+  };
+
   if (view === 'grid') {
     return (
-      <Card className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card group">
+      <Card 
+        className="h-full flex flex-col items-center justify-center p-4 text-center relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card group"
+        onMouseEnter={handlePrefetch}
+      >
         <Link href={detailUrl} className="block absolute inset-0 z-0" />
         <Badge className="absolute top-2 left-2 text-xs capitalize bg-primary text-primary-foreground hover:bg-primary/80 z-10">{group.country}</Badge>
         <Badge className="absolute top-2 right-2 text-xs bg-accent text-accent-foreground hover:bg-accent/80 z-10">{group.category}</Badge>
@@ -76,7 +86,10 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
 
   // List View
   return (
-    <Card className="transition-all duration-300 hover:shadow-xl overflow-hidden flex flex-col sm:flex-row">
+    <Card 
+        className="transition-all duration-300 hover:shadow-xl overflow-hidden flex flex-col sm:flex-row"
+        onMouseEnter={handlePrefetch}
+    >
       <div className="p-4 sm:p-6 flex items-center sm:border-r">
           <Avatar className="h-16 w-16 text-primary">
             <AvatarImage src={group.imageUrl} alt={`Preview for ${group.title}`} />

@@ -18,6 +18,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import { getCategories, getCountries } from '@/app/admin/actions';
+import { Skeleton } from '../ui/skeleton';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -38,7 +39,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
   useEffect(() => {
     async function fetchInitialData() {
       if (!firestore) {
-        console.log("Firestore not available yet...");
         setIsGroupLoading(true);
         setIsFiltersLoading(true);
         return;
@@ -77,8 +77,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
 
 
   const handleGroupSubmitted = (newGroup: GroupLink) => {
-    // This function can be used to show a toast or scroll to top
-    // The real-time listener will automatically add the group to the list
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -133,6 +131,19 @@ export function HomePage({ initialSettings }: HomePageProps) {
       </Carousel>
     );
   };
+  
+  const renderFeaturedSkeleton = () => (
+    <div className="mx-auto max-w-5xl">
+       <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
+       <div className='flex gap-4'>
+            <Skeleton className="h-40 basis-1/2 sm:basis-1/3 lg:basis-1/4" />
+            <Skeleton className="h-40 basis-1/2 sm:basis-1/3 lg:basis-1/4" />
+            <Skeleton className="hidden sm:block h-40 sm:basis-1/3 lg:basis-1/4" />
+            <Skeleton className="hidden lg:block h-40 lg:basis-1/4" />
+       </div>
+       <Separator className="my-8" />
+    </div>
+  )
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -156,7 +167,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
             </div>
         </section>
         
-        {featuredGroups.length > 0 && !isGroupLoading && (
+        {isGroupLoading ? renderFeaturedSkeleton() : (featuredGroups.length > 0 && (
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
@@ -164,7 +175,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
               <Separator className="my-8" />
             </div>
           </section>
-        )}
+        ))}
 
         <GroupClientPage 
             groups={visibleGroups} 

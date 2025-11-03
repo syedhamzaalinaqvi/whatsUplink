@@ -9,6 +9,7 @@ import { NewsletterSignup } from '@/components/layout/newsletter-signup';
 import { getModerationSettings, getLayoutSettings } from './admin/actions';
 import { Header } from '@/components/layout/header';
 import Head from 'next/head';
+import { TopProgressBar } from '@/components/layout/top-progress-bar';
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -98,6 +99,7 @@ export default async function RootLayout({
         {layoutSettings.headerScripts && (
            <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
         )}
+        <TopProgressBar />
         <div className="flex flex-col min-h-screen">
           <FirebaseClientProvider>
             <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
