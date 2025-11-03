@@ -1,7 +1,8 @@
 
 'use client';
 import { useEffect, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const router = useRouter();
   const [isFetchingPreview, setIsFetchingPreview] = useState(false);
 
+  // Form fields state
   const [link, setLink] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -45,7 +47,7 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   const [type, setType] = useState<'group' | 'channel'>('group');
   
   const initialState: FormState = { message: '', errors: {} };
-  const [state, formAction] = useFormState(submitGroup, initialState);
+  const [state, formAction] = useActionState(submitGroup, initialState);
   
   useEffect(() => {
     if (state.message) {
