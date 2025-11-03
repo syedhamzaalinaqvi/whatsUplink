@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: 'mmg.whatsapp.net',
+        port: '',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: 'static.whatsapp.net',
