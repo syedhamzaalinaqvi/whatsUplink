@@ -357,7 +357,7 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     groupTitle: formData.get('groupTitle'),
     reason: formData.get('reason'),
     // If otherReason is null (not in form), pass undefined to Zod.
-    otherReason: otherReasonValue === null ? undefined : otherReasonValue,
+    otherReason: otherReasonValue === null ? undefined : String(otherReasonValue),
   });
   
   if (!validatedFields.success) {
@@ -393,3 +393,5 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
+
+    

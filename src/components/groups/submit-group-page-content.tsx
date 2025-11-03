@@ -43,23 +43,16 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   };
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    let newLink = input.value;
-
-    // Automatically add 'www.' if it's a channel link and it's missing
-    if (type === 'channel' && newLink.startsWith('https://whatsapp.com/channel')) {
-        newLink = newLink.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
-        input.value = newLink;
-    }
-
-    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = newLink.startsWith('https://www.whatsapp.com/channel');
+    const link = e.target.value;
+    
+    const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = link.includes('whatsapp.com/channel');
 
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
     if (isValidForType) {
         startFetchingPreview(async () => {
-            const result = await getGroupPreview(newLink);
+            const result = await getGroupPreview(link);
             if (result && !result.error) {
                 setPreview(result);
             } else {
@@ -148,12 +141,12 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         
         <div className="space-y-2 col-span-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title} key={preview?.title} readOnly={!!preview?.title}/>
+          <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || ''} key={preview?.title} readOnly={!!preview?.title}/>
         </div>
 
         <div className="space-y-2 col-span-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description} key={preview?.description} />
+          <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || ''} key={preview?.description} />
         </div>
         
         <input type="hidden" name="imageUrl" value={preview?.image || ''} />
@@ -218,3 +211,5 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
+
+    

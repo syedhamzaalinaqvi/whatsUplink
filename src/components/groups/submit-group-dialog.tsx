@@ -1,3 +1,4 @@
+
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -67,24 +68,16 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    let newLink = input.value;
+    const link = e.target.value;
     
-    // Automatically add 'www.' if it's a channel link and it's missing
-    if (type === 'channel' && newLink.startsWith('https://whatsapp.com/channel')) {
-        newLink = newLink.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
-        // Update the input value directly in the DOM
-        input.value = newLink;
-    }
-    
-    const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = newLink.startsWith('https://www.whatsapp.com/channel');
+    const isGroupLink = link.startsWith('https://chat.whatsapp.com/');
+    const isChannelLink = link.includes('whatsapp.com/channel');
 
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
     if (isValidForType) {
         startFetchingPreview(async () => {
-            const result = await getGroupPreview(newLink);
+            const result = await getGroupPreview(link);
             if (result && !result.error) {
                 setPreview(result);
             } else {
@@ -257,3 +250,5 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
+
+    
