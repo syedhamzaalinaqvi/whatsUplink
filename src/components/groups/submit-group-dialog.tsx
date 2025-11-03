@@ -1,7 +1,6 @@
 'use client';
-import { useRef, useState, useTransition, useEffect } from 'react';
+import { useRef, useState, useTransition, useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useActionState } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -205,7 +204,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
                 <Label htmlFor="link">Link</Label>
-                <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} required />
+                <Input id="link" name="link" type="url" placeholder={placeholders[type]} value={link} onChange={handleLinkChange} />
                 {state.errors?.link && <p className="text-sm font-medium text-destructive">{state.errors.link[0]}</p>}
             </div>
 
@@ -290,3 +289,5 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     </>
   );
 }
+
+    

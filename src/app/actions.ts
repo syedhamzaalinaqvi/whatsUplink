@@ -24,7 +24,7 @@ function getFirestoreInstance() {
 }
 
 const submitGroupSchema = z.object({
-  link: z.string().url({ message: 'Please enter a valid WhatsApp link.' }),
+  link: z.string().min(1, { message: 'Please enter a valid WhatsApp link.' }).url({ message: 'Please enter a valid WhatsApp link.' }),
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
@@ -141,11 +141,6 @@ export async function submitGroup(
     tags: formData.get('tags'),
     imageUrl: formData.get('imageUrl'),
   };
-
-  // Automatically add 'www.' to channel links for validation consistency
-  if (rawData.type === 'channel' && typeof rawData.link === 'string' && rawData.link.startsWith('https://whatsapp.com/channel')) {
-    rawData.link = rawData.link.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
-  }
   
   const validatedFields = submitGroupSchema.safeParse(rawData);
 
@@ -398,3 +393,5 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
+
+    
