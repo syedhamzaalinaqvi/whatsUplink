@@ -127,9 +127,11 @@ async function addNewGroup(groupData: Omit<GroupLink, 'id' | 'createdAt' | 'last
 
 
 export async function submitGroup(
-  rawData: any
+  prevState: FormState,
+  formData: FormData
 ): Promise<FormState> {
   
+  const rawData = Object.fromEntries(formData.entries());
   const validatedFields = submitGroupSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
