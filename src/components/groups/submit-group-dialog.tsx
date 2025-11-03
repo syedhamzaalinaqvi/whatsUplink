@@ -96,7 +96,10 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     }
   };
 
-  const handleFormSubmit = async (formData: FormData) => {
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
     startSubmitting(async () => {
       const action = isEditMode ? updateGroup : submitGroup;
       const result = await action({ message: '' }, formData);
@@ -110,7 +113,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       } else {
         toast({
           title: 'Error',
-          description: result.errors?.link?.[0] || result.message,
+          description: result.errors?.link?.[0] || result.errors?.title?.[0] || result.errors?.description?.[0] || result.message,
           variant: 'destructive',
         });
       }
@@ -130,12 +133,12 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </DialogHeader>
       
       <div className="flex-1 overflow-y-auto px-6">
-        <form ref={formRef} action={handleFormSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
+        <form ref={formRef} onSubmit={handleFormSubmit} id="submit-group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
             
             <div className="space-y-2 col-span-2">
               <Label>Type</Label>
-              <RadioGroup name="type" required value={type} onValueChange={(v: 'group' | 'channel') => {
+              <RadioGroup name="type" value={type} onValueChange={(v: 'group' | 'channel') => {
                   setType(v);
                   setPreview(null);
                   if (formRef.current) {
@@ -156,7 +159,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="link">Link</Label>          
-              <Input id="link" name="link" type="url" placeholder={placeholders[type]} required defaultValue={groupToEdit?.link || ''} onChange={handleLinkChange} />
+              <Input id="link" name="link" type="url" placeholder={placeholders[type]} defaultValue={groupToEdit?.link || ''} onChange={handleLinkChange} />
             </div>
 
             {(isFetchingPreview || preview) && (
@@ -178,19 +181,19 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             
             <div className="space-y-2 col-span-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" required defaultValue={preview?.title || groupToEdit?.title} key={`title-${preview?.title || groupToEdit?.id}`} readOnly={!isEditMode && !!preview?.title}/>
+              <Input id="title" name="title" placeholder="e.g., Awesome Dev Community" defaultValue={preview?.title || groupToEdit?.title} key={`title-${preview?.title || groupToEdit?.id}`}/>
             </div>
 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." required defaultValue={preview?.description || groupToEdit?.description} key={`desc-${preview?.description || groupToEdit?.id}`} />
+              <Textarea id="description" name="description" placeholder="A short, catchy description of your entry." defaultValue={preview?.description || groupToEdit?.description} key={`desc-${preview?.description || groupToEdit?.id}`} />
             </div>
             
             <input type="hidden" name="imageUrl" value={preview?.image || groupToEdit?.imageUrl || ''} />
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
-              <Select name="country" required defaultValue={groupToEdit?.country}>
+              <Select name="country" defaultValue={groupToEdit?.country}>
                   <SelectTrigger id="country" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a country'} />
                   </SelectTrigger>
@@ -204,7 +207,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="category">Category</Label>
-              <Select name="category" required defaultValue={groupToEdit?.category}>
+              <Select name="category" defaultValue={groupToEdit?.category}>
                   <SelectTrigger id="category" disabled={!areFiltersReady}>
                       <SelectValue placeholder={!areFiltersReady ? 'Loading...' : 'Select a category'} />
                   </SelectTrigger>
