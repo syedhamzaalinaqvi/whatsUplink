@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { useFormStatus } from 'react-dom';
+import Image from 'next/image';
 
 type SubmitGroupPageContentProps = {
     categories: Category[];
@@ -133,9 +134,23 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
         </div>
         
          <div className="space-y-2 col-span-2">
-              <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-              <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}/>
-              <p className="text-xs text-muted-foreground">If left blank, a default image will be used.</p>
+            <Label>Image Preview</Label>
+            <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/50 flex items-center justify-center bg-muted/50">
+                    {imageUrl ? (
+                    <Image
+                        src={imageUrl}
+                        alt="Logo Preview"
+                        fill
+                        className="object-contain rounded-md"
+                    />
+                    ) : (
+                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                    )}
+                </div>
+                <p className="text-xs text-muted-foreground">An image will be automatically fetched from the link. If it's incorrect, you can edit it later.</p>
+            </div>
+            <input type="hidden" name="imageUrl" value={imageUrl} />
         </div>
         
         <div className="space-y-2 col-span-2 sm:col-span-1">

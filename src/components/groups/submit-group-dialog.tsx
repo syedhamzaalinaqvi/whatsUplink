@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useActionState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { useFormStatus } from 'react-dom';
+import Image from 'next/image';
 
 type SubmitGroupDialogContentProps = {
   onGroupSubmitted: (group: GroupLink) => void;
@@ -31,7 +32,7 @@ type SubmitGroupDialogContentProps = {
 function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
     const { pending } = useFormStatus();
     return (
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} form="group-form">
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditMode ? 'Save Changes' : 'Submit Entry'}
         </Button>
@@ -137,7 +138,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
       </div>
       
       <div className="flex-1 overflow-y-auto px-6">
-        <form action={formAction} className="grid grid-cols-2 gap-x-4 gap-y-6">
+        <form action={formAction} id="group-form" className="grid grid-cols-2 gap-x-4 gap-y-6">
             
             {isEditMode && <input type="hidden" name="id" value={groupToEdit.id} />}
             
@@ -177,10 +178,25 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
             </div>
             
             <div className="space-y-2 col-span-2">
-              <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-              <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.png" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-              <p className="text-xs text-muted-foreground">If left blank, a default image will be used.</p>
+                <Label>Image Preview</Label>
+                <div className="flex items-center gap-4">
+                    <div className="relative w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/50 flex items-center justify-center bg-muted/50">
+                        {imageUrl ? (
+                        <Image
+                            src={imageUrl}
+                            alt="Logo Preview"
+                            fill
+                            className="object-contain rounded-md"
+                        />
+                        ) : (
+                        <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                        )}
+                    </div>
+                     <p className="text-xs text-muted-foreground">An image will be automatically fetched from the link. If it's incorrect, you can edit it later.</p>
+                </div>
+                <input type="hidden" name="imageUrl" value={imageUrl} />
             </div>
+
 
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label htmlFor="country">Country</Label>
@@ -218,17 +234,16 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
               <p className="text-xs text-muted-foreground">Separate tags with a comma. All tags will be converted to lowercase.</p>
             </div>
             
-            <DialogFooter className="p-6 pt-4 border-t bg-background col-span-2">
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <SubmitButton isEditMode={isEditMode} />
-            </DialogFooter>
-
         </form>
       </div>
+       <DialogFooter className="p-6 pt-4 border-t bg-background">
+            <DialogClose asChild>
+                <Button type="button" variant="outline">
+                Cancel
+                </Button>
+            </DialogClose>
+            <SubmitButton isEditMode={isEditMode} />
+        </DialogFooter>
     </>
   );
 }
