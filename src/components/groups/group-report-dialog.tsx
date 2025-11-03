@@ -94,7 +94,7 @@ export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Report &quot;{group.title}&quot;</DialogTitle>
           <DialogDescription>
@@ -102,7 +102,7 @@ export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDi
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} id="report-form" className="py-4 space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} id="report-form" className="space-y-6">
             <FormField
               control={form.control}
               name="reason"
@@ -149,7 +149,7 @@ export function GroupReportDialog({ group, isOpen, onOpenChange }: GroupReportDi
             )}
           </form>
         </Form>
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={isSubmitting}>
               Cancel
