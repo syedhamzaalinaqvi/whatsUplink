@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { MessagesSquare } from 'lucide-react';
 import { SharePopover } from './share-popover';
+import NProgress from 'nprogress';
 
 type GroupCardProps = {
   group: GroupLink;
@@ -38,6 +39,7 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
   
   const handleCardClick = () => {
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+    NProgress.start();
   };
 
   if (view === 'grid') {
