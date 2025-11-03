@@ -44,6 +44,12 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/whatsuplink_logo_and_favicon_without_background.png',
       shortcut: '/whatsuplink_logo_and_favicon_without_background.png',
       apple: '/whatsuplink_logo_and_favicon_without_background.png',
+      other: [
+        {
+          rel: 'apple-touch-icon-precomposed',
+          url: '/whatsuplink_logo_and_favicon_without_background.png',
+        },
+      ],
     },
     robots: {
       index: true,
@@ -85,6 +91,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
        <Head>
           <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+          <link rel="icon" href="/whatsuplink_logo_and_favicon_without_background.png" sizes="any" />
       </Head>
       <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
