@@ -37,6 +37,7 @@ const submitGroupSchema = z.object({
         return data.link.startsWith('https://chat.whatsapp.com/');
     }
     if (data.type === 'channel') {
+        // Handles both www. and non-www links
         return data.link.includes('whatsapp.com/channel');
     }
     return false;
@@ -123,13 +124,22 @@ export async function submitGroup(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
+  let linkValue = formData.get('link') as string;
+  const typeValue = formData.get('type') as string;
+
+  // Automatically add 'www.' if it's a channel link and it's missing
+  if (typeValue === 'channel' && linkValue && linkValue.startsWith('https://whatsapp.com/channel')) {
+    linkValue = linkValue.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
+    formData.set('link', linkValue);
+  }
+  
   const validatedFields = submitGroupSchema.safeParse({
-    link: formData.get('link'),
+    link: linkValue,
     title: formData.get('title'),
     description: formData.get('description'),
     category: formData.get('category'),
     country: formData.get('country'),
-    type: formData.get('type'),
+    type: typeValue,
     tags: formData.get('tags'),
     imageUrl: formData.get('imageUrl'),
   });
@@ -359,3 +369,4 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
   }
 }
 
+    

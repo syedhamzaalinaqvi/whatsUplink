@@ -40,15 +40,20 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
   
   const placeholders = {
     group: "https://chat.whatsapp.com/...",
-    channel: "https://whatsapp.com/channel/..."
+    channel: "https://www.whatsapp.com/channel/..."
   };
 
   const handleLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLink = e.target.value;
+    let newLink = e.target.value;
+
+    // Automatically add 'www.' if it's a channel link and it's missing
+    if (type === 'channel' && newLink.startsWith('https://whatsapp.com/channel')) {
+        newLink = newLink.replace('https://whatsapp.com/channel', 'https://www.whatsapp.com/channel');
+    }
     setLink(newLink);
 
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = newLink.startsWith('https://whatsapp.com/channel') || newLink.startsWith('https://www.whatsapp.com/channel');
+    const isChannelLink = newLink.startsWith('https://www.whatsapp.com/channel');
 
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
@@ -210,3 +215,5 @@ export function SubmitGroupPageContent({ categories, countries }: SubmitGroupPag
     </form>
   );
 }
+
+    
