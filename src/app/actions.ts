@@ -350,11 +350,14 @@ const reportGroupSchema = z.object({
 });
 
 export async function reportGroup(formData: FormData): Promise<{ success: boolean; message: string }> {
+  const otherReasonValue = formData.get('otherReason');
+
   const validatedFields = reportGroupSchema.safeParse({
     groupId: formData.get('groupId'),
     groupTitle: formData.get('groupTitle'),
     reason: formData.get('reason'),
-    otherReason: formData.get('otherReason'),
+    // If otherReason is null (not in form), pass undefined to Zod.
+    otherReason: otherReasonValue === null ? undefined : otherReasonValue,
   });
   
   if (!validatedFields.success) {
@@ -390,5 +393,3 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
-
-    
