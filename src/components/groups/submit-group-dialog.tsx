@@ -1,3 +1,4 @@
+
 'use client';
 import { useRef, useState, useTransition, useEffect } from 'react';
 import { Loader2, Link as LinkIcon } from 'lucide-react';
@@ -74,7 +75,7 @@ export function SubmitGroupDialogContent({ onGroupSubmitted, groupToEdit, catego
     setLink(newLink);
     
     const isGroupLink = newLink.startsWith('https://chat.whatsapp.com/');
-    const isChannelLink = newLink.includes('whatsapp.com/channel');
+    const isChannelLink = newLink.startsWith('https://whatsapp.com/channel') || newLink.startsWith('https://www.whatsapp.com/channel');
 
     const isValidForType = (type === 'group' && isGroupLink) || (type === 'channel' && isChannelLink);
 
