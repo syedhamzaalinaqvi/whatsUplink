@@ -11,6 +11,7 @@ import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
 import { submitGroupSchema } from '@/lib/schemas';
+import type { FormState } from '@/lib/types';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -25,22 +26,6 @@ function getFirestoreInstance() {
 }
 
 export type SubmitGroupPayload = z.infer<typeof submitGroupSchema>;
-
-export type FormState = {
-  message: string;
-  group?: GroupLink;
-  errors?: {
-    link?: string[];
-    title?: string[];
-    description?: string[];
-    category?: string[];
-    country?: string[];
-    type?: string[];
-    tags?: string[];
-    imageUrl?: string[];
-    _form?: string[];
-  };
-};
 
 export async function getGroupPreview(link: string) {
   'use server';
@@ -377,4 +362,5 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     
 
     
+
 
