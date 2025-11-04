@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FirebaseProvider } from '@/firebase/provider';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { NewsletterSignup } from '@/components/layout/newsletter-signup';
 import { getModerationSettings } from '@/lib/admin-settings';
@@ -105,7 +105,7 @@ export default async function RootLayout({
           <TopProgressBar />
         </Suspense>
         <div className="flex flex-col min-h-screen">
-          <FirebaseClientProvider>
+          <FirebaseProvider>
             <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
             <main className="flex-1 relative z-10">
               {children}
@@ -132,7 +132,7 @@ export default async function RootLayout({
                 </div>
               </div>
             </footer>
-          </FirebaseClientProvider>
+          </FirebaseProvider>
         </div>
       </body>
     </html>
