@@ -5,5 +5,4 @@
 // The new architecture uses a provider pattern for better instance management.
 // For now, let's export the new client provider from here as well.
 
-export { FirebaseClientProvider } from './client-provider';
 export { FirebaseProvider, useFirestore, useAuth } from './provider';
