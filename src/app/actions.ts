@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
 import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -184,6 +185,57 @@ export async function submitGroup(
   } catch (error) {
     console.error('Submission processing failed:', error);
     return { message: 'Failed to submit group. Please try again.' };
+  }
+}
+
+const updateGroupSchema = submitGroupSchema.extend({
+  id: z.string(),
+});
+
+type UpdateGroupPayload = z.infer<typeof updateGroupSchema>;
+
+export async function updateGroup(
+  payload: UpdateGroupPayload
+): Promise<FormState> {
+  const validatedFields = updateGroupSchema.safeParse(payload);
+
+  if (!validatedFields.success) {
+    return {
+      message: 'Validation failed. Please check your input.',
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+  
+  const { id, ...dataToUpdate } = validatedFields.data;
+
+  try {
+    const db = getFirestoreInstance();
+    const groupDocRef = doc(db, 'groups', id);
+
+    const dataForDb: { [key: string]: any } = {
+      ...dataToUpdate,
+      tags: dataToUpdate.tags ? dataToUpdate.tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [],
+      imageUrl: dataToUpdate.imageUrl || 'https://picsum.photos/seed/placeholder/512/512',
+      updatedAt: serverTimestamp(),
+    };
+
+    await updateDoc(groupDocRef, dataForDb);
+
+    revalidatePath('/admin');
+    revalidatePath('/');
+    revalidatePath(`/group/invite/${id}`);
+
+    const updatedDoc = await getDoc(groupDocRef);
+    const updatedGroup = mapDocToGroupLink(updatedDoc);
+
+    return {
+      message: 'Group updated successfully!',
+      group: updatedGroup,
+    };
+
+  } catch (error) {
+    console.error('Update processing failed:', error);
+    return { message: 'Failed to update group. Please try again.' };
   }
 }
 
