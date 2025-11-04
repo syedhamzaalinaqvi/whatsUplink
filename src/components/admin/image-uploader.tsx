@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Trash2, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorageSasUrl } from '@/app/storage-actions';
+import { useFirestore } from '@/firebase/provider'; // Use the provider hook
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 type ImageUploaderProps = {
   currentImageUrl?: string | null;
@@ -21,12 +22,13 @@ export function ImageUploader({
   onRemove,
 }: ImageUploaderProps) {
   const { toast } = useToast();
+  const { app } = useFirestore(); // Get the Firebase app instance
   const [isUploading, startUploading] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !app) return;
 
     if (file.size > 5 * 1024 * 1024) { // 5MB limit
       toast({
@@ -36,40 +38,23 @@ export function ImageUploader({
       });
       return;
     }
-    
-    // Create a preview URL
+
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
 
     startUploading(async () => {
       try {
-        // 1. Get the secure upload URL from our server action
-        const sasResponse = await getStorageSasUrl({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        });
+        const storage = getStorage(app);
+        const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}-${file.name}`;
+        const storageRef = ref(storage, `group-logos/${uniqueFileName}`);
 
-        if (!sasResponse.success) {
-          throw new Error(sasResponse.error);
-        }
+        // Upload the file directly using the client SDK
+        const snapshot = await uploadBytes(storageRef, file);
+        
+        // Get the public download URL
+        const downloadUrl = await getDownloadURL(snapshot.ref);
 
-        // 2. Upload the file directly to Firebase Storage using the SAS URL
-        const uploadResponse = await fetch(sasResponse.sasUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          throw new Error(`Upload failed: ${errorText}`);
-        }
-
-        // 3. On successful upload, update the form with the public URL
-        onUploadComplete(sasResponse.publicUrl);
+        onUploadComplete(downloadUrl);
         toast({
           title: 'Success!',
           description: 'Image uploaded successfully.',
@@ -82,11 +67,9 @@ export function ImageUploader({
           description: error.message || 'There was a problem uploading your image.',
           variant: 'destructive',
         });
-        // Revert preview on failure
-        setPreviewUrl(currentImageUrl || null);
+        setPreviewUrl(currentImageUrl || null); // Revert preview on failure
       } finally {
-        // Revoke the local object URL to prevent memory leaks
-        URL.revokeObjectURL(objectUrl);
+        URL.revokeObjectURL(objectUrl); // Clean up memory
       }
     });
   };
