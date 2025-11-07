@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { GroupCard } from './group-card';
@@ -34,6 +34,32 @@ export function HomePage({
   const [settings] = useState(initialSettings);
   const [initialSearchTag, setInitialSearchTag] = useState('');
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+
+  useEffect(() => {
+    // Sync dialog state with URL query param for the floating button
+    const isSubmitOpen = searchParams.get('submit-form') === 'true';
+    if (isSubmitOpen && !isSubmitDialogOpen) {
+      setIsSubmitDialogOpen(true);
+    }
+  }, [searchParams, isSubmitDialogOpen]);
+
+
+  const handleOpenSubmitDialog = (open: boolean) => {
+    setIsSubmitDialogOpen(open);
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (open) {
+      newParams.set('submit-form', 'true');
+    } else {
+      newParams.delete('submit-form');
+    }
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
+
+
   const isSubmitPage = pathname === '/submit';
 
   useEffect(() => {
@@ -126,12 +152,16 @@ export function HomePage({
       
       {!isSubmitPage && (
           <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-            <SubmitGroupDialog categories={initialCategories} countries={initialCountries}>
-              <Button size="lg" className="rounded-full shadow-lg h-14 text-base">
-                <PlusCircle className="mr-2 h-5 w-5" />
-                Submit Group
-              </Button>
-            </SubmitGroupDialog>
+            <Button size="lg" className="rounded-full shadow-lg h-14 text-base" onClick={() => handleOpenSubmitDialog(true)}>
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Submit Group
+            </Button>
+            <SubmitGroupDialog 
+              categories={initialCategories} 
+              countries={initialCountries} 
+              isOpen={isSubmitDialogOpen}
+              onOpenChange={handleOpenSubmitDialog}
+            />
           </div>
       )}
     </div>
