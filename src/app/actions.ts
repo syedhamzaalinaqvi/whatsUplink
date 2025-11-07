@@ -185,3 +185,134 @@ export async function reportGroup(formData: FormData): Promise<{ success: boolea
     return { success: false, message: 'Failed to submit report. Please try again later.' };
   }
 }
+
+export async function getGroupPreview(link: string): Promise<{
+  success: boolean;
+  data?: {
+    title: string;
+    description: string;
+    imageUrl: string;
+    imageHint: string;
+  };
+  error?: string;
+}> {
+  if (!link || !link.startsWith('https://chat.whatsapp.com/')) {
+    return { success: false, error: 'Invalid WhatsApp group link.' };
+  }
+  try {
+    const preview = await getLinkPreview(link, {
+        followRedirects: 'follow',
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        }
+    });
+
+    if (!preview || !('title' in preview) || !preview.title) {
+        return { success: false, error: 'Could not fetch group preview. Please check the link.' };
+    }
+
+    const title = preview.title as string;
+    const description = preview.description as string || '';
+    const imageUrl = (preview.images?.[0] as string) || (preview.favicons?.[0] as string) || '/whatsuplink_logo_and_favicon_without_background.png';
+    const imageHint = title.split(' ').slice(0, 2).join(' ').toLowerCase();
+
+    return { success: true, data: { title, description, imageUrl, imageHint } };
+  } catch (error: any) {
+    console.error('Error fetching link preview:', error);
+    return { success: false, error: 'Failed to fetch group info. The link may be invalid or private.' };
+  }
+}
+
+export async function submitGroup(
+  state: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const validatedFields = submitGroupSchema.safeParse({
+    link: formData.get('link'),
+    title: formData.get('title'),
+    description: formData.get('description'),
+    category: formData.get('category'),
+    country: formData.get('country'),
+    type: formData.get('type'),
+    tags: formData.get('tags'),
+    imageUrl: formData.get('imageUrl'),
+    imageHint: formData.get('imageHint'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      message: 'Please correct the errors in the form.',
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const db = getFirestoreInstance();
+    const settings = await getModerationSettings();
+
+    // Check for existing group or cooldown period
+    const groupsRef = collection(db, 'groups');
+    const q = query(groupsRef, where('link', '==', validatedFields.data.link));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        const existingDoc = querySnapshot.docs[0];
+        const existingGroup = mapDocToGroupLink(existingDoc);
+        const lastSubmitted = existingGroup.lastSubmittedAt ? new Date(existingGroup.lastSubmittedAt) : new Date(0);
+        let cooldownEnds = new Date(lastSubmitted);
+
+        if (settings.cooldownEnabled) {
+             switch (settings.cooldownUnit) {
+                case 'hours':
+                    cooldownEnds.setHours(cooldownEnds.getHours() + settings.cooldownValue);
+                    break;
+                case 'days':
+                    cooldownEnds.setDate(cooldownEnds.getDate() + settings.cooldownValue);
+                    break;
+                case 'months':
+                    cooldownEnds.setMonth(cooldownEnds.getMonth() + settings.cooldownValue);
+                    break;
+            }
+
+            if (new Date() < cooldownEnds) {
+                return {
+                    message: `This group was submitted recently. Please wait before submitting it again.`,
+                    errors: { link: ['This group link is on a cooldown period.'] }
+                };
+            }
+        }
+
+        // If cooldown has passed, update the existing document
+        await updateDoc(existingDoc.ref, {
+            ...validatedFields.data,
+            tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+            submissionCount: increment(1),
+            lastSubmittedAt: serverTimestamp(),
+            featured: false, // Reset featured status on resubmission
+        });
+        
+        revalidatePath('/');
+        return { message: 'Group link updated successfully!', success: true };
+    }
+
+    // Add a new document
+    const newGroupData = {
+      ...validatedFields.data,
+      tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      createdAt: serverTimestamp(),
+      lastSubmittedAt: serverTimestamp(),
+      clicks: 0,
+      submissionCount: 1,
+      featured: false,
+    };
+
+    await addDoc(groupsRef, newGroupData);
+    
+    revalidatePath('/');
+    return { message: 'Your group has been submitted successfully!', success: true };
+
+  } catch (error) {
+    console.error('Firestore submission error:', error);
+    return { message: 'An unexpected error occurred. Please try again.' };
+  }
+}

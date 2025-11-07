@@ -1,1 +1,5 @@
-// This file is being cleared as part of the form deletion.
+export type FormState = {
+  message: string;
+  errors?: Record<string, string[] | undefined> | undefined;
+  success?: boolean;
+};

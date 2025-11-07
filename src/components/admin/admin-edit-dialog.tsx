@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import type { Category, Country, GroupLink } from '@/lib/data';
+import { SubmitGroupForm } from '../groups/submit-group-form';
 
 type AdminEditDialogProps = {
     group: GroupLink | null;
@@ -22,15 +23,20 @@ export function AdminEditDialog({ group, isOpen, onOpenChange, categories, count
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                 <DialogHeader>
-                    <DialogTitle>Edit Group</DialogTitle>
+            <DialogContent className="sm:max-w-4xl h-full sm:h-auto overflow-y-auto">
+                 <DialogHeader className='px-6 pt-6 sm:px-0 sm:pt-0'>
+                    <DialogTitle>{group ? 'Edit Group' : 'Add New Group'}</DialogTitle>
                     <DialogDescription>
-                        The group editing form has been temporarily removed.
+                        {group ? 'Update the details for this group.' : 'Add a new group to the directory.'}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <p className="text-sm text-muted-foreground">The form for editing and adding groups is currently under construction to resolve some issues. Please use the "Delete" function for now if you need to remove a group.</p>
+                <div className="py-4 px-6 sm:px-0">
+                    <SubmitGroupForm
+                        categories={categories}
+                        countries={countries}
+                        groupToEdit={group}
+                        onSuccess={() => onOpenChange(false)}
+                    />
                 </div>
             </DialogContent>
         </Dialog>

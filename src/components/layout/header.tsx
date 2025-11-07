@@ -50,7 +50,9 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-             {/* The submit button has been removed. */}
+             <Button asChild>
+                <Link href="/submit">Submit Group</Link>
+             </Button>
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -87,6 +89,9 @@ export function Header({
                       </Link>
                     ))}
                   </nav>
+                  <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/submit">Submit Group</Link>
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>
