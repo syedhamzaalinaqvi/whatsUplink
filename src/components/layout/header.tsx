@@ -1,14 +1,13 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { GroupLink, Category, Country, NavLink } from '@/lib/data';
 import { Menu, Loader2 } from 'lucide-react';
-import { SubmitGroup } from '@/components/groups/submit-group';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { getCategories, getCountries } from '@/app/admin/actions';
 
 type HeaderProps = {
   navLinks?: NavLink[];
@@ -19,37 +18,9 @@ type HeaderProps = {
 export function Header({ 
     navLinks = [],
     logoUrl,
-    isLoadingFilters: initialIsLoading
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
-
-  useEffect(() => {
-    async function fetchFilters() {
-      setIsLoading(true);
-      try {
-        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-        setCategories(cats);
-        setCountries(counts);
-      } catch (error) {
-        console.error("Failed to load header filters", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchFilters();
-  }, []);
-
-  const handleGroupSubmitted = (newGroup: GroupLink) => {
-    // Maybe show a global toast or something
-    if (typeof window !== 'undefined') {
-      window.location.href = `/group/invite/${newGroup.id}`;
-    }
-  }
-
 
   return (
     <>
@@ -79,7 +50,7 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-            <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isLoading} categories={categories} countries={countries} />
+             {/* The submit button has been removed. */}
           </div>
 
           {/* Mobile Navigation Trigger */}

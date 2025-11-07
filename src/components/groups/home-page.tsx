@@ -7,7 +7,6 @@ import { GroupClientPage } from '@/components/groups/group-client-page';
 import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
-import { SubmitGroup } from './submit-group';
 import { GroupCard } from './group-card';
 import { Separator } from '../ui/separator';
 import {
@@ -86,11 +85,6 @@ export function HomePage({ initialSettings }: HomePageProps) {
     fetchInitialData();
 
   }, [firestore]);
-
-
-  const handleGroupSubmitted = (newGroup: GroupLink) => {
-    router.push(`/group/invite/${newGroup.id}`);
-  };
 
   const handleLoadMore = () => {
     setVisibleCount(prevCount => prevCount + settings.groupsPerPage);
@@ -194,10 +188,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
         />
       </main>
       
-      {/* Mobile Floating Submit Button - Placed here to only show on homepage */}
-      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <SubmitGroup onGroupSubmitted={handleGroupSubmitted} isLoading={isFiltersLoading} categories={categories} countries={countries} />
-      </div>
+      {/* The floating submit button has been removed. */}
     </div>
   );
 }
