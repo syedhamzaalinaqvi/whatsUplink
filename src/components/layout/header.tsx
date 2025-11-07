@@ -28,30 +28,32 @@ export function Header({
   const searchParams = useSearchParams();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // This state is now the single source of truth, controlled by the URL.
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
+  // Effect to sync dialog state with URL
   useEffect(() => {
     setIsSubmitDialogOpen(searchParams.get('submit-form') === 'true');
   }, [searchParams]);
 
+  // Function to open the dialog by updating the URL
   const openSubmitDialog = useCallback(() => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('submit-form', 'true');
     router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   }, [pathname, router, searchParams]);
 
+  // Function to close the dialog by updating the URL
   const handleDialogChange = useCallback((open: boolean) => {
     if (!open) {
+        // Use router.replace to remove the query from the URL without adding to history
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.delete('submit-form');
-        const newUrl = `${pathname}?${newParams.toString()}`;
-        // Use replaceState to avoid adding to history and instantly update URL without page reload
-        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
-        setIsSubmitDialogOpen(false);
+        router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
-  }, [pathname, searchParams]);
+  }, [pathname, router, searchParams]);
 
 
   const createSubmitButton = (isMobile = false) => {

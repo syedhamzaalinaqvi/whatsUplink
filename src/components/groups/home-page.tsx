@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
@@ -37,12 +37,13 @@ export function HomePage({
 
   const isSubmitPage = pathname === '/submit';
 
-  // This is the single source of truth for opening the dialog via URL
-  const handleOpenSubmitDialog = () => {
+  // This function now simply updates the URL to open the dialog,
+  // which is managed by the Header component.
+  const handleOpenSubmitDialog = useCallback(() => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('submit-form', 'true');
     router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
-  };
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     const tag = sessionStorage.getItem('tagSearch');
