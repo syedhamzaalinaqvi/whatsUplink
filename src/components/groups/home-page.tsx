@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { GroupCard } from './group-card';
@@ -12,7 +13,10 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
+} from "@/components/ui/carousel";
+import { SubmitGroupDialog } from './submit-group-dialog';
+import { Button } from '../ui/button';
+import { PlusCircle } from 'lucide-react';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -29,6 +33,8 @@ export function HomePage({
 }: HomePageProps) {
   const [settings] = useState(initialSettings);
   const [initialSearchTag, setInitialSearchTag] = useState('');
+  const pathname = usePathname();
+  const isSubmitPage = pathname === '/submit';
 
   useEffect(() => {
     const tag = sessionStorage.getItem('tagSearch');
@@ -117,6 +123,17 @@ export function HomePage({
             initialSearchQuery={initialSearchTag}
         />
       </main>
+      
+      {!isSubmitPage && (
+          <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <SubmitGroupDialog categories={initialCategories} countries={initialCountries}>
+              <Button size="lg" className="rounded-full shadow-lg h-14 text-base">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Submit Group
+              </Button>
+            </SubmitGroupDialog>
+          </div>
+      )}
     </div>
   );
 }
