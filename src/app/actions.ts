@@ -245,68 +245,23 @@ export async function submitGroup(
 
   try {
     const db = getFirestoreInstance();
-    const settings = await getModerationSettings();
-
-    // Check for existing group or cooldown period
     const groupsRef = collection(db, 'groups');
-    const q = query(groupsRef, where('link', '==', validatedFields.data.link));
-    const querySnapshot = await getDocs(q);
+    
+    // Always add a new document for every submission.
+    const newGroupData = {
+      ...validatedFields.data,
+      tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      createdAt: serverTimestamp(),
+      lastSubmittedAt: serverTimestamp(),
+      clicks: 0,
+      submissionCount: 1,
+      featured: false,
+    };
 
-    if (!querySnapshot.empty) {
-        const existingDoc = querySnapshot.docs[0];
-        const existingGroup = mapDocToGroupLink(existingDoc);
-        const lastSubmitted = existingGroup.lastSubmittedAt ? new Date(existingGroup.lastSubmittedAt) : new Date(0);
-        let cooldownEnds = new Date(lastSubmitted);
-
-        if (settings.cooldownEnabled) {
-             switch (settings.cooldownUnit) {
-                case 'hours':
-                    cooldownEnds.setHours(cooldownEnds.getHours() + settings.cooldownValue);
-                    break;
-                case 'days':
-                    cooldownEnds.setDate(cooldownEnds.getDate() + settings.cooldownValue);
-                    break;
-                case 'months':
-                    cooldownEnds.setMonth(cooldownEnds.getMonth() + settings.cooldownValue);
-                    break;
-            }
-
-            if (new Date() < cooldownEnds) {
-                return {
-                    message: `This group was submitted recently. Please wait before submitting it again.`,
-                    errors: { link: ['This group link is on a cooldown period.'] }
-                };
-            }
-        }
-
-        // If cooldown has passed, update the existing document
-        await updateDoc(existingDoc.ref, {
-            ...validatedFields.data,
-            tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-            submissionCount: increment(1),
-            lastSubmittedAt: serverTimestamp(),
-            featured: false, // Reset featured status on resubmission
-        });
-        
-        revalidatePath('/');
-        return { message: 'Group link updated successfully!', success: true };
-    } else {
-        // Add a new document since it doesn't exist
-        const newGroupData = {
-          ...validatedFields.data,
-          tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-          createdAt: serverTimestamp(),
-          lastSubmittedAt: serverTimestamp(),
-          clicks: 0,
-          submissionCount: 1,
-          featured: false,
-        };
-
-        await addDoc(groupsRef, newGroupData);
-        
-        revalidatePath('/');
-        return { message: 'Your group has been submitted successfully!', success: true };
-    }
+    await addDoc(groupsRef, newGroupData);
+    
+    revalidatePath('/');
+    return { message: 'Your group has been submitted successfully!', success: true };
 
   } catch (error) {
     console.error('Firestore submission error:', error);
