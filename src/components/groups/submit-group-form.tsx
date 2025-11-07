@@ -90,7 +90,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
       });
       form.reset();
       if (onSuccess) onSuccess();
-    } else if (formState.message && !formState.success) { // Ensure message exists and it's an error
+    } else if (formState.message && !formState.success) {
       toast({
         title: 'Oops!',
         description: formState.message,
@@ -204,7 +204,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}>
                                     <FormControl><SelectTrigger className="transition-all focus:ring-primary focus:ring-2"><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
                                     <SelectContent>{categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
@@ -218,7 +218,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Country</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}>
                                     <FormControl><SelectTrigger className="transition-all focus:ring-primary focus:ring-2"><SelectValue placeholder="Select a country" /></SelectTrigger></FormControl>
                                     <SelectContent>{countries.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
@@ -233,7 +233,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             <FormItem className="space-y-3 md:col-span-2">
                                 <FormLabel>Type</FormLabel>
                                 <FormControl>
-                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row gap-4">
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row gap-4" name={field.name}>
                                         <FormItem className="flex items-center space-x-3 space-y-0">
                                             <FormControl><RadioGroupItem value="group" /></FormControl>
                                             <FormLabel className="font-normal">Group (Members can chat)</FormLabel>
