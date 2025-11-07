@@ -84,16 +84,19 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
-    if (!groupToEdit && isValidLink(linkValue)) {
-      const handler = setTimeout(() => {
-        handleFetchInfo();
-      }, 500); // Wait for 500ms after user stops typing
+    if (groupToEdit) return; // Don't auto-fetch in edit mode
 
-      return () => {
-        clearTimeout(handler);
-      };
-    }
+    const handler = setTimeout(() => {
+      if (isValidLink(linkValue)) {
+        handleFetchInfo();
+      }
+    }, 500); // Wait for 500ms after user stops typing
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [linkValue, handleFetchInfo, groupToEdit]);
+
 
   useEffect(() => {
     if (!formState) return;
