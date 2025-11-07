@@ -139,8 +139,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   return (
     <Form {...form}>
       <form action={handleFormAction} className="space-y-8">
-        <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
-            <CardContent className="p-6 space-y-8">
+        <Card className="border-0 shadow-none">
+            <CardContent className="p-0 space-y-8">
                 {/* Link Input */}
                 <div className="space-y-2">
                     <FormLabel htmlFor="link">Group or Channel Link</FormLabel>
@@ -183,7 +183,6 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                                         <MessagesSquare className="h-10 w-10"/>
                                     </AvatarFallback>
                                 </Avatar>
-                                <p className='text-xs text-muted-foreground'>Logo Preview</p>
                             </div>
                         )}
                         <div className={cn("space-y-6", imageUrl ? "md:col-span-2" : "md:col-span-3")}>
