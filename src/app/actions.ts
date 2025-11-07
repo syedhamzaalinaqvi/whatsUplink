@@ -293,28 +293,26 @@ export async function submitGroup(
         
         revalidatePath('/');
         return { message: 'Group link updated successfully!', success: true };
+    } else {
+        // Add a new document since it doesn't exist
+        const newGroupData = {
+          ...validatedFields.data,
+          tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          createdAt: serverTimestamp(),
+          lastSubmittedAt: serverTimestamp(),
+          clicks: 0,
+          submissionCount: 1,
+          featured: false,
+        };
+
+        await addDoc(groupsRef, newGroupData);
+        
+        revalidatePath('/');
+        return { message: 'Your group has been submitted successfully!', success: true };
     }
-
-    // Add a new document
-    const newGroupData = {
-      ...validatedFields.data,
-      tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      createdAt: serverTimestamp(),
-      lastSubmittedAt: serverTimestamp(),
-      clicks: 0,
-      submissionCount: 1,
-      featured: false,
-    };
-
-    await addDoc(groupsRef, newGroupData);
-    
-    revalidatePath('/');
-    return { message: 'Your group has been submitted successfully!', success: true };
 
   } catch (error) {
     console.error('Firestore submission error:', error);
     return { message: 'An unexpected error occurred. Please try again.' };
   }
 }
-
-    
