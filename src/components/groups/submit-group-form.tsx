@@ -20,7 +20,6 @@ import { Loader2, Sparkles } from 'lucide-react';
 import type { Category, Country, GroupLink } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { useActionState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { MessagesSquare } from 'lucide-react';
 
@@ -28,20 +27,13 @@ const initialState: FormState = {
   message: '',
 };
 
-type SubmitGroupFormProps = {
-  categories: Category[];
-  countries: Country[];
-  groupToEdit?: GroupLink | null;
-  onSuccess?: () => void;
-};
-
 type FormValues = z.infer<typeof submitGroupSchema>;
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
   const [isSubmitting, startSubmitting] = useTransition();
-  const [formState, formAction] = useActionState(submitGroup, initialState);
   const [isFetching, startFetching] = useTransition();
+  const [formState, formAction] = useActionState(submitGroup, initialState);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
@@ -80,10 +72,27 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                 description: 'Group info has been automatically filled.',
             });
         } else {
-            form.setError('link', { type: 'manual', message: result.error || 'Failed to fetch group info.' });
+            toast({
+              title: 'Could not fetch info',
+              description: result.error || 'The link may be invalid or private.',
+              variant: 'destructive',
+            })
         }
     });
   }, [linkValue, form, toast]);
+
+  // Debounce effect to auto-fetch info
+  useEffect(() => {
+    if (!isValidLink(linkValue)) return;
+
+    const handler = setTimeout(() => {
+      handleFetchInfo();
+    }, 500); // Wait for 500ms after user stops typing
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [linkValue, handleFetchInfo]);
 
   useEffect(() => {
     if (!formState) return;
@@ -128,7 +137,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                 {/* Link Input */}
                 <div className="space-y-2">
                     <FormLabel htmlFor="link">Group or Channel Link</FormLabel>
-                    <div className="flex flex-col sm:flex-row items-start gap-2">
+                    <div className="relative">
                         <FormField
                             control={form.control}
                             name="link"
@@ -146,18 +155,11 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                                 </FormItem>
                             )}
                         />
-                        <Button
-                            type="button"
-                            onClick={handleFetchInfo}
-                            disabled={isFetching || !isValidLink(linkValue)}
-                            className="w-full sm:w-auto h-12 transition-all hover:scale-105 active:scale-95"
-                        >
-                            {isFetching ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                                <><Sparkles className="mr-2 h-5 w-5" /> Auto-fill Info</>
-                            )}
-                        </Button>
+                        {isFetching && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                        )}
                     </div>
                 </div>
 
