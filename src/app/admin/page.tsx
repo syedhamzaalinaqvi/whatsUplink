@@ -1,29 +1,38 @@
-
-import { getPaginatedGroups, getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
+import { getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
+import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+import { mapDocToGroupLink } from '@/lib/data';
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams?: {
-    rows?: string;
-    page?: 'next' | 'prev' | 'first';
-    cursor?: string;
-  };
-}) {
 
-  const rowsPerPage = searchParams?.rows ? parseInt(searchParams.rows, 10) : 50;
-  const pageDirection = searchParams?.page || 'first';
-  const cursor = searchParams?.cursor;
+// Helper function to initialize Firebase on the server
+function getFirestoreInstance() {
+    let app;
+    if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
+    }
+    const { getFirestore } = require('firebase/firestore');
+    return getFirestore(app);
+}
 
+
+export default async function AdminPage() {
   try {
-    // Seed data if necessary, then fetch everything
     await seedInitialData();
     
-    const [initialData, moderationSettings, categories, countries, layoutSettings, reports] = await Promise.all([
-      getPaginatedGroups(rowsPerPage, pageDirection, cursor),
+    // We fetch the initial batch of groups here for the first render.
+    // The client component will then take over with real-time updates.
+    const db = getFirestoreInstance();
+    const groupsQuery = query(collection(db, 'groups'), orderBy('createdAt', 'desc'));
+    const initialGroupSnapshot = await getDocs(groupsQuery);
+    const initialGroups = initialGroupSnapshot.docs.map(mapDocToGroupLink);
+    
+    const [moderationSettings, categories, countries, layoutSettings, reports] = await Promise.all([
       getModerationSettings(),
       getCategories(),
       getCountries(),
@@ -33,9 +42,7 @@ export default async function AdminPage({
 
     return (
       <AdminPageClient
-        initialGroups={initialData.groups}
-        initialHasNextPage={initialData.hasNextPage}
-        initialHasPrevPage={initialData.hasPrevPage}
+        initialGroups={initialGroups}
         initialModerationSettings={moderationSettings}
         initialCategories={categories}
         initialCountries={countries}

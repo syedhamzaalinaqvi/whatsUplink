@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
@@ -37,10 +36,9 @@ import type { Report } from '@/lib/data';
 
 type AdminReportsProps = {
   reports: Report[];
-  onReportDeleted: (reportId: string) => void;
 };
 
-export function AdminReports({ reports, onReportDeleted }: AdminReportsProps) {
+export function AdminReports({ reports }: AdminReportsProps) {
   const { toast } = useToast();
   const [isDeleting, startDeleteTransition] = useTransition();
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
@@ -56,7 +54,6 @@ export function AdminReports({ reports, onReportDeleted }: AdminReportsProps) {
         const result = await deleteReport(reportToDelete.id);
         if (result.success) {
             toast({ title: 'Success', description: result.message });
-            onReportDeleted(reportToDelete.id);
             setReportToDelete(null);
         } else {
             toast({ title: 'Error', description: result.message, variant: 'destructive' });

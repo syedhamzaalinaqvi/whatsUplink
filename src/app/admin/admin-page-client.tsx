@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -8,8 +7,6 @@ import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
 type AdminPageClientProps = {
   initialGroups: GroupLink[];
-  initialHasNextPage: boolean;
-  initialHasPrevPage: boolean;
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
@@ -19,8 +16,6 @@ type AdminPageClientProps = {
 
 export function AdminPageClient({
   initialGroups,
-  initialHasNextPage,
-  initialHasPrevPage,
   initialModerationSettings,
   initialCategories,
   initialCountries,
@@ -36,8 +31,6 @@ export function AdminPageClient({
   return (
     <AdminDashboard
       initialGroups={initialGroups}
-      initialHasNextPage={initialHasNextPage}
-      initialHasPrevPage={initialHasPrevPage}
       initialModerationSettings={initialModerationSettings}
       initialCategories={initialCategories}
       initialCountries={initialCountries}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
@@ -34,16 +33,11 @@ import { AdminLayoutSettings } from './admin-layout-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AdminReports } from './admin-reports';
 import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, orderBy, query, limit } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { mapDocToGroupLink, mapDocToReport } from '@/lib/data';
-
-
-const ROWS_PER_PAGE_OPTIONS = [50, 100, 200, 500];
 
 type AdminDashboardProps = {
   initialGroups: GroupLink[];
-  initialHasNextPage: boolean;
-  initialHasPrevPage: boolean;
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
@@ -53,8 +47,6 @@ type AdminDashboardProps = {
 
 export function AdminDashboard({
   initialGroups,
-  initialHasNextPage,
-  initialHasPrevPage,
   initialModerationSettings,
   initialCategories,
   initialCountries,
@@ -70,11 +62,8 @@ export function AdminDashboard({
 
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
   const [reports, setReports] = useState<Report[]>(initialReports);
-  const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
-  const [hasPrevPage, setHasPrevPage] = useState(initialHasPrevPage);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(initialLayoutSettings);
-  const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, startUpdateTransition] = useTransition();
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
@@ -85,28 +74,18 @@ export function AdminDashboard({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const rowsPerPage = searchParams.get('rows') ? parseInt(searchParams.get('rows')!, 10) : 50;
-
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
 
   useEffect(() => {
-    // This effect ensures that if the user navigates (e.g., pagination), the new props are reflected.
-    setGroups(initialGroups);
-    setReports(initialReports);
-    setHasNextPage(initialHasNextPage);
-    setHasPrevPage(initialHasPrevPage);
-    setIsLoading(false);
-  }, [initialGroups, initialReports, initialHasNextPage, initialHasPrevPage]);
-
-  useEffect(() => {
-      // These setters are for non-paginated data that can also be updated within the dashboard.
-      setModerationSettings(initialModerationSettings);
-      setLayoutSettings(initialLayoutSettings);
-      setCategories(initialCategories);
-      setCountries(initialCountries);
+    // These setters are for non-paginated data that can be updated within the dashboard.
+    setModerationSettings(initialModerationSettings);
+    setLayoutSettings(initialLayoutSettings);
+    setCategories(initialCategories);
+    setCountries(initialCountries);
   }, [initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
 
   useEffect(() => {
@@ -117,48 +96,26 @@ export function AdminDashboard({
     const unsubscribeReports = onSnapshot(reportsQuery, (snapshot) => {
       const updatedReports = snapshot.docs.map(mapDocToReport);
       setReports(updatedReports);
+    }, (error) => {
+      console.error("Error fetching real-time reports:", error);
+      toast({ title: "Error", description: "Could not load reports.", variant: "destructive" });
     });
 
-    // Real-time listener for Groups
-    // This listener will only add new groups to the top of the existing list to avoid pagination conflicts.
-    // Full reloads happen on navigation.
-    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'), limit(rowsPerPage));
+    // Real-time listener for all Groups
+    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
     const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
        const serverGroups = snapshot.docs.map(mapDocToGroupLink);
-       setGroups(prevGroups => {
-         const newGroups = serverGroups.filter(g => !prevGroups.some(pg => pg.id === g.id));
-         const updatedGroups = prevGroups.map(pg => {
-            const updated = serverGroups.find(sg => sg.id === pg.id);
-            return updated || pg;
-         });
-         return [...newGroups, ...updatedGroups]
-            .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-            .slice(0, rowsPerPage);
-       });
+       setGroups(serverGroups);
+    }, (error) => {
+      console.error("Error fetching real-time groups:", error);
+      toast({ title: "Error", description: "Could not load groups.", variant: "destructive" });
     });
 
     return () => {
       unsubscribeReports();
       unsubscribeGroups();
     };
-  }, [firestore, rowsPerPage]);
-
-
-  const navigate = (direction: 'next' | 'prev' | 'first', newRowsPerPage?: number) => {
-    setIsLoading(true);
-    const currentRows = newRowsPerPage || rowsPerPage;
-    const params = new URLSearchParams();
-    params.set('rows', String(currentRows));
-    params.set('page', direction);
-
-    if (direction === 'next' && groups.length > 0) {
-      params.set('cursor', groups[groups.length - 1].id);
-    } else if (direction === 'prev' && groups.length > 0) {
-      params.set('cursor', groups[0].id);
-    }
-    
-    router.push(`/admin?${params.toString()}`);
-  };
+  }, [firestore, toast]);
 
 
   const handleEdit = (group: GroupLink) => {
@@ -179,9 +136,6 @@ export function AdminDashboard({
   const handleToggleFeatured = (group: GroupLink) => {
     startUpdateTransition(async () => {
       const result = await toggleFeaturedStatus(group.id, !!group.featured);
-      if (result.success) {
-        setGroups(currentGroups => currentGroups.map(g => g.id === group.id ? { ...g, featured: !g.featured } : g));
-      }
       toast({
         title: result.success ? 'Success' : 'Error',
         description: result.message,
@@ -192,6 +146,7 @@ export function AdminDashboard({
 
   const handleBulkFeature = (featured: boolean) => {
     startUpdateTransition(async () => {
+      if (selectedRows.length === 0) return;
       const result = await bulkSetFeaturedStatus(selectedRows, featured);
       toast({
         title: result.success ? 'Success' : 'Error',
@@ -199,7 +154,6 @@ export function AdminDashboard({
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success) {
-        setGroups(currentGroups => currentGroups.map(g => selectedRows.includes(g.id) ? { ...g, featured } : g));
         setSelectedRows([]);
       }
     });
@@ -346,20 +300,12 @@ export function AdminDashboard({
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {isLoading ? (
-                        Array.from({ length: rowsPerPage }).map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell><Skeleton className="h-5 w-5" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                            <TableCell><Skeleton className="h-6 w-11" /></TableCell>
-                            <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    {filteredGroups.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={9} className="h-24 text-center">
+                                No groups found for the selected filters.
+                            </TableCell>
                         </TableRow>
-                        ))
                     ) : (
                         filteredGroups.map((group) => (
                         <TableRow key={group.id} data-state={selectedRows.includes(group.id) && 'selected'}>
@@ -426,46 +372,8 @@ export function AdminDashboard({
                     <div className="text-sm text-muted-foreground">
                         {selectedRows.length} of {filteredGroups.length} row(s) selected.
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className='flex items-center gap-2'>
-                            <span className="text-sm">Rows per page:</span>
-                            <Select value={`${rowsPerPage}`} onValueChange={(value) => navigate('first', Number(value))}>
-                                <SelectTrigger className='w-20'>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ROWS_PER_PAGE_OPTIONS.map(opt => (
-                                        <SelectItem key={opt} value={`${opt}`}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => navigate('prev')}
-                                disabled={!hasPrevPage || isLoading}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => navigate('next')}
-                                disabled={!hasNextPage || isLoading}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
                 </div>
 
-                {filteredGroups.length === 0 && !isLoading && (
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>No groups found for the selected filters.</p>
-                    </div>
-                )}
             </TabsContent>
             <TabsContent value="settings">
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -487,7 +395,7 @@ export function AdminDashboard({
                 </div>
             </TabsContent>
             <TabsContent value="reports">
-                <AdminReports reports={reports} onReportDeleted={id => setReports(r => r.filter(rep => rep.id !== id))}/>
+                <AdminReports reports={reports} />
             </TabsContent>
         </Tabs>
       </main>
@@ -516,7 +424,6 @@ export function AdminDashboard({
             isOpen={isBulkDeleteDialogOpen}
             onOpenChange={setIsBulkDeleteDialogOpen}
             onSuccess={() => {
-                setGroups(current => current.filter(g => !selectedRows.includes(g.id)));
                 setSelectedRows([]);
             }}
         />
