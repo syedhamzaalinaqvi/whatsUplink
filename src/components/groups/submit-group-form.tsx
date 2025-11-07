@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useTransition, useState, useCallback } from 'react';
+import { useEffect, useTransition, useState, useCallback, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -22,6 +22,13 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { MessagesSquare } from 'lucide-react';
+
+type SubmitGroupFormProps = {
+    categories: Category[];
+    countries: Country[];
+    groupToEdit?: GroupLink | null;
+    onSuccess?: () => void;
+};
 
 const initialState: FormState = {
   message: '',
@@ -286,7 +293,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                         className="w-full text-lg py-6 transition-all hover:scale-[1.02] active:scale-100"
                         disabled={isFetching || isSubmitting}
                     >
-                      {isSubmitting ? (
+                      {(isFetching || isSubmitting) ? (
                         <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
                       ) : groupToEdit ? 'Update Group' : 'Submit Group'}
                     </Button>
