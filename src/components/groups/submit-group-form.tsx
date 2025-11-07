@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
-import { useActionState } from 'react';
 import { getGroupPreview, submitGroup } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,13 +30,9 @@ type SubmitGroupFormProps = {
 
 type FormValues = z.infer<typeof submitGroupSchema>;
 
-const initialState: FormState = {
-  message: '',
-};
-
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
-  const [formState, formAction] = useActionState(submitGroup, initialState);
+  const [isSubmitting, startSubmitTransition] = useTransition();
   const [isFetching, startFetching] = useTransition();
 
   const form = useForm<FormValues>({
@@ -77,38 +72,48 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     });
   }, [linkValue, form, toast]);
 
-  useEffect(() => {
-    if (!formState) return;
+  const onSubmit = (data: FormValues) => {
+    startSubmitTransition(async () => {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+            if (value) {
+                formData.append(key, value as string);
+            }
+        });
+        
+        // Pass a dummy state object, since useActionState is removed
+        const formState = await submitGroup({ message: '' }, formData);
 
-    if (formState.message) {
-      toast({
-        title: formState.success ? 'Success!' : 'Oops!',
-        description: formState.message,
-        variant: formState.success ? 'default' : 'destructive',
-      });
-    }
-
-    if (formState.success) {
-      form.reset();
-      if (onSuccess) {
-        onSuccess();
-      }
-    } else if (formState.errors) {
-      Object.keys(formState.errors).forEach((key) => {
-        const field = key as keyof FormValues;
-        const message = formState.errors?.[field]?.[0];
-        if (message) {
-          form.setError(field, { type: 'server', message });
+        if (formState.success) {
+            toast({
+                title: 'Success!',
+                description: formState.message,
+                variant: 'default',
+            });
+            form.reset();
+            if (onSuccess) onSuccess();
+        } else {
+            toast({
+                title: 'Oops!',
+                description: formState.message,
+                variant: 'destructive',
+            });
+            if (formState.errors) {
+                Object.keys(formState.errors).forEach((key) => {
+                    const field = key as keyof FormValues;
+                    const message = formState.errors?.[field]?.[0];
+                    if (message) {
+                        form.setError(field, { type: 'server', message });
+                    }
+                });
+            }
         }
-      });
-    }
-  }, [formState, toast, form, onSuccess]);
-  
-  const formRef = useRef<HTMLFormElement>(null);
+    });
+  };
 
   return (
     <Form {...form}>
-      <form ref={formRef} action={formAction} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
             <CardHeader>
                 <CardTitle>1. Group Link</CardTitle>
@@ -271,14 +276,16 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6 transition-all hover:scale-[1.02] active:scale-100"
-                onClick={() => form.trigger()}
+                disabled={isSubmitting || isFetching}
             >
-                {groupToEdit ? 'Update Group' : 'Submit Group'}
+                {isSubmitting ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                    <>{groupToEdit ? 'Update Group' : 'Submit Group'}</>
+                )}
             </Button>
         </div>
       </form>
     </Form>
   );
 }
-
-    
