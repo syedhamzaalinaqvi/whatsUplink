@@ -26,14 +26,14 @@ export function SubmitGroupDialog({ categories, countries, children }: SubmitGro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-4xl h-full sm:h-auto overflow-y-auto">
-        <DialogHeader className="px-6 pt-6 sm:px-0 sm:pt-0">
+      <DialogContent className="sm:max-w-4xl h-full sm:h-auto flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4 border-b sticky top-0 bg-background z-10">
           <DialogTitle>Submit a New Group</DialogTitle>
           <DialogDescription>
             Share a WhatsApp group or channel with the world. Fill out the form below to add it to our directory.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 px-6 sm:px-0">
+        <div className="overflow-y-auto px-6 pb-6">
           <SubmitGroupForm
             categories={categories}
             countries={countries}
