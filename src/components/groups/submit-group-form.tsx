@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useEffect, useTransition, useCallback, useActionState } from 'react';
+import { useEffect, useTransition, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -63,7 +62,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/');
   };
 
-  const handleFetchInfo = useCallback(async () => {
+  const handleFetchInfo = async () => {
     if (!isValidLink(linkValue)) return;
 
     startFetching(async () => {
@@ -81,7 +80,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             })
         }
     });
-  }, [linkValue, form, toast]);
+  };
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
@@ -105,8 +104,13 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         description: formState.message,
         variant: 'default',
       });
-      form.reset();
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        onSuccess();
+        form.reset(); // Reset form on success when it's in a dialog
+      } else {
+        // If not in a dialog, just reset the form for the /submit page
+        form.reset({ link: '', title: '', description: '', imageUrl: '', category: '', country: '', type: 'group', tags: '' });
+      }
     } else if (formState.message && !formState.success) {
       toast({
         title: 'Oops!',
