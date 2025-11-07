@@ -43,6 +43,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
     defaultValues: {
+      groupId: groupToEdit?.id || undefined,
       link: groupToEdit?.link || '',
       title: groupToEdit?.title || '',
       description: groupToEdit?.description || '',
@@ -72,7 +73,6 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             form.setValue('description', result.data.description, { shouldValidate: true });
             form.setValue('imageUrl', result.data.imageUrl, { shouldValidate: true });
             form.setValue('imageHint', result.data.imageHint, { shouldValidate: true });
-            // Toast removed as requested
         } else {
             toast({
               title: 'Could not fetch info',
@@ -101,7 +101,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
 
     if (formState.success) {
       toast({
-        title: 'Success!',
+        title: groupToEdit ? 'Updated!' : 'Success!',
         description: formState.message,
         variant: 'default',
       });
@@ -123,7 +123,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         });
       }
     }
-  }, [formState, form, toast, onSuccess]);
+  }, [formState, form, toast, onSuccess, groupToEdit]);
   
   const handleFormAction = (formData: FormData) => {
     startSubmitting(() => {
@@ -134,6 +134,11 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   return (
     <Form {...form}>
       <form action={handleFormAction} className="space-y-8">
+        
+        {groupToEdit && (
+            <input type="hidden" {...form.register('groupId')} />
+        )}
+
         {/* Link Input */}
         <div className="space-y-2">
             <FormLabel htmlFor="link">Group or Channel Link</FormLabel>
@@ -161,22 +166,21 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                     </div>
                 )}
             </div>
+             {imageUrl && (
+                <div className="flex items-center gap-4 pt-4">
+                    <Avatar className="h-16 w-16 text-primary border-2 border-primary/10">
+                        <AvatarImage src={imageUrl} alt="Group Preview" />
+                        <AvatarFallback>
+                            <MessagesSquare className="h-8 w-8"/>
+                        </AvatarFallback>
+                    </Avatar>
+                    <p className="text-sm text-muted-foreground">
+                        Group info auto-filled. You can edit the details below.
+                    </p>
+                </div>
+            )}
         </div>
         
-        {imageUrl && (
-            <div className="flex items-center gap-4 py-4">
-                <Avatar className="h-16 w-16 text-primary border-2 border-primary/10">
-                    <AvatarImage src={imageUrl} alt="Group Preview" />
-                    <AvatarFallback>
-                        <MessagesSquare className="h-8 w-8"/>
-                    </AvatarFallback>
-                </Avatar>
-                 <p className="text-sm text-muted-foreground">
-                    Group info auto-filled. You can edit the details below.
-                </p>
-            </div>
-        )}
-
         {/* The rest of the form - appears after link is potentially fetched */}
         <div className={cn("space-y-8 transition-opacity duration-500", isFetching && "opacity-50 pointer-events-none")}>
             
@@ -288,7 +292,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                 disabled={isFetching || isSubmitting}
             >
               {(isFetching || isSubmitting) ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {groupToEdit ? 'Updating...' : 'Submitting...'}</>
               ) : groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
         </div>

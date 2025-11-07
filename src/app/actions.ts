@@ -225,6 +225,7 @@ export async function submitGroup(
   formData: FormData
 ): Promise<FormState> {
   const validatedFields = submitGroupSchema.safeParse({
+    groupId: formData.get('groupId'),
     link: formData.get('link'),
     title: formData.get('title'),
     description: formData.get('description'),
@@ -243,25 +244,43 @@ export async function submitGroup(
     };
   }
 
+  const { groupId, ...groupData } = validatedFields.data;
+  const isUpdate = !!groupId;
+
   try {
     const db = getFirestoreInstance();
-    const groupsRef = collection(db, 'groups');
+    const tags = groupData.tags ? groupData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
     
-    // Always add a new document for every submission.
-    const newGroupData = {
-      ...validatedFields.data,
-      tags: validatedFields.data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      createdAt: serverTimestamp(),
-      lastSubmittedAt: serverTimestamp(),
-      clicks: 0,
-      submissionCount: 1,
-      featured: false,
-    };
+    if (isUpdate) {
+      // This is an UPDATE operation
+      const groupRef = doc(db, 'groups', groupId);
+      const updateData = {
+        ...groupData,
+        tags: tags,
+      };
+      await updateDoc(groupRef, updateData);
 
-    await addDoc(groupsRef, newGroupData);
-    
-    revalidatePath('/');
-    return { message: 'Your group has been submitted successfully!', success: true };
+      revalidatePath('/admin');
+      revalidatePath('/');
+      revalidatePath(`/group/invite/${groupId}`);
+      return { message: 'Group updated successfully!', success: true };
+
+    } else {
+      // This is a CREATE operation
+      const newGroupData = {
+        ...groupData,
+        tags: tags,
+        createdAt: serverTimestamp(),
+        lastSubmittedAt: serverTimestamp(),
+        clicks: 0,
+        submissionCount: 1,
+        featured: false,
+      };
+      await addDoc(collection(db, 'groups'), newGroupData);
+
+      revalidatePath('/');
+      return { message: 'Your group has been submitted successfully!', success: true };
+    }
 
   } catch (error) {
     console.error('Firestore submission error:', error);

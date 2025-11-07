@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 export const submitGroupSchema = z.object({
+  groupId: z.string().optional(), // Add groupId for updates
   link: z.string().url('Please enter a valid WhatsApp link.').refine(
     (link) => link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/'),
     { message: 'Link must be a valid WhatsApp group or channel invite link.' }
