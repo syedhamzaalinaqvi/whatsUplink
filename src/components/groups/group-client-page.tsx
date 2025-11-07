@@ -7,6 +7,7 @@ import { GroupListControls } from '@/components/groups/group-list-controls';
 import type { Category, Country, GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
+import { Loader2 } from 'lucide-react';
 
 type GroupClientPageProps = {
     groups: GroupLink[];
@@ -115,9 +116,10 @@ export function GroupClientPage({
                             onClick={onLoadMore}
                             variant="default"
                             size="lg"
+                            disabled={isGroupLoading}
                             className="transition-all hover:scale-105 active:scale-95"
                         >
-                            Load More Groups
+                            {isGroupLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Load More Groups'}
                         </Button>
                     </div>
                 )}

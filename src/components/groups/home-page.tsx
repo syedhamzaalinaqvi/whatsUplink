@@ -1,12 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
-import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { mapDocToGroupLink } from '@/lib/data';
 import { GroupCard } from './group-card';
 import { Separator } from '../ui/separator';
 import {
@@ -16,25 +13,27 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { getCategories, getCountries } from '@/app/admin/actions';
 import { Skeleton } from '../ui/skeleton';
-import { useRouter } from 'next/navigation';
+import { getPaginatedGroups } from '@/app/admin/actions';
+import { Button } from '../ui/button';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
+  initialGroups: GroupLink[];
+  initialCategories: Category[];
+  initialCountries: Country[];
 };
 
-export function HomePage({ initialSettings }: HomePageProps) {
-  const { firestore } = useFirestore();
-  const router = useRouter();
-  const [groups, setGroups] = useState<GroupLink[]>([]);
-  const [visibleCount, setVisibleCount] = useState(initialSettings.groupsPerPage);
-  const [isGroupLoading, setIsGroupLoading] = useState(true);
-  
-  const [settings, setSettings] = useState(initialSettings);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [isFiltersLoading, setIsFiltersLoading] = useState(true);
+export function HomePage({ 
+    initialSettings, 
+    initialGroups, 
+    initialCategories, 
+    initialCountries 
+}: HomePageProps) {
+  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+  const [settings] = useState(initialSettings);
+  const [isGroupLoading, setIsGroupLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialGroups.length === settings.groupsPerPage);
 
   // This is used for tag-based filtering from the detail page
   const [initialSearchTag, setInitialSearchTag] = useState('');
@@ -47,51 +46,19 @@ export function HomePage({ initialSettings }: HomePageProps) {
     }
   }, []);
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      if (!firestore) {
-        setIsGroupLoading(true);
-        setIsFiltersLoading(true);
-        return;
-      }
-      
-      setIsFiltersLoading(true);
-      try {
-        const [cats, counts] = await Promise.all([getCategories(), getCountries()]);
-        setCategories(cats);
-        setCountries(counts);
-      } catch (error) {
-        console.error("Failed to fetch filters:", error);
-      } finally {
-        setIsFiltersLoading(false);
-      }
-
-      setIsGroupLoading(true);
-      const groupsCollection = collection(firestore, 'groups');
-      const q = query(groupsCollection, orderBy('createdAt', 'desc'));
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const groupsData = querySnapshot.docs.map(mapDocToGroupLink);
-        setGroups(groupsData);
-        setIsGroupLoading(false);
-      }, (error) => {
-        console.error("Error fetching real-time groups:", error);
-        setIsGroupLoading(false);
-      });
-      
-      return () => unsubscribe();
-    }
+  const handleLoadMore = async () => {
+    setIsGroupLoading(true);
+    const lastGroupCursor = groups[groups.length - 1]?.id;
+    const { groups: newGroups, hasNextPage } = await getPaginatedGroups(
+      settings.groupsPerPage,
+      'next',
+      lastGroupCursor
+    );
     
-    fetchInitialData();
-
-  }, [firestore]);
-
-  const handleLoadMore = () => {
-    setVisibleCount(prevCount => prevCount + settings.groupsPerPage);
+    setGroups(prev => [...prev, ...newGroups]);
+    setHasMore(hasNextPage);
+    setIsGroupLoading(false);
   };
-
-  const visibleGroups = groups.slice(0, visibleCount);
-  const hasMoreGroups = visibleCount < groups.length;
   
   const featuredGroups = useMemo(() => groups.filter(g => g.featured), [groups]);
 
@@ -165,7 +132,7 @@ export function HomePage({ initialSettings }: HomePageProps) {
             </div>
         </section>
         
-        {isGroupLoading ? renderFeaturedSkeleton() : (featuredGroups.length > 0 && (
+        {featuredGroups.length > 0 && (
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
@@ -173,22 +140,20 @@ export function HomePage({ initialSettings }: HomePageProps) {
               <Separator className="my-8" />
             </div>
           </section>
-        ))}
+        )}
 
         <GroupClientPage 
-            groups={visibleGroups} 
+            groups={groups} 
             onLoadMore={handleLoadMore}
-            hasMore={hasMoreGroups}
+            hasMore={hasMore}
             isGroupLoading={isGroupLoading}
             showClicks={settings.showClicks}
-            initialCategories={categories}
-            initialCountries={countries}
-            isLoadingFilters={isFiltersLoading}
+            initialCategories={initialCategories}
+            initialCountries={initialCountries}
+            isLoadingFilters={false}
             initialSearchQuery={initialSearchTag}
         />
       </main>
-      
-      {/* The floating submit button has been removed. */}
     </div>
   );
 }
