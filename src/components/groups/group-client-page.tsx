@@ -1,15 +1,16 @@
-
 'use client';
 
 import { useState, useMemo, useLayoutEffect, useEffect } from 'react';
 import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
-import type { Category, Country, GroupLink } from '@/lib/data';
+import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
+import { Button } from '../ui/button';
+import { Loader2 } from 'lucide-react';
 
 type GroupClientPageProps = {
     allGroups: GroupLink[];
-    showClicks: boolean;
+    initialSettings: ModerationSettings;
     initialCategories: Category[];
     initialCountries: Country[];
     initialSearchQuery?: string;
@@ -17,7 +18,7 @@ type GroupClientPageProps = {
 
 export function GroupClientPage({
   allGroups,
-  showClicks,
+  initialSettings,
   initialCategories,
   initialCountries,
   initialSearchQuery = '',
@@ -27,6 +28,8 @@ export function GroupClientPage({
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
+  
+  const [visibleCount, setVisibleCount] = useState(initialSettings.groupsPerPage);
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
@@ -51,6 +54,10 @@ export function GroupClientPage({
   const handleTagClick = (tag: string) => {
     setSearchQuery(tag);
   };
+  
+  const handleLoadMore = () => {
+    setVisibleCount(prevCount => prevCount + initialSettings.groupsPerPage);
+  };
 
   const filteredGroups = useMemo(() => {
     return allGroups.filter(group => {
@@ -65,6 +72,10 @@ export function GroupClientPage({
       return searchMatch && countryMatch && categoryMatch && typeMatch;
     });
   }, [allGroups, searchQuery, selectedCountry, selectedCategory, selectedType]);
+
+  const visibleGroups = useMemo(() => {
+    return filteredGroups.slice(0, visibleCount);
+  }, [filteredGroups, visibleCount]);
 
   const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
 
@@ -93,16 +104,24 @@ export function GroupClientPage({
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />
                 ))}
             </div>
-        ) : filteredGroups.length > 0 ? (
+        ) : visibleGroups.length > 0 ? (
             <div className={gridClass}>
-                {filteredGroups.map(group => (
-                <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={showClicks} />
+                {visibleGroups.map(group => (
+                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={initialSettings.showClicks} />
                 ))}
             </div>
         ) : (
             <div className="mt-16 text-center text-muted-foreground">
                 <h3 className="text-xl font-semibold">No groups found</h3>
                 <p>Try adjusting your filters or submit a new group!</p>
+            </div>
+        )}
+
+        {filteredGroups.length > visibleCount && (
+            <div className="mt-12 text-center">
+                <Button onClick={handleLoadMore} size="lg">
+                    Load More Groups
+                </Button>
             </div>
         )}
         </div>

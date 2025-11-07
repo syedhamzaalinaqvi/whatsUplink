@@ -7,6 +7,7 @@ import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
 type AdminPageClientProps = {
   initialGroups: GroupLink[];
+  initialHasNextPage: boolean;
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
@@ -16,6 +17,7 @@ type AdminPageClientProps = {
 
 export function AdminPageClient({
   initialGroups,
+  initialHasNextPage,
   initialModerationSettings,
   initialCategories,
   initialCountries,
@@ -31,6 +33,7 @@ export function AdminPageClient({
   return (
     <AdminDashboard
       initialGroups={initialGroups}
+      initialHasNextPage={initialHasNextPage}
       initialModerationSettings={initialModerationSettings}
       initialCategories={initialCategories}
       initialCountries={initialCountries}

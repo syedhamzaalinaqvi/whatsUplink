@@ -1,5 +1,5 @@
 
-import { getCategories, getCountries, seedInitialData, getLayoutSettings, getReports } from './actions';
+import { getCategories, getCountries, seedInitialData, getLayoutSettings, getReports, getPaginatedGroups } from './actions';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
@@ -28,11 +28,6 @@ export default async function AdminPage() {
   try {
     await seedInitialData();
     
-    const db = getFirestoreInstance();
-    const groupsQuery = query(collection(db, 'groups'), orderBy('createdAt', 'desc'));
-    const initialGroupSnapshot = await getDocs(groupsQuery);
-    const initialGroups = initialGroupSnapshot.docs.map(mapDocToGroupLink);
-    
     const [moderationSettings, categories, countries, layoutSettings, reports] = await Promise.all([
       getModerationSettings(),
       getCategories(),
@@ -41,9 +36,13 @@ export default async function AdminPage() {
       getReports(),
     ]);
 
+    // Fetch initial paginated groups
+    const { groups, hasNextPage } = await getPaginatedGroups(moderationSettings.groupsPerPage, 'first');
+
     return (
       <AdminPageClient
-        initialGroups={initialGroups}
+        initialGroups={groups}
+        initialHasNextPage={hasNextPage}
         initialModerationSettings={moderationSettings}
         initialCategories={categories}
         initialCountries={countries}

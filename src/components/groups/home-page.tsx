@@ -126,7 +126,7 @@ export function HomePage({
 
         <GroupClientPage 
             allGroups={allGroups}
-            showClicks={settings.showClicks}
+            initialSettings={settings}
             initialCategories={initialCategories}
             initialCountries={initialCountries}
             initialSearchQuery={initialSearchTag}

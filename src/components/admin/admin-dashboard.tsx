@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Search, Trash2, Star, Eye, Repeat } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, Eye, Repeat, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { AdminDeleteDialog } from './admin-delete-dialog';
 import { AdminEditDialog } from './admin-edit-dialog';
@@ -20,7 +20,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { GROUP_TYPES } from '@/lib/constants';
 import { Checkbox } from '../ui/checkbox';
-import { toggleFeaturedStatus, bulkSetFeaturedStatus } from '@/app/admin/actions';
+import { toggleFeaturedStatus, bulkSetFeaturedStatus, getPaginatedGroups } from '@/app/admin/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AdminStats } from './admin-stats';
 import { AdminBulkDeleteDialog } from './admin-bulk-delete-dialog';
@@ -33,6 +33,7 @@ import { AdminReports } from './admin-reports';
 
 type AdminDashboardProps = {
   initialGroups: GroupLink[];
+  initialHasNextPage: boolean;
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
@@ -42,6 +43,7 @@ type AdminDashboardProps = {
 
 export function AdminDashboard({
   initialGroups,
+  initialHasNextPage,
   initialModerationSettings,
   initialCategories,
   initialCountries,
@@ -50,13 +52,15 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const { toast } = useToast();
   
-  // The component now receives all its data via props and does not fetch it.
-  // State is used to manage UI interactions and filters.
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
+  const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
+  const [hasPrevPage, setHasPrevPage] = useState(false);
+
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(initialLayoutSettings);
   const [isUpdating, startUpdateTransition] = useTransition();
+  const [isLoading, startLoadingTransition] = useTransition();
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
@@ -80,7 +84,30 @@ export function AdminDashboard({
     setLayoutSettings(initialLayoutSettings);
     setCategories(initialCategories);
     setCountries(initialCountries);
-  }, [initialGroups, initialReports, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
+    setHasNextPage(initialHasNextPage);
+    setHasPrevPage(false); // Reset prev page on revalidation
+  }, [initialGroups, initialReports, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries, initialHasNextPage]);
+
+  const handleFetchPage = (direction: 'next' | 'prev' | 'first') => {
+    startLoadingTransition(async () => {
+      const cursorId = 
+        direction === 'next' ? groups[groups.length - 1]?.id :
+        direction === 'prev' ? groups[0]?.id :
+        undefined;
+
+      const { groups: newGroups, hasNextPage: newHasNext, hasPrevPage: newHasPrev } = await getPaginatedGroups(
+        moderationSettings.groupsPerPage,
+        direction,
+        cursorId
+      );
+
+      if (newGroups.length > 0) {
+        setGroups(newGroups);
+        setHasNextPage(newHasNext);
+        setHasPrevPage(newHasPrev);
+      }
+    });
+  };
 
   const handleEdit = (group: GroupLink) => {
     setSelectedGroup(group);
@@ -131,6 +158,7 @@ export function AdminDashboard({
   };
   
   const filteredGroups = useMemo(() => {
+    // Filtering is now done on the client-side for the current page of groups
     return groups.filter(group => {
       const searchLower = searchQuery.toLowerCase();
       const searchMatch = !searchQuery || group.title.toLowerCase().includes(searchLower);
@@ -161,7 +189,7 @@ export function AdminDashboard({
           </div>
         </div>
 
-        <AdminStats groups={groups} />
+        <AdminStats groups={initialGroups} />
 
         <Tabs defaultValue="groups" className="mt-6">
              <TabsList className="h-auto w-full md:w-fit md:h-10 flex flex-col md:inline-flex md:flex-row">
@@ -265,7 +293,13 @@ export function AdminDashboard({
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {filteredGroups.length === 0 ? (
+                    {isLoading ? (
+                        <TableRow>
+                            <TableCell colSpan={9} className="h-24 text-center">
+                                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                            </TableCell>
+                        </TableRow>
+                    ) : filteredGroups.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={9} className="h-24 text-center">
                                 No groups found for the selected filters.
@@ -336,6 +370,24 @@ export function AdminDashboard({
                 <div className="flex items-center justify-between mt-4">
                     <div className="text-sm text-muted-foreground">
                         {selectedRows.length} of {filteredGroups.length} row(s) selected.
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFetchPage('prev')}
+                            disabled={!hasPrevPage || isLoading}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFetchPage('next')}
+                            disabled={!hasNextPage || isLoading}
+                        >
+                            Next
+                        </Button>
                     </div>
                 </div>
 
