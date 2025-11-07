@@ -53,25 +53,14 @@ export function Header({
   };
 
   const createSubmitButton = (isMobile = false) => {
-    // Find the original 'Submit Group' nav link to decide what to render
-    const submitNavLink = navLinks.find(link => link.label.toLowerCase() === 'submit group');
-
-    if (!submitNavLink) return null;
-
     const commonProps = {
       onClick: () => {
         handleOpenSubmitDialog(true);
         if (isMobile) setIsMobileMenuOpen(false);
       },
-      children: 'Submit Group',
     };
 
-    if (isMobile) {
-      return <Button {...commonProps} />;
-    }
-    
-    // For desktop, we replace the nav link with a button
-    return <Button {...commonProps} />;
+    return <Button {...commonProps}>Submit Group</Button>;
   };
 
   return (
@@ -94,7 +83,7 @@ export function Header({
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.filter(link => link.label.toLowerCase() !== 'submit group').map((link) => (
+            {navLinks.filter(link => link.href !== '/submit').map((link) => (
               <Link key={link.id} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                 {link.label}
               </Link>
@@ -133,7 +122,7 @@ export function Header({
                         </h1>
                     </Link>
                     <nav className="flex flex-col gap-4">
-                    {navLinks.filter(link => link.label.toLowerCase() !== 'submit group').map((link) => (
+                    {navLinks.filter(link => link.href !== '/submit').map((link) => (
                       <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
                         {link.label}
                       </Link>
