@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -35,32 +34,15 @@ export function HomePage({
   const [initialSearchTag, setInitialSearchTag] = useState('');
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
-
-  useEffect(() => {
-    // Sync dialog state with URL query param for the floating button
-    const isSubmitOpen = searchParams.get('submit-form') === 'true';
-    if (isSubmitOpen && !isSubmitDialogOpen) {
-      setIsSubmitDialogOpen(true);
-    }
-  }, [searchParams, isSubmitDialogOpen]);
-
-
-  const handleOpenSubmitDialog = (open: boolean) => {
-    setIsSubmitDialogOpen(open);
-    const newParams = new URLSearchParams(searchParams.toString());
-    if (open) {
-      newParams.set('submit-form', 'true');
-    } else {
-      newParams.delete('submit-form');
-    }
-    router.replace(`${pathname}?${newParams.toString()}`);
-  };
-
 
   const isSubmitPage = pathname === '/submit';
+
+  // This is the single source of truth for opening the dialog via URL
+  const handleOpenSubmitDialog = () => {
+    const newParams = new URLSearchParams();
+    newParams.set('submit-form', 'true');
+    router.push(`${pathname}?${newParams.toString()}`);
+  };
 
   useEffect(() => {
     const tag = sessionStorage.getItem('tagSearch');
@@ -152,16 +134,11 @@ export function HomePage({
       
       {!isSubmitPage && (
           <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-            <Button size="lg" className="rounded-full shadow-lg h-14 text-base" onClick={() => handleOpenSubmitDialog(true)}>
+            <Button size="lg" className="rounded-full shadow-lg h-14 text-base" onClick={handleOpenSubmitDialog}>
               <PlusCircle className="mr-2 h-5 w-5" />
               Submit Group
             </Button>
-            <SubmitGroupDialog 
-              categories={initialCategories} 
-              countries={initialCountries} 
-              isOpen={isSubmitDialogOpen}
-              onOpenChange={handleOpenSubmitDialog}
-            />
+            {/* The dialog itself is now rendered in the main layout, so it's not needed here. */}
           </div>
       )}
     </div>

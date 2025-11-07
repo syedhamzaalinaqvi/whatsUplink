@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,34 +32,36 @@ export function Header({
   
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
+  // The single source of truth for the dialog's open state
   useEffect(() => {
-    // Sync dialog state with URL query param
     const isSubmitOpen = searchParams.get('submit-form') === 'true';
-    if (isSubmitOpen !== isSubmitDialogOpen) {
-      setIsSubmitDialogOpen(isSubmitOpen);
-    }
-  }, [searchParams, isSubmitDialogOpen]);
+    setIsSubmitDialogOpen(isSubmitOpen);
+  }, [searchParams]);
 
-  const handleOpenSubmitDialog = (open: boolean) => {
+  // Function to open the dialog by changing the URL
+  const openSubmitDialog = () => {
     const newParams = new URLSearchParams(searchParams.toString());
-    if (open) {
-      newParams.set('submit-form', 'true');
-    } else {
+    newParams.set('submit-form', 'true');
+    router.push(`${pathname}?${newParams.toString()}`);
+  };
+
+  // Function to close the dialog by changing the URL
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      const newParams = new URLSearchParams(searchParams.toString());
       newParams.delete('submit-form');
+      router.push(`${pathname}?${newParams.toString()}`);
     }
-    // Use replace to avoid adding a new entry to the browser's history
-    router.replace(`${pathname}?${newParams.toString()}`);
   };
 
   const createSubmitButton = (isMobile = false) => {
-    const commonProps = {
-      onClick: () => {
-        handleOpenSubmitDialog(true);
-        if (isMobile) setIsMobileMenuOpen(false);
-      },
+    const handleClick = () => {
+      openSubmitDialog();
+      if (isMobile) {
+        setIsMobileMenuOpen(false);
+      }
     };
-
-    return <Button {...commonProps}>Submit Group</Button>;
+    return <Button onClick={handleClick}>Submit Group</Button>;
   };
 
   return (
@@ -136,12 +137,12 @@ export function Header({
         </div>
       </header>
 
-      {/* The dialog is placed here so it can be controlled from the header */}
+      {/* The dialog is rendered here, controlled by URL state */}
       <SubmitGroupDialog
         categories={categories}
         countries={countries}
         isOpen={isSubmitDialogOpen}
-        onOpenChange={handleOpenSubmitDialog}
+        onOpenChange={handleDialogChange}
       />
     </>
   );
