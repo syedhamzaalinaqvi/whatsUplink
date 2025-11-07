@@ -20,11 +20,14 @@ function getFirestoreInstance() {
 
 
 export default async function AdminPage() {
+  // Setting revalidate to 0 tells Next.js not to cache this page,
+  // so data is always fresh on navigation.
+  // This is an alternative to calling revalidatePath from every action.
+  // export const revalidate = 0; 
+
   try {
     await seedInitialData();
     
-    // We fetch the initial batch of groups here for the first render.
-    // The client component will then take over with real-time updates.
     const db = getFirestoreInstance();
     const groupsQuery = query(collection(db, 'groups'), orderBy('createdAt', 'desc'));
     const initialGroupSnapshot = await getDocs(groupsQuery);

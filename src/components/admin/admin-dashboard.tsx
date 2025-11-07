@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings, Report } from '@/lib/data';
 import {
   Table,
@@ -13,9 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Search, Trash2, Star, ChevronLeft, ChevronRight, Eye, Repeat } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, Eye, Repeat } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Skeleton } from '../ui/skeleton';
 import { AdminDeleteDialog } from './admin-delete-dialog';
 import { AdminEditDialog } from './admin-edit-dialog';
 import { Input } from '../ui/input';
@@ -32,9 +30,6 @@ import { AdminTaxonomyManager } from './admin-taxonomy-manager';
 import { AdminLayoutSettings } from './admin-layout-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AdminReports } from './admin-reports';
-import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { mapDocToGroupLink, mapDocToReport } from '@/lib/data';
 
 type AdminDashboardProps = {
   initialGroups: GroupLink[];
@@ -53,13 +48,10 @@ export function AdminDashboard({
   initialLayoutSettings,
   initialReports,
 }: AdminDashboardProps) {
-  'use client';
-  
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { firestore } = useFirestore();
-
+  
+  // The component now receives all its data via props and does not fetch it.
+  // State is used to manage UI interactions and filters.
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
@@ -79,44 +71,16 @@ export function AdminDashboard({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
-
+  
+  // When the initial props change (due to revalidation), update the state
   useEffect(() => {
-    // These setters are for non-paginated data that can be updated within the dashboard.
+    setGroups(initialGroups);
+    setReports(initialReports);
     setModerationSettings(initialModerationSettings);
     setLayoutSettings(initialLayoutSettings);
     setCategories(initialCategories);
     setCountries(initialCountries);
-  }, [initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
-
-  useEffect(() => {
-    if (!firestore) return;
-
-    // Real-time listener for Reports
-    const reportsQuery = query(collection(firestore, 'reports'), orderBy('createdAt', 'desc'));
-    const unsubscribeReports = onSnapshot(reportsQuery, (snapshot) => {
-      const updatedReports = snapshot.docs.map(mapDocToReport);
-      setReports(updatedReports);
-    }, (error) => {
-      console.error("Error fetching real-time reports:", error);
-      toast({ title: "Error", description: "Could not load reports.", variant: "destructive" });
-    });
-
-    // Real-time listener for all Groups
-    const groupsQuery = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
-    const unsubscribeGroups = onSnapshot(groupsQuery, (snapshot) => {
-       const serverGroups = snapshot.docs.map(mapDocToGroupLink);
-       setGroups(serverGroups);
-    }, (error) => {
-      console.error("Error fetching real-time groups:", error);
-      toast({ title: "Error", description: "Could not load groups.", variant: "destructive" });
-    });
-
-    return () => {
-      unsubscribeReports();
-      unsubscribeGroups();
-    };
-  }, [firestore, toast]);
-
+  }, [initialGroups, initialReports, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries]);
 
   const handleEdit = (group: GroupLink) => {
     setSelectedGroup(group);
@@ -141,6 +105,7 @@ export function AdminDashboard({
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
+      // No manual state update needed, revalidation will handle it.
     });
   };
 

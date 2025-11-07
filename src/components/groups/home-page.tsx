@@ -13,34 +13,21 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { Skeleton } from '../ui/skeleton';
-import { getPaginatedGroups } from '@/app/admin/actions';
-import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { mapDocToGroupLink } from '@/lib/data';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
-  initialGroups: GroupLink[];
+  allGroups: GroupLink[];
   initialCategories: Category[];
   initialCountries: Country[];
 };
 
 export function HomePage({ 
     initialSettings, 
-    initialGroups, 
+    allGroups, 
     initialCategories, 
     initialCountries 
 }: HomePageProps) {
-  const { firestore } = useFirestore();
-  const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
   const [settings] = useState(initialSettings);
-  const [isGroupLoading, setIsGroupLoading] = useState(false);
-  
-  // This state is managed by the real-time listener now.
-  // We assume there's always more to load unless the listener returns fewer than expected.
-  const [hasMore, setHasMore] = useState(initialGroups.length === settings.groupsPerPage);
-
   const [initialSearchTag, setInitialSearchTag] = useState('');
 
   useEffect(() => {
@@ -51,57 +38,7 @@ export function HomePage({
     }
   }, []);
   
-  // REAL-TIME LISTENER
-  useEffect(() => {
-    if (!firestore) return;
-
-    // Listen to all groups, ordered by creation date
-    const q = query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
-
-    // onSnapshot returns an unsubscribe function
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const serverGroups = querySnapshot.docs.map(g => {
-        const group = mapDocToGroupLink(g);
-        // Ensure the global setting is applied to real-time data
-        group.showClicks = settings.showClicks; 
-        return group;
-      });
-      
-      setGroups(serverGroups);
-      setIsGroupLoading(false);
-    }, (error) => {
-      console.error("Error fetching real-time groups:", error);
-      setIsGroupLoading(false);
-    });
-
-    // Cleanup: Unsubscribe when the component unmounts
-    return () => unsubscribe();
-  }, [firestore, settings.showClicks]); // Rerun if firestore instance or showClicks setting changes
-
-
-  const handleLoadMore = async () => {
-    if (!groups.length) return;
-
-    setIsGroupLoading(true);
-    const lastGroupCursor = groups[groups.length - 1]?.id;
-    const { groups: newGroups, hasNextPage } = await getPaginatedGroups(
-      settings.groupsPerPage,
-      'next',
-      lastGroupCursor
-    );
-    
-    // To prevent duplicates with real-time listeners, we'll check for existing IDs
-    setGroups(prev => {
-        const existingIds = new Set(prev.map(g => g.id));
-        const filteredNewGroups = newGroups.filter(g => !existingIds.has(g.id));
-        return [...prev, ...filteredNewGroups];
-    });
-
-    setHasMore(hasNextPage);
-    setIsGroupLoading(false);
-  };
-  
-  const featuredGroups = useMemo(() => groups.filter(g => g.featured), [groups]);
+  const featuredGroups = useMemo(() => allGroups.filter(g => g.featured), [allGroups]);
 
   const renderFeaturedGroups = () => {
     if (featuredGroups.length === 0) return null;
@@ -173,14 +110,10 @@ export function HomePage({
         )}
 
         <GroupClientPage 
-            groups={groups} 
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore}
-            isGroupLoading={isGroupLoading}
+            allGroups={allGroups}
             showClicks={settings.showClicks}
             initialCategories={initialCategories}
             initialCountries={initialCountries}
-            isLoadingFilters={false}
             initialSearchQuery={initialSearchTag}
         />
       </main>

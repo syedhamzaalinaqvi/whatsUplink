@@ -1,35 +1,25 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useLayoutEffect } from 'react';
+import { useState, useMemo, useLayoutEffect, useEffect } from 'react';
 import { GroupCard } from '@/components/groups/group-card';
 import { GroupListControls } from '@/components/groups/group-list-controls';
 import type { Category, Country, GroupLink } from '@/lib/data';
 import { Skeleton } from '../ui/skeleton';
-import { Button } from '../ui/button';
-import { Loader2 } from 'lucide-react';
 
 type GroupClientPageProps = {
-    groups: GroupLink[];
-    onLoadMore: () => void;
-    hasMore: boolean;
-    isGroupLoading: boolean;
+    allGroups: GroupLink[];
     showClicks: boolean;
     initialCategories: Category[];
     initialCountries: Country[];
-    isLoadingFilters: boolean;
     initialSearchQuery?: string;
 };
 
 export function GroupClientPage({
-  groups,
-  onLoadMore,
-  hasMore,
-  isGroupLoading,
+  allGroups,
   showClicks,
   initialCategories,
   initialCountries,
-  isLoadingFilters,
   initialSearchQuery = '',
 }: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -41,18 +31,18 @@ export function GroupClientPage({
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
 
-  // This hook handles restoring the scroll position
+  // Restore scroll position on mount
   useLayoutEffect(() => {
     const savedScrollPosition = sessionStorage.getItem('scrollPosition');
     if (savedScrollPosition) {
-      // A small timeout can sometimes help ensure the content is rendered before scrolling
       setTimeout(() => {
         window.scrollTo(0, parseInt(savedScrollPosition, 10));
         sessionStorage.removeItem('scrollPosition');
       }, 0);
     }
-  }, []); // Empty dependency array ensures it only runs once on mount
+  }, []);
 
+  // Update categories and countries if they change
   useEffect(() => {
     setCategories(initialCategories);
     setCountries(initialCountries);
@@ -63,7 +53,7 @@ export function GroupClientPage({
   };
 
   const filteredGroups = useMemo(() => {
-    return groups.filter(group => {
+    return allGroups.filter(group => {
       const searchLower = searchQuery.toLowerCase();
       const searchMatch = !searchQuery || 
         group.title.toLowerCase().includes(searchLower) || 
@@ -74,7 +64,7 @@ export function GroupClientPage({
       const typeMatch = selectedType === 'all' || group.type === selectedType;
       return searchMatch && countryMatch && categoryMatch && typeMatch;
     });
-  }, [groups, searchQuery, selectedCountry, selectedCategory, selectedType]);
+  }, [allGroups, searchQuery, selectedCountry, selectedCategory, selectedType]);
 
   const gridClass = view === 'grid' ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4' : 'flex flex-col gap-6';
 
@@ -94,36 +84,21 @@ export function GroupClientPage({
             onTypeChange={setSelectedType}
             categories={categories}
             countries={countries}
-            isLoadingFilters={isLoadingFilters}
+            isLoadingFilters={false} // Data is now pre-loaded
         />
         
-        {isGroupLoading && filteredGroups.length === 0 ? (
+        {allGroups.length === 0 ? (
             <div className={gridClass}>
                 {Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />
                 ))}
             </div>
         ) : filteredGroups.length > 0 ? (
-            <>
-                <div className={gridClass}>
-                    {filteredGroups.map(group => (
-                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={showClicks} />
-                    ))}
-                </div>
-                {hasMore && (
-                    <div className="mt-10 flex justify-center">
-                        <Button
-                            onClick={onLoadMore}
-                            variant="default"
-                            size="lg"
-                            disabled={isGroupLoading}
-                            className="transition-all hover:scale-105 active:scale-95"
-                        >
-                            {isGroupLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Load More Groups'}
-                        </Button>
-                    </div>
-                )}
-            </>
+            <div className={gridClass}>
+                {filteredGroups.map(group => (
+                <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={showClicks} />
+                ))}
+            </div>
         ) : (
             <div className="mt-16 text-center text-muted-foreground">
                 <h3 className="text-xl font-semibold">No groups found</h3>
