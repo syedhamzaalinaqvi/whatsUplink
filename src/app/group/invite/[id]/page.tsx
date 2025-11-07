@@ -13,13 +13,10 @@ type Props = {
 };
 
 function getDb() {
-    let app;
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+        initializeApp(firebaseConfig);
     }
-    return getFirestore(app);
+    return getFirestore(getApp());
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

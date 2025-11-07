@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, 
 import { mapDocToGroupLink } from '@/lib/data';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import crypto from 'crypto';
 import mailchimp from '@mailchimp/mailchimp_marketing';
@@ -16,14 +17,10 @@ import { revalidatePath } from 'next/cache';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
-    let app;
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+        initializeApp(firebaseConfig);
     }
-    const { getFirestore } = require('firebase/firestore');
-    return getFirestore(app);
+    return getFirestore(getApp());
 }
 
 const loginSchema = z.object({

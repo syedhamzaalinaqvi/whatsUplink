@@ -5,18 +5,15 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { doc, updateDoc } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
-    let app;
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+        initializeApp(firebaseConfig);
     }
-    const { getFirestore } = require('firebase/firestore');
-    return getFirestore(app);
+    return getFirestore(getApp());
 }
 
 

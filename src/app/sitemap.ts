@@ -7,13 +7,10 @@ import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 function getDb() {
-    let app;
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+        initializeApp(firebaseConfig);
     }
-    return getFirestore(app);
+    return getFirestore(getApp());
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -25,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/contact',
     '/privacy',
     '/terms',
+    '/submit',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
@@ -43,5 +41,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...dynamicRoutes];
 }
-
-    

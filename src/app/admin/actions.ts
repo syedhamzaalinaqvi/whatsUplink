@@ -7,6 +7,7 @@ import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, get
 import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink, Report } from '@/lib/data';
 import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { DEFAULT_CATEGORIES, DEFAULT_COUNTRIES } from '@/lib/constants';
 import type { FormState } from '@/lib/types';
@@ -14,14 +15,10 @@ import { saveModerationSettings as saveModSettings } from './settings-actions';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
-    let app;
     if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+        initializeApp(firebaseConfig);
     }
-    const { getFirestore } = require('firebase/firestore');
-    return getFirestore(app);
+    return getFirestore(getApp());
 }
 
 export async function deleteGroup(groupId: string): Promise<{ success: boolean; message: string }> {
