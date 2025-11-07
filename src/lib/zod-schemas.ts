@@ -1,9 +1,10 @@
+
 import { z } from 'zod';
 
 export const submitGroupSchema = z.object({
-  link: z.string().url('Please enter a valid WhatsApp group link.').refine(
-    (link) => link.startsWith('https://chat.whatsapp.com/'),
-    { message: 'Link must be a valid WhatsApp group invite link.' }
+  link: z.string().url('Please enter a valid WhatsApp link.').refine(
+    (link) => link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/'),
+    { message: 'Link must be a valid WhatsApp group or channel invite link.' }
   ),
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   description: z.string().min(20, 'Description must be at least 20 characters long.'),

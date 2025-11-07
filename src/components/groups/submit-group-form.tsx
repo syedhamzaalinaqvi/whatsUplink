@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useTransition, useState, useCallback, useRef } from 'react';
+import { useEffect, useTransition, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -20,6 +20,11 @@ import { Loader2, Sparkles } from 'lucide-react';
 import type { Category, Country, GroupLink } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useActionState } from 'react';
+
+const initialState: FormState = {
+  message: '',
+};
 
 type SubmitGroupFormProps = {
   categories: Category[];
@@ -32,7 +37,7 @@ type FormValues = z.infer<typeof submitGroupSchema>;
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
-  const [isSubmitting, startSubmitTransition] = useTransition();
+  const [formState, formAction] = useActionState(submitGroup, initialState);
   const [isFetching, startFetching] = useTransition();
 
   const form = useForm<FormValues>({
@@ -52,8 +57,12 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
 
   const linkValue = form.watch('link');
 
+  const isValidLink = (link: string) => {
+    return link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/');
+  };
+
   const handleFetchInfo = useCallback(async () => {
-    if (!linkValue) return;
+    if (!isValidLink(linkValue)) return;
 
     startFetching(async () => {
         const result = await getGroupPreview(linkValue);
@@ -72,51 +81,39 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     });
   }, [linkValue, form, toast]);
 
-  const onSubmit = (data: FormValues) => {
-    startSubmitTransition(async () => {
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
-            if (value) {
-                formData.append(key, value as string);
-            }
+  useEffect(() => {
+    if (formState.success) {
+      toast({
+        title: 'Success!',
+        description: formState.message,
+        variant: 'default',
+      });
+      form.reset();
+      if (onSuccess) onSuccess();
+    } else if (formState.message && !formState.success) { // Ensure message exists and it's an error
+      toast({
+        title: 'Oops!',
+        description: formState.message,
+        variant: 'destructive',
+      });
+      if (formState.errors) {
+        Object.keys(formState.errors).forEach((key) => {
+          const field = key as keyof FormValues;
+          const message = formState.errors?.[field]?.[0];
+          if (message) {
+            form.setError(field, { type: 'server', message });
+          }
         });
-        
-        // Pass a dummy state object, since useActionState is removed
-        const formState = await submitGroup({ message: '' }, formData);
-
-        if (formState.success) {
-            toast({
-                title: 'Success!',
-                description: formState.message,
-                variant: 'default',
-            });
-            form.reset();
-            if (onSuccess) onSuccess();
-        } else {
-            toast({
-                title: 'Oops!',
-                description: formState.message,
-                variant: 'destructive',
-            });
-            if (formState.errors) {
-                Object.keys(formState.errors).forEach((key) => {
-                    const field = key as keyof FormValues;
-                    const message = formState.errors?.[field]?.[0];
-                    if (message) {
-                        form.setError(field, { type: 'server', message });
-                    }
-                });
-            }
-        }
-    });
-  };
+      }
+    }
+  }, [formState, form, toast, onSuccess]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form action={formAction} className="space-y-8">
         <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
             <CardHeader>
-                <CardTitle>1. Group Link</CardTitle>
+                <CardTitle>1. Group or Channel Link</CardTitle>
                 <CardDescription>Paste the full WhatsApp group or channel invite link below.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -128,8 +125,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             <FormItem className="flex-1 w-full">
                             <FormControl>
                                 <Input
-                                    placeholder="https://chat.whatsapp.com/YourGroupInvite"
-                                    className="h-12 text-base transition-all focus:scale-[1.01] focus:shadow-lg"
+                                    placeholder="https://chat.whatsapp.com/YourInvite"
+                                    className="h-12 text-base transition-all focus:scale-[1.01] focus:shadow-lg focus:ring-primary focus:ring-2"
                                     {...field}
                                 />
                             </FormControl>
@@ -140,7 +137,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                     <Button
                         type="button"
                         onClick={handleFetchInfo}
-                        disabled={isFetching || !linkValue.startsWith('https://chat.whatsapp.com/')}
+                        disabled={isFetching || !isValidLink(linkValue)}
                         className="w-full sm:w-auto h-12 transition-all hover:scale-105 active:scale-95"
                     >
                         {isFetching ? (
@@ -156,8 +153,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         <div className={cn("space-y-8 transition-opacity duration-500", isFetching && "opacity-50 pointer-events-none")}>
             <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
                 <CardHeader>
-                    <CardTitle>2. Group Details</CardTitle>
-                    <CardDescription>Provide the necessary details for your group. These can be auto-filled from the link.</CardDescription>
+                    <CardTitle>2. Details</CardTitle>
+                    <CardDescription>Provide the necessary details. These can be auto-filled from the link.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
@@ -166,8 +163,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Group Title</FormLabel>
-                                <FormControl><Input placeholder="e.g., Awesome Gamers Club" {...field} /></FormControl>
+                                <FormLabel>Title</FormLabel>
+                                <FormControl><Input placeholder="e.g., Awesome Gamers Club" {...field} className="transition-all focus:ring-primary focus:ring-2" /></FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -178,14 +175,14 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             render={({ field }) => (
                                 <FormItem>
                                 <FormLabel>Description</FormLabel>
-                                <FormControl><Textarea placeholder="A short, catchy description of your group." {...field} rows={6} /></FormControl>
+                                <FormControl><Textarea placeholder="A short, catchy description..." {...field} rows={6} className="transition-all focus:ring-primary focus:ring-2" /></FormControl>
                                 <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
                     <div className="space-y-6">
-                        <FormLabel>Group Logo</FormLabel>
+                        <FormLabel>Logo Preview</FormLabel>
                         <div className='flex items-center justify-center p-4 border-2 border-dashed rounded-lg bg-muted/50 aspect-square'>
                             <Image src={form.watch('imageUrl') || '/whatsuplink_logo_and_favicon_without_background.png'} alt="Group logo preview" width={128} height={128} className='rounded-md object-contain' />
                         </div>
@@ -198,7 +195,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
                 <CardHeader>
                     <CardTitle>3. Categorization</CardTitle>
-                    <CardDescription>Help others find your group by selecting the right category, country, and type.</CardDescription>
+                    <CardDescription>Help others find your group or channel by selecting the right category, country, and type.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <FormField
@@ -208,7 +205,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             <FormItem>
                                 <FormLabel>Category</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="transition-all focus:ring-primary focus:ring-2"><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
                                     <SelectContent>{categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -222,7 +219,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                             <FormItem>
                                 <FormLabel>Country</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger></FormControl>
+                                    <FormControl><SelectTrigger className="transition-all focus:ring-primary focus:ring-2"><SelectValue placeholder="Select a country" /></SelectTrigger></FormControl>
                                     <SelectContent>{countries.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -257,7 +254,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                         render={({ field }) => (
                             <FormItem className="md:col-span-2">
                             <FormLabel>Tags</FormLabel>
-                            <FormControl><Input placeholder="e.g., tech, gaming, movies" {...field} /></FormControl>
+                            <FormControl><Input placeholder="e.g., tech, gaming, movies" {...field} className="transition-all focus:ring-primary focus:ring-2" /></FormControl>
                             <FormDescription>Separate tags with commas. These help people discover your group.</FormDescription>
                             <FormMessage />
                             </FormItem>
@@ -276,13 +273,9 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6 transition-all hover:scale-[1.02] active:scale-100"
-                disabled={isSubmitting || isFetching}
+                disabled={isFetching}
             >
-                {isSubmitting ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                    <>{groupToEdit ? 'Update Group' : 'Submit Group'}</>
-                )}
+              {groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
         </div>
       </form>

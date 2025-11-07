@@ -193,8 +193,8 @@ export async function getGroupPreview(link: string): Promise<{
   };
   error?: string;
 }> {
-  if (!link || !link.startsWith('https://chat.whatsapp.com/')) {
-    return { success: false, error: 'Invalid WhatsApp group link.' };
+  if (!link || (!link.startsWith('https://chat.whatsapp.com/') && !link.startsWith('https://www.whatsapp.com/channel/'))) {
+    return { success: false, error: 'Invalid WhatsApp group or channel link.' };
   }
   try {
     const preview = await getLinkPreview(link, {
