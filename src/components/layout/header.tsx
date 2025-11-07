@@ -42,8 +42,8 @@ export function Header({
   const openSubmitDialog = () => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('submit-form', 'true');
-    // Use replace to avoid adding a new entry to the history stack, making back button work as expected.
-    router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+    // Use push to add a new entry to history, making back button work as expected.
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   };
 
   // Function to close the dialog by changing the URL
@@ -51,6 +51,7 @@ export function Header({
     if (!open) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.delete('submit-form');
+      // Use replace here so that closing the dialog doesn't add to the history stack.
       router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
   };

@@ -13,7 +13,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { SubmitGroupDialog } from './submit-group-dialog';
 import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
 
@@ -34,14 +33,15 @@ export function HomePage({
   const [initialSearchTag, setInitialSearchTag] = useState('');
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const isSubmitPage = pathname === '/submit';
 
   // This is the single source of truth for opening the dialog via URL
   const handleOpenSubmitDialog = () => {
-    const newParams = new URLSearchParams();
+    const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('submit-form', 'true');
-    router.push(`${pathname}?${newParams.toString()}`);
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   };
 
   useEffect(() => {
@@ -138,7 +138,6 @@ export function HomePage({
               <PlusCircle className="mr-2 h-5 w-5" />
               Submit Group
             </Button>
-            {/* The dialog itself is now rendered in the main layout, so it's not needed here. */}
           </div>
       )}
     </div>

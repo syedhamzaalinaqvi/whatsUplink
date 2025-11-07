@@ -80,7 +80,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             })
         }
     });
-  }, [linkValue, form, toast, startFetching]);
+  }, [linkValue, form, toast]);
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
