@@ -37,12 +37,13 @@ export default async function AdminPage() {
     ]);
 
     // Fetch initial paginated groups
-    const { groups, hasNextPage } = await getPaginatedGroups(moderationSettings.groupsPerPage, 'first');
+    const { groups, totalPages, totalGroups } = await getPaginatedGroups(1, 50);
 
     return (
       <AdminPageClient
         initialGroups={groups}
-        initialHasNextPage={hasNextPage}
+        initialTotalPages={totalPages}
+        initialTotalGroups={totalGroups}
         initialModerationSettings={moderationSettings}
         initialCategories={categories}
         initialCountries={countries}
@@ -55,3 +56,5 @@ export default async function AdminPage() {
     return notFound();
   }
 }
+
+    

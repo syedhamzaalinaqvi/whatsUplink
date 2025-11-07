@@ -21,9 +21,10 @@ type AdminDeleteDialogProps = {
   group: GroupLink;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onSuccess: () => void;
 };
 
-export function AdminDeleteDialog({ group, isOpen, onOpenChange }: AdminDeleteDialogProps) {
+export function AdminDeleteDialog({ group, isOpen, onOpenChange, onSuccess }: AdminDeleteDialogProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -35,6 +36,7 @@ export function AdminDeleteDialog({ group, isOpen, onOpenChange }: AdminDeleteDi
           title: 'Success',
           description: result.message,
         });
+        onSuccess();
         onOpenChange(false);
       } else {
         toast({
@@ -71,3 +73,5 @@ export function AdminDeleteDialog({ group, isOpen, onOpenChange }: AdminDeleteDi
     </AlertDialog>
   );
 }
+
+    

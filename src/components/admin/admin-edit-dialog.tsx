@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,9 +17,10 @@ type AdminEditDialogProps = {
     onOpenChange: (isOpen: boolean) => void;
     categories: Category[];
     countries: Country[];
+    onSuccess: () => void;
 }
 
-export function AdminEditDialog({ group, isOpen, onOpenChange, categories, countries }: AdminEditDialogProps) {
+export function AdminEditDialog({ group, isOpen, onOpenChange, categories, countries, onSuccess }: AdminEditDialogProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -34,10 +36,15 @@ export function AdminEditDialog({ group, isOpen, onOpenChange, categories, count
                         categories={categories}
                         countries={countries}
                         groupToEdit={group}
-                        onSuccess={() => onOpenChange(false)}
+                        onSuccess={() => {
+                            onSuccess();
+                            onOpenChange(false);
+                        }}
                     />
                 </div>
             </DialogContent>
         </Dialog>
     );
 }
+
+    

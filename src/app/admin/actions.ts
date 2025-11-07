@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, serverTimestamp, writeBatch, collection, getDocs, setDoc, getDoc, query, orderBy, limit, startAfter, endBefore, limitToLast, type DocumentSnapshot,getCountFromServer } from 'firebase/firestore';
 import type { GroupLink, ModerationSettings, Category, Country, LayoutSettings, NavLink, Report } from '@/lib/data';
 import { mapDocToGroupLink, mapDocToCategory, mapDocToCountry, mapDocToReport } from '@/lib/data';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -145,56 +145,39 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
 
 
 export async function getPaginatedGroups(
+    page: number,
     rowsPerPage: number,
-    pageDirection: 'next' | 'prev' | 'first',
-    cursorId?: string
-): Promise<{ groups: GroupLink[], hasNextPage: boolean, hasPrevPage: boolean }> {
+): Promise<{ groups: GroupLink[], totalGroups: number, totalPages: number }> {
     const db = getFirestoreInstance();
     const groupsCollection = collection(db, 'groups');
     
+    // First, get the total count of documents
+    const countSnapshot = await getCountFromServer(groupsCollection);
+    const totalGroups = countSnapshot.data().count;
+    const totalPages = Math.ceil(totalGroups / rowsPerPage);
+
+    // Then, fetch the documents for the current page
     let q;
-    let cursorDoc: DocumentSnapshot | undefined = undefined;
-
-    if (pageDirection !== 'first' && cursorId) {
-        const cursorDocSnap = await getDoc(doc(db, 'groups', cursorId));
-        if (cursorDocSnap.exists()) {
-            cursorDoc = cursorDocSnap;
-        } else {
-             // Invalid cursor, default to first page
-             pageDirection = 'first';
-        }
-    }
-
-    if (pageDirection === 'first') {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage + 1));
-    } else if (pageDirection === 'next' && cursorDoc) {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(cursorDoc), limit(rowsPerPage + 1));
-    } else if (pageDirection === 'prev' && cursorDoc) {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), endBefore(cursorDoc), limitToLast(rowsPerPage));
+    if (page === 1) {
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
     } else {
-        // Fallback to first page if logic is inconsistent
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage + 1));
+        // To get to a specific page, we need a cursor from the last doc of the previous page
+        const prevPageEndQuery = query(groupsCollection, orderBy('createdAt', 'desc'), limit((page - 1) * rowsPerPage));
+        const prevPageDocs = await getDocs(prevPageEndQuery);
+        const lastVisible = prevPageDocs.docs[prevPageDocs.docs.length - 1];
+        
+        if (!lastVisible) {
+            // This can happen if the page number is out of bounds
+            return { groups: [], totalGroups, totalPages };
+        }
+
+        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(rowsPerPage));
     }
     
     const querySnapshot = await getDocs(q);
+    const groups = querySnapshot.docs.map(mapDocToGroupLink);
     
-    let groups = querySnapshot.docs.map(mapDocToGroupLink);
-    
-    const hasNextPage = groups.length > rowsPerPage;
-    if (hasNextPage) {
-        groups.pop(); // Remove the extra item used for checking
-    }
-    
-    if (pageDirection === 'prev') {
-        // When going back, Firestore returns the last N items in ascending order of the orderBy field.
-        // Since we orderBy 'createdAt' 'desc', we get them in reverse chronological order (oldest first).
-        // We need to reverse them to show the newest of that page first.
-        groups.reverse();
-    }
-    
-    const hasPrevPage = pageDirection !== 'first' && !!cursorId;
-
-    return { groups, hasNextPage, hasPrevPage };
+    return { groups, totalGroups, totalPages };
 }
 
 // ----- Categories & Countries Management Actions -----
@@ -474,3 +457,5 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
         return { success: false, message: 'Failed to delete report.' };
     }
 }
+
+    

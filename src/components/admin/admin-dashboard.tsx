@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useTransition } from 'react';
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Search, Trash2, Star, Eye, Repeat, Loader2 } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, Eye, Repeat, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { AdminDeleteDialog } from './admin-delete-dialog';
 import { AdminEditDialog } from './admin-edit-dialog';
@@ -33,7 +34,8 @@ import { AdminReports } from './admin-reports';
 
 type AdminDashboardProps = {
   initialGroups: GroupLink[];
-  initialHasNextPage: boolean;
+  initialTotalPages: number;
+  initialTotalGroups: number;
   initialModerationSettings: ModerationSettings;
   initialCategories: Category[];
   initialCountries: Country[];
@@ -43,7 +45,8 @@ type AdminDashboardProps = {
 
 export function AdminDashboard({
   initialGroups,
-  initialHasNextPage,
+  initialTotalPages,
+  initialTotalGroups,
   initialModerationSettings,
   initialCategories,
   initialCountries,
@@ -53,9 +56,12 @@ export function AdminDashboard({
   const { toast } = useToast();
   
   const [groups, setGroups] = useState<GroupLink[]>(initialGroups);
-  const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
-  const [hasPrevPage, setHasPrevPage] = useState(false);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
+  const [totalGroups, setTotalGroups] = useState(initialTotalGroups);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  
   const [reports, setReports] = useState<Report[]>(initialReports);
   const [moderationSettings, setModerationSettings] = useState<ModerationSettings>(initialModerationSettings);
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>(initialLayoutSettings);
@@ -75,39 +81,29 @@ export function AdminDashboard({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupLink | null>(null);
-  
-  // When the initial props change (due to revalidation), update the state
-  useEffect(() => {
-    setGroups(initialGroups);
-    setReports(initialReports);
-    setModerationSettings(initialModerationSettings);
-    setLayoutSettings(initialLayoutSettings);
-    setCategories(initialCategories);
-    setCountries(initialCountries);
-    setHasNextPage(initialHasNextPage);
-    setHasPrevPage(false); // Reset prev page on revalidation
-  }, [initialGroups, initialReports, initialModerationSettings, initialLayoutSettings, initialCategories, initialCountries, initialHasNextPage]);
 
-  const handleFetchPage = (direction: 'next' | 'prev' | 'first') => {
+  const handleFetchPage = (page: number, rpp: number) => {
     startLoadingTransition(async () => {
-      const cursorId = 
-        direction === 'next' ? groups[groups.length - 1]?.id :
-        direction === 'prev' ? groups[0]?.id :
-        undefined;
-
-      const { groups: newGroups, hasNextPage: newHasNext, hasPrevPage: newHasPrev } = await getPaginatedGroups(
-        moderationSettings.groupsPerPage,
-        direction,
-        cursorId
-      );
-
-      if (newGroups.length > 0) {
-        setGroups(newGroups);
-        setHasNextPage(newHasNext);
-        setHasPrevPage(newHasPrev);
-      }
+      const { groups: newGroups, totalPages: newTotalPages, totalGroups: newTotalGroups } = await getPaginatedGroups(page, rpp);
+      setGroups(newGroups);
+      setTotalPages(newTotalPages);
+      setTotalGroups(newTotalGroups);
+      setCurrentPage(page);
+      setRowsPerPage(rpp);
     });
   };
+
+  useEffect(() => {
+    // This effect runs when the component mounts and when pagination/filter options change.
+    handleFetchPage(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
+
+  useEffect(() => {
+    // Reset to page 1 when filters change to avoid being on an invalid page
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery, selectedCountry, selectedCategory, selectedType]);
 
   const handleEdit = (group: GroupLink) => {
     setSelectedGroup(group);
@@ -132,7 +128,9 @@ export function AdminDashboard({
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
-      // No manual state update needed, revalidation will handle it.
+      if(result.success) {
+        handleFetchPage(currentPage, rowsPerPage);
+      }
     });
   };
 
@@ -147,6 +145,7 @@ export function AdminDashboard({
       });
       if (result.success) {
         setSelectedRows([]);
+        handleFetchPage(currentPage, rowsPerPage);
       }
     });
   }
@@ -157,8 +156,8 @@ export function AdminDashboard({
     );
   };
   
+  // Client-side filtering is now disabled in favor of server-side pagination/filtering
   const filteredGroups = useMemo(() => {
-    // Filtering is now done on the client-side for the current page of groups
     return groups.filter(group => {
       const searchLower = searchQuery.toLowerCase();
       const searchMatch = !searchQuery || group.title.toLowerCase().includes(searchLower);
@@ -367,26 +366,52 @@ export function AdminDashboard({
                 </Table>
                 </div>
                 
-                <div className="flex items-center justify-between mt-4">
-                    <div className="text-sm text-muted-foreground">
-                        {selectedRows.length} of {filteredGroups.length} row(s) selected.
+                <div className="flex items-center justify-end space-x-2 py-4">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                        {selectedRows.length} of {totalGroups} row(s) selected.
                     </div>
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium">Rows per page</p>
+                        <Select
+                            value={`${rowsPerPage}`}
+                            onValueChange={(value) => {
+                                setRowsPerPage(Number(value));
+                                setCurrentPage(1); // Reset to first page
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                                <SelectValue placeholder={rowsPerPage} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                                {[50, 100, 200, 500].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                    {pageSize}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => handleFetchPage('prev')}
-                            disabled={!hasPrevPage || isLoading}
+                            className="h-8 w-8 p-0"
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            disabled={currentPage <= 1 || isLoading}
                         >
-                            Previous
+                            <span className="sr-only">Go to previous page</span>
+                            <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => handleFetchPage('next')}
-                            disabled={!hasNextPage || isLoading}
+                            className="h-8 w-8 p-0"
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage >= totalPages || isLoading}
                         >
-                            Next
+                            <span className="sr-only">Go to next page</span>
+                            <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
@@ -422,6 +447,7 @@ export function AdminDashboard({
           group={selectedGroup}
           isOpen={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
+          onSuccess={() => handleFetchPage(currentPage, rowsPerPage)}
         />
       )}
       
@@ -432,6 +458,7 @@ export function AdminDashboard({
             onOpenChange={setIsEditDialogOpen}
             categories={categories}
             countries={countries}
+            onSuccess={() => handleFetchPage(currentPage, rowsPerPage)}
         />
       )}
 
@@ -442,9 +469,12 @@ export function AdminDashboard({
             onOpenChange={setIsBulkDeleteDialogOpen}
             onSuccess={() => {
                 setSelectedRows([]);
+                handleFetchPage(currentPage, rowsPerPage);
             }}
         />
       )}
     </div>
   );
 }
+
+    
