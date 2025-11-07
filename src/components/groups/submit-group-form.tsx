@@ -29,7 +29,7 @@ type SubmitGroupFormProps = {
   onSuccess?: () => void;
 };
 
-type FormValues = Zod.infer<typeof submitGroupSchema>;
+type FormValues = z.infer<typeof submitGroupSchema>;
 
 const initialState: FormState = {
   message: '',
@@ -78,18 +78,29 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   }, [linkValue, form, toast]);
 
   useEffect(() => {
+    if (!formState) return;
+
     if (formState.message) {
       toast({
         title: formState.success ? 'Success!' : 'Oops!',
         description: formState.message,
         variant: formState.success ? 'default' : 'destructive',
       });
-      if (formState.success) {
-        form.reset();
-        if (onSuccess) {
-          onSuccess();
-        }
+    }
+
+    if (formState.success) {
+      form.reset();
+      if (onSuccess) {
+        onSuccess();
       }
+    } else if (formState.errors) {
+      Object.keys(formState.errors).forEach((key) => {
+        const field = key as keyof FormValues;
+        const message = formState.errors?.[field]?.[0];
+        if (message) {
+          form.setError(field, { type: 'server', message });
+        }
+      });
     }
   }, [formState, toast, form, onSuccess]);
   
@@ -260,7 +271,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6 transition-all hover:scale-[1.02] active:scale-100"
-                onClick={() => formRef.current?.requestSubmit()}
+                onClick={() => form.trigger()}
             >
                 {groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
@@ -269,3 +280,5 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     </Form>
   );
 }
+
+    
