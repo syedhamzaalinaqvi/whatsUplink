@@ -82,13 +82,6 @@ const SelectContent = React.forwardRef<
       )}
       position={position}
       {...props}
-      onCloseAutoFocus={(e) => e.preventDefault()}
-      onPointerDownOutside={(e) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('[data-radix-select-trigger]')) {
-          e.preventDefault();
-        }
-      }}
     >
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useTransition, useCallback, useActionState } from 'react';
@@ -71,10 +72,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             form.setValue('description', result.data.description, { shouldValidate: true });
             form.setValue('imageUrl', result.data.imageUrl, { shouldValidate: true });
             form.setValue('imageHint', result.data.imageHint, { shouldValidate: true });
-            toast({
-                title: 'Success!',
-                description: 'Group info has been automatically filled.',
-            });
+            // Toast removed as requested
         } else {
             toast({
               title: 'Could not fetch info',
