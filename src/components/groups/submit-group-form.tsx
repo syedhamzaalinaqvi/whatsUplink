@@ -35,9 +35,8 @@ type FormValues = z.infer<typeof submitGroupSchema>;
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
-  const [isSubmitting, startSubmitting] = useTransition();
   const [isFetching, startFetching] = useTransition();
-  const [formState, formAction] = useActionState(submitGroup, initialState);
+  const [formState, formAction, isSubmitting] = useActionState(submitGroup, initialState);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
@@ -132,15 +131,10 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     }
   }, [formState, form, toast, onSuccess, groupToEdit]);
   
-  const handleFormAction = (formData: FormData) => {
-    startSubmitting(() => {
-        formAction(formData);
-    });
-  }
 
   return (
     <Form {...form}>
-      <form action={handleFormAction} className="space-y-8">
+      <form action={formAction} className="space-y-8">
         
         {groupToEdit && (
             <input type="hidden" {...form.register('groupId')} />

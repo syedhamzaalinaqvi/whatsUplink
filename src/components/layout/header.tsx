@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, NavLink } from '@/lib/data';
 import { Menu } from 'lucide-react';
@@ -32,29 +32,27 @@ export function Header({
   
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
-  // The single source of truth for the dialog's open state
   useEffect(() => {
-    const isSubmitOpen = searchParams.get('submit-form') === 'true';
-    setIsSubmitDialogOpen(isSubmitOpen);
+    setIsSubmitDialogOpen(searchParams.get('submit-form') === 'true');
   }, [searchParams]);
 
-  // Function to open the dialog by changing the URL
-  const openSubmitDialog = () => {
+  const openSubmitDialog = useCallback(() => {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('submit-form', 'true');
-    // Use push to add a new entry to history, making back button work as expected.
     router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
-  };
+  }, [pathname, router, searchParams]);
 
-  // Function to close the dialog by changing the URL
-  const handleDialogChange = (open: boolean) => {
+  const handleDialogChange = useCallback((open: boolean) => {
     if (!open) {
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete('submit-form');
-      // Use replace here so that closing the dialog doesn't add to the history stack.
-      router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete('submit-form');
+        const newUrl = `${pathname}?${newParams.toString()}`;
+        // Use replaceState to avoid adding to history and instantly update URL without page reload
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+        setIsSubmitDialogOpen(false);
     }
-  };
+  }, [pathname, searchParams]);
+
 
   const createSubmitButton = (isMobile = false) => {
     const handleClick = () => {
