@@ -1,10 +1,10 @@
 
 import { MetadataRoute } from 'next';
-import { collection, getDocs } from 'firebase/firestore';
-import { mapDocToGroupLink } from '@/lib/data';
+import { collection, getDocs, query, select } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
+import type { GroupLink } from '@/lib/data';
 
 function getDb() {
     if (!getApps().length) {
@@ -29,14 +29,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
   
   const db = getDb();
-  const groupsCollection = collection(db, 'groups');
-  const querySnapshot = await getDocs(groupsCollection);
-  const groups = querySnapshot.docs.map(mapDocToGroupLink);
+  // Optimize the query to only fetch the document ID, which is all we need.
+  // This is much faster and uses significantly less data than fetching the whole document.
+  const groupsQuery = query(collection(db, 'groups'), select()); // select() with no arguments fetches only IDs
+  const querySnapshot = await getDocs(groupsQuery);
+  const groupIds = querySnapshot.docs.map(doc => doc.id);
 
-
-  const dynamicRoutes = groups.map((group) => ({
-    url: `${baseUrl}/group/invite/${group.id}`,
-    lastModified: group.createdAt || new Date().toISOString(),
+  const dynamicRoutes = groupIds.map((id) => ({
+    url: `${baseUrl}/group/invite/${id}`,
+    lastModified: new Date().toISOString(), // lastModified can't be determined without a full fetch, so we use the current date.
   }));
 
   return [...staticRoutes, ...dynamicRoutes];
