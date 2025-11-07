@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useTransition, useActionState } from 'react';
+import { useEffect, useTransition, useActionState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -62,7 +62,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/');
   };
 
-  const handleFetchInfo = async () => {
+  const handleFetchInfo = useCallback(() => {
     if (!isValidLink(linkValue)) return;
 
     startFetching(async () => {
@@ -80,7 +80,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             })
         }
     });
-  };
+  }, [linkValue, form, toast, startFetching]);
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
