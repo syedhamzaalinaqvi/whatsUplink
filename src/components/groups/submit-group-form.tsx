@@ -193,7 +193,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                                 <FormLabel>Category</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger></FormControl>
-                                    <SelectContent><SelectItem value="">-</SelectItem>{categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <FormMessage />
                             </FormItem>
@@ -207,7 +207,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
                                 <FormLabel>Country</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger></FormControl>
-                                    <SelectContent><SelectItem value="">-</SelectItem>{countries.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{countries.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <FormMessage />
                             </FormItem>
