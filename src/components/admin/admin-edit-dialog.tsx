@@ -22,7 +22,7 @@ export function AdminEditDialog({ group, isOpen, onOpenChange, categories, count
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl h-full sm:h-auto flex flex-col p-0">
+            <DialogContent className="sm:max-w-4xl h-full sm:h-auto flex flex-col p-0 sm:max-h-[90vh]">
                  <DialogHeader className='p-6 pb-4 border-b sticky top-0 bg-background z-10'>
                     <DialogTitle>{group ? 'Edit Group' : 'Add New Group'}</DialogTitle>
                     <DialogDescription>
