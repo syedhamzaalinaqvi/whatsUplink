@@ -2,25 +2,77 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { GroupLink, Category, Country, NavLink } from '@/lib/data';
-import { Menu, Loader2 } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type { Category, Country, NavLink } from '@/lib/data';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SubmitGroupDialog } from '../groups/submit-group-dialog';
 
 type HeaderProps = {
   navLinks?: NavLink[];
   logoUrl?: string;
-  isLoadingFilters?: boolean;
+  categories: Category[];
+  countries: Country[];
 };
 
 export function Header({ 
     navLinks = [],
     logoUrl,
+    categories,
+    countries,
 }: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
+
+  useEffect(() => {
+    // Sync dialog state with URL query param
+    const isSubmitOpen = searchParams.get('submit-form') === 'true';
+    if (isSubmitOpen !== isSubmitDialogOpen) {
+      setIsSubmitDialogOpen(isSubmitOpen);
+    }
+  }, [searchParams, isSubmitDialogOpen]);
+
+  const handleOpenSubmitDialog = (open: boolean) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (open) {
+      newParams.set('submit-form', 'true');
+    } else {
+      newParams.delete('submit-form');
+    }
+    // Use replace to avoid adding a new entry to the browser's history
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
+
+  const createSubmitButton = (isMobile = false) => {
+    // Find the original 'Submit Group' nav link to decide what to render
+    const submitNavLink = navLinks.find(link => link.label.toLowerCase() === 'submit group');
+
+    if (!submitNavLink) return null;
+
+    const commonProps = {
+      onClick: () => {
+        handleOpenSubmitDialog(true);
+        if (isMobile) setIsMobileMenuOpen(false);
+      },
+      children: 'Submit Group',
+    };
+
+    if (isMobile) {
+      return <Button {...commonProps} />;
+    }
+    
+    // For desktop, we replace the nav link with a button
+    return <Button {...commonProps} />;
+  };
 
   return (
     <>
@@ -42,7 +94,7 @@ export function Header({
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
+            {navLinks.filter(link => link.label.toLowerCase() !== 'submit group').map((link) => (
               <Link key={link.id} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                 {link.label}
               </Link>
@@ -50,9 +102,7 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-             <Button asChild>
-                <Link href="/submit">Submit Group</Link>
-             </Button>
+             {createSubmitButton(false)}
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -83,21 +133,27 @@ export function Header({
                         </h1>
                     </Link>
                     <nav className="flex flex-col gap-4">
-                    {navLinks.map((link) => (
+                    {navLinks.filter(link => link.label.toLowerCase() !== 'submit group').map((link) => (
                       <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
                         {link.label}
                       </Link>
                     ))}
                   </nav>
-                  <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
-                    <Link href="/submit">Submit Group</Link>
-                  </Button>
+                  {createSubmitButton(true)}
                 </div>
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </header>
+
+      {/* The dialog is placed here so it can be controlled from the header */}
+      <SubmitGroupDialog
+        categories={categories}
+        countries={countries}
+        isOpen={isSubmitDialogOpen}
+        onOpenChange={handleOpenSubmitDialog}
+      />
     </>
   );
 }

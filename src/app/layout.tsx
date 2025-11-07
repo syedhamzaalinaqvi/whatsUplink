@@ -6,7 +6,7 @@ import { Inter } from 'next/font/google';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { NewsletterSignup } from '@/components/layout/newsletter-signup';
 import { getModerationSettings } from '@/lib/admin-settings';
-import { getLayoutSettings } from './admin/actions';
+import { getLayoutSettings, getCategories, getCountries } from './admin/actions';
 import { Header } from '@/components/layout/header';
 import Head from 'next/head';
 import { TopProgressBar } from '@/components/layout/top-progress-bar';
@@ -79,8 +79,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const moderationSettings = await getModerationSettings();
-  const layoutSettings = await getLayoutSettings();
+  const [moderationSettings, layoutSettings, categories, countries] = await Promise.all([
+    getModerationSettings(),
+    getLayoutSettings(),
+    getCategories(),
+    getCountries(),
+  ]);
   
   const bodyStyle: React.CSSProperties = {};
   if (layoutSettings.backgroundSettings.bgImageEnabled && layoutSettings.backgroundSettings.bgImageUrl) {
@@ -106,7 +110,12 @@ export default async function RootLayout({
         </Suspense>
         <div className="flex flex-col min-h-screen">
           <Providers>
-            <Header navLinks={layoutSettings.navLinks} logoUrl={layoutSettings.logoUrl} />
+            <Header 
+              navLinks={layoutSettings.navLinks} 
+              logoUrl={layoutSettings.logoUrl}
+              categories={categories}
+              countries={countries}
+            />
             <main className="flex-1 relative z-10">
               {children}
             </main>

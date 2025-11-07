@@ -1,33 +1,33 @@
 
 'use client';
 
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { SubmitGroupForm } from './submit-group-form';
 import type { Category, Country } from '@/lib/data';
-import type { ReactNode } from 'react';
 
 type SubmitGroupDialogProps = {
   categories: Category[];
   countries: Country[];
-  children: ReactNode; // The trigger button
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 };
 
-export function SubmitGroupDialog({ categories, countries, children }: SubmitGroupDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function SubmitGroupDialog({ categories, countries, isOpen, onOpenChange }: SubmitGroupDialogProps) {
+  
+  const handleSuccess = () => {
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-4xl h-full sm:h-auto flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4 border-b sticky top-0 bg-background z-10">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-4xl h-full sm:h-auto flex flex-col p-0 sm:max-h-[90vh]">
+        <DialogHeader className="p-6 pb-4 border-b sticky top-0 bg-background z-20">
           <DialogTitle>Submit a New Group</DialogTitle>
           <DialogDescription>
             Share a WhatsApp group or channel with the world. Fill out the form below to add it to our directory.
@@ -37,7 +37,7 @@ export function SubmitGroupDialog({ categories, countries, children }: SubmitGro
           <SubmitGroupForm
             categories={categories}
             countries={countries}
-            onSuccess={() => setIsOpen(false)}
+            onSuccess={handleSuccess}
           />
         </div>
       </DialogContent>
