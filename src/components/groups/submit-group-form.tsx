@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { getGroupPreview, submitGroup } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ const initialState: FormState = {
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
-  const [formState, formAction] = useFormState(submitGroup, initialState);
+  const [formState, formAction] = useActionState(submitGroup, initialState);
   const [isFetching, startFetching] = useTransition();
 
   const form = useForm<FormValues>({
