@@ -39,6 +39,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   const { toast } = useToast();
   const [formState, formAction] = useActionState(submitGroup, initialState);
   const [isFetching, startFetching] = useTransition();
+  const [isSubmitting, startSubmitting] = useTransition();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
@@ -82,6 +83,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   }, [linkValue, form, toast]);
 
   useEffect(() => {
+    if (!formState) return;
+
     if (formState.success) {
       toast({
         title: 'Success!',
@@ -107,10 +110,16 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
       }
     }
   }, [formState, form, toast, onSuccess]);
+  
+  const handleFormAction = (formData: FormData) => {
+    startSubmitting(() => {
+        formAction(formData);
+    });
+  }
 
   return (
     <Form {...form}>
-      <form action={formAction} className="space-y-8">
+      <form action={handleFormAction} className="space-y-8">
         <Card className="border-primary/20 shadow-sm transition-all hover:shadow-md">
             <CardHeader>
                 <CardTitle>1. Group or Channel Link</CardTitle>
@@ -273,9 +282,11 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6 transition-all hover:scale-[1.02] active:scale-100"
-                disabled={isFetching}
+                disabled={isFetching || isSubmitting}
             >
-              {groupToEdit ? 'Update Group' : 'Submit Group'}
+              {isSubmitting ? (
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
+              ) : groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
         </div>
       </form>
