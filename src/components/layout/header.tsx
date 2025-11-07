@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { SubmitGroupDialog } from '../groups/submit-group-dialog';
+import { Dialog } from '../ui/dialog';
 
 type HeaderProps = {
   navLinks?: NavLink[];
@@ -28,42 +29,37 @@ export function Header({
   const searchParams = useSearchParams();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // This state is now the single source of truth, controlled by the URL.
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   
   const finalLogoUrl = logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
-  // Effect to sync dialog state with URL
+  // Effect to sync dialog state with URL on initial load and back/forward navigation
   useEffect(() => {
     setIsSubmitDialogOpen(searchParams.get('submit-form') === 'true');
   }, [searchParams]);
 
-  // Function to open the dialog by updating the URL
-  const openSubmitDialog = useCallback(() => {
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set('submit-form', 'true');
-    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams]);
-
-  // Function to close the dialog by updating the URL
+  // This function is called when the dialog's open state is changed by any means
+  // (e.g., clicking X, pressing Esc, clicking overlay)
   const handleDialogChange = useCallback((open: boolean) => {
-    if (!open) {
-        // Use router.replace to remove the query from the URL without adding to history
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.delete('submit-form');
-        router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (open) {
+      newParams.set('submit-form', 'true');
+      // Use push to add to history, allowing back button to close dialog
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    } else {
+      newParams.delete('submit-form');
+      // Use replace to not add to history when closing
+      router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
+    // This will trigger the useEffect above to update the state
   }, [pathname, router, searchParams]);
 
-
-  const createSubmitButton = (isMobile = false) => {
-    const handleClick = () => {
-      openSubmitDialog();
-      if (isMobile) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    return <Button onClick={handleClick}>Submit Group</Button>;
+  // This function is what buttons call to signal their intent to open the dialog
+  const openSubmitDialog = () => {
+    handleDialogChange(true);
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -84,7 +80,6 @@ export function Header({
             </h1>
           </Link>
           
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.filter(link => link.href !== '/submit').map((link) => (
               <Link key={link.id} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
@@ -94,10 +89,9 @@ export function Header({
           </nav>
           
           <div className="hidden md:flex items-center gap-4">
-             {createSubmitButton(false)}
+             <Button onClick={openSubmitDialog}>Submit Group</Button>
           </div>
 
-          {/* Mobile Navigation Trigger */}
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -131,7 +125,7 @@ export function Header({
                       </Link>
                     ))}
                   </nav>
-                  {createSubmitButton(true)}
+                  <Button onClick={openSubmitDialog}>Submit Group</Button>
                 </div>
               </SheetContent>
             </Sheet>
@@ -139,13 +133,13 @@ export function Header({
         </div>
       </header>
 
-      {/* The dialog is rendered here, controlled by URL state */}
-      <SubmitGroupDialog
-        categories={categories}
-        countries={countries}
-        isOpen={isSubmitDialogOpen}
-        onOpenChange={handleDialogChange}
-      />
+      {/* The Dialog component now directly controls the open state and URL changes */}
+      <Dialog open={isSubmitDialogOpen} onOpenChange={handleDialogChange}>
+        <SubmitGroupDialog
+          categories={categories}
+          countries={countries}
+        />
+      </Dialog>
     </>
   );
 }

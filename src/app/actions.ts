@@ -222,7 +222,7 @@ export async function submitGroup(
   formData: FormData
 ): Promise<FormState> {
   const validatedFields = submitGroupSchema.safeParse({
-    groupId: formData.get('groupId'),
+    groupId: formData.get('groupId') || undefined,
     link: formData.get('link'),
     title: formData.get('title'),
     description: formData.get('description'),
@@ -284,9 +284,3 @@ export async function submitGroup(
     return { message: 'An unexpected error occurred. Please try again.' };
   }
 }
-
-    
-
-    
-
-    
