@@ -248,7 +248,7 @@ export async function submitGroup(
     const db = getFirestoreInstance();
     const tags = groupData.tags ? groupData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
     
-    if (isUpdate) {
+    if (isUpdate && groupId) {
       // This is an UPDATE operation
       const groupRef = doc(db, 'groups', groupId);
       const updateData = {
@@ -260,7 +260,7 @@ export async function submitGroup(
       revalidatePath('/admin');
       revalidatePath('/');
       revalidatePath(`/group/invite/${groupId}`);
-      return { message: 'Group updated successfully!', success: true };
+      return { message: 'Group updated successfully!', success: true, newGroupId: groupId };
 
     } else {
       // This is a CREATE operation
@@ -273,10 +273,11 @@ export async function submitGroup(
         submissionCount: 1,
         featured: false,
       };
-      await addDoc(collection(db, 'groups'), newGroupData);
+      const docRef = await addDoc(collection(db, 'groups'), newGroupData);
 
       revalidatePath('/');
-      return { message: 'Your group has been submitted successfully!', success: true };
+      revalidatePath(`/group/invite/${docRef.id}`);
+      return { message: 'Your group has been submitted successfully!', success: true, newGroupId: docRef.id };
     }
 
   } catch (error) {

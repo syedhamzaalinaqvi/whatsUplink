@@ -19,6 +19,7 @@ import type { Category, Country, GroupLink } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { MessagesSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type SubmitGroupFormProps = {
     categories: Category[];
@@ -35,6 +36,7 @@ type FormValues = z.infer<typeof submitGroupSchema>;
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isFetching, startFetching] = useTransition();
   const [formState, formAction, isSubmitting] = useActionState(submitGroup, initialState);
 
@@ -106,6 +108,12 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         description: formState.message,
         variant: 'default',
       });
+
+      if (formState.newGroupId) {
+        // Redirect to the new group page
+        router.push(`/group/invite/${formState.newGroupId}`);
+      }
+      
       if (onSuccess) {
         onSuccess();
         form.reset(); // Reset form on success when it's in a dialog
@@ -129,7 +137,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         });
       }
     }
-  }, [formState, form, toast, onSuccess, groupToEdit]);
+  }, [formState, form, toast, onSuccess, groupToEdit, router]);
   
 
   return (
