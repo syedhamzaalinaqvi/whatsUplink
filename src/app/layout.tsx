@@ -8,7 +8,6 @@ import { NewsletterSignup } from '@/components/layout/newsletter-signup';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { getLayoutSettings, getCategories, getCountries } from './admin/actions';
 import { Header } from '@/components/layout/header';
-import Head from 'next/head';
 import { TopProgressBar } from '@/components/layout/top-progress-bar';
 import { Suspense } from 'react';
 import { Providers } from './providers';
@@ -44,15 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     keywords: ['whatsapp group links', 'whatsapp groups', 'usa whatsapp group', 'family whatsapp group link', 'adult whatsapp group links', 'pubg whatsapp group', 'freefire whatsapp groups links', 'entertainment whatsapp group'],
     icons: {
-      icon: '/whatsuplink_logo_and_favicon_without_background.png',
-      shortcut: '/whatsuplink_logo_and_favicon_without_background.png',
-      apple: '/whatsuplink_logo_and_favicon_without_background.png',
-      other: [
-        {
-          rel: 'apple-touch-icon-precomposed',
-          url: '/whatsuplink_logo_and_favicon_without_background.png',
-        },
-      ],
+      icon: '/favicon.ico', // Standard favicon path
+      apple: '/apple-touch-icon.png', // Standard Apple touch icon path
     },
     robots: {
       index: true,
@@ -96,10 +88,6 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-       <Head>
-          <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-          <link rel="icon" href="/whatsuplink_logo_and_favicon_without_background.png" sizes="any" />
-      </Head>
       <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
         {layoutSettings.headerScripts && (
