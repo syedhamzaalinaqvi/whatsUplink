@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useTransition, useActionState } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -29,17 +29,13 @@ type SubmitGroupFormProps = {
     onSuccess?: () => void;
 };
 
-const initialState: FormState = {
-  message: '',
-};
-
 type FormValues = z.infer<typeof submitGroupSchema>;
 
 export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess }: SubmitGroupFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isFetching, startFetching] = useTransition();
-  const [formState, formAction] = useActionState(submitGroup, initialState);
+  const [isSubmitting, startSubmitting] = useTransition();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
@@ -89,6 +85,48 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     });
   };
 
+  const processSubmit = (formData: FormData) => {
+    startSubmitting(async () => {
+      const formState = await submitGroup({
+          message: '',
+      }, formData);
+
+      if (formState.success) {
+        toast({
+          title: groupToEdit ? 'Updated!' : 'Success!',
+          description: formState.message,
+          variant: 'default',
+        });
+
+        if (formState.newGroupId && !groupToEdit) {
+          router.push(`/group/invite/${formState.newGroupId}`);
+        }
+        
+        if (onSuccess) {
+          onSuccess();
+          form.reset();
+        } else {
+          form.reset({ link: '', title: '', description: '', imageUrl: '', category: '', country: '', type: 'group', tags: '' });
+        }
+      } else {
+        toast({
+          title: 'Oops!',
+          description: formState.message,
+          variant: 'destructive',
+        });
+        if (formState.errors) {
+          Object.keys(formState.errors).forEach((key) => {
+            const field = key as keyof FormValues;
+            const message = formState.errors?.[field]?.[0];
+            if (message) {
+              form.setError(field, { type: 'server', message });
+            }
+          });
+        }
+      }
+    });
+  };
+
   // Debounce effect to auto-fetch info
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -102,53 +140,11 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linkValue, groupToEdit]);
-
-
-  useEffect(() => {
-    if (!formState) return;
-
-    if (formState.success) {
-      toast({
-        title: groupToEdit ? 'Updated!' : 'Success!',
-        description: formState.message,
-        variant: 'default',
-      });
-
-      if (formState.newGroupId && !groupToEdit) {
-        // Redirect to the new group page ONLY on creation, not edit
-        router.push(`/group/invite/${formState.newGroupId}`);
-      }
-      
-      if (onSuccess) {
-        onSuccess();
-        form.reset(); // Reset form on success when it's in a dialog
-      } else {
-        // If not in a dialog, just reset the form for the /submit page
-        form.reset({ link: '', title: '', description: '', imageUrl: '', category: '', country: '', type: 'group', tags: '' });
-      }
-    } else if (formState.message && !formState.success) {
-      toast({
-        title: 'Oops!',
-        description: formState.message,
-        variant: 'destructive',
-      });
-      if (formState.errors) {
-        Object.keys(formState.errors).forEach((key) => {
-          const field = key as keyof FormValues;
-          const message = formState.errors?.[field]?.[0];
-          if (message) {
-            form.setError(field, { type: 'server', message });
-          }
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formState, form, toast, onSuccess, groupToEdit, router]);
   
 
   return (
     <Form {...form}>
-      <form action={formAction} className="space-y-8">
+      <form action={processSubmit} className="space-y-8">
         
         {groupToEdit && (
             <input type="hidden" {...form.register('groupId')} />
@@ -304,9 +300,9 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6"
-                disabled={isFetching || formState.pending}
+                disabled={isFetching || isSubmitting}
             >
-              {(isFetching || formState.pending) ? (
+              {(isFetching || isSubmitting) ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {groupToEdit ? 'Updating...' : 'Submitting...'}</>
               ) : groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
@@ -315,3 +311,5 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     </Form>
   );
 }
+
+    
