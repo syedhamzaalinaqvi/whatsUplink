@@ -14,7 +14,8 @@ import {
   Share2,
   RadioTower,
   Flag,
-  Tag
+  Tag,
+  Repeat
 } from 'lucide-react';
 import type { GroupLink, Category, Country } from '@/lib/data';
 import {
@@ -121,7 +122,8 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
         '@type': 'Organization',
         name: 'WhatsUpLink',
       },
-      datePublished: group.createdAt,
+      // Use lastSubmittedAt for more accurate date, fallback to createdAt
+      datePublished: group.lastSubmittedAt || group.createdAt,
     },
   };
 
@@ -178,6 +180,14 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                             <span>{group.type}</span>
                         </div>
                     </Badge>
+                     {(group.submissionCount ?? 1) > 1 && (
+                        <Badge variant="destructive" className="text-sm px-3 py-1">
+                            <div className='flex items-center gap-2'>
+                                <Repeat className="h-4 w-4" />
+                                <span>Re-submitted</span>
+                            </div>
+                        </Badge>
+                     )}
                     {group.showClicks && (
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <Eye className="h-4 w-4" />

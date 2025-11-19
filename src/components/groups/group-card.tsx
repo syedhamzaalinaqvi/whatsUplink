@@ -23,8 +23,11 @@ type GroupCardProps = {
 
 export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProps) {
   const router = useRouter();
-  const timeAgo = group.createdAt 
-    ? formatDistanceToNow(new Date(group.createdAt), { addSuffix: true }).replace('about ', '')
+  
+  // Use the last submitted date if available, otherwise use creation date
+  const relevantDate = group.lastSubmittedAt || group.createdAt;
+  const timeAgo = relevantDate
+    ? formatDistanceToNow(new Date(relevantDate), { addSuffix: true }).replace('about ', '')
     : 'recently';
   
   const typeIcon = group.type === 'channel' 
