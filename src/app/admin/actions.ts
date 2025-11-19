@@ -159,10 +159,10 @@ export async function getPaginatedGroups(
     // Then, fetch the documents for the current page
     let q;
     if (page === 1) {
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), limit(rowsPerPage));
+        q = query(groupsCollection, orderBy('lastSubmittedAt', 'desc'), limit(rowsPerPage));
     } else {
         // To get to a specific page, we need a cursor from the last doc of the previous page
-        const prevPageEndQuery = query(groupsCollection, orderBy('createdAt', 'desc'), limit((page - 1) * rowsPerPage));
+        const prevPageEndQuery = query(groupsCollection, orderBy('lastSubmittedAt', 'desc'), limit((page - 1) * rowsPerPage));
         const prevPageDocs = await getDocs(prevPageEndQuery);
         const lastVisible = prevPageDocs.docs[prevPageDocs.docs.length - 1];
         
@@ -171,7 +171,7 @@ export async function getPaginatedGroups(
             return { groups: [], totalGroups, totalPages };
         }
 
-        q = query(groupsCollection, orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(rowsPerPage));
+        q = query(groupsCollection, orderBy('lastSubmittedAt', 'desc'), startAfter(lastVisible), limit(rowsPerPage));
     }
     
     const querySnapshot = await getDocs(q);
@@ -457,5 +457,3 @@ export async function deleteReport(reportId: string): Promise<{ success: boolean
         return { success: false, message: 'Failed to delete report.' };
     }
 }
-
-    

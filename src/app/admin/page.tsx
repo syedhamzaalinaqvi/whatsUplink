@@ -45,7 +45,7 @@ export default async function AdminPage() {
       getLayoutSettings(),
       getReports(),
       getPaginatedGroups(1, 50), // Fetch initial paginated groups for the table
-      getDocs(query(collection(db, 'groups'), orderBy('createdAt', 'desc'))) // Fetch ALL groups for stats
+      getDocs(query(collection(db, 'groups'), orderBy('lastSubmittedAt', 'desc'))) // Fetch ALL groups for stats
     ]);
 
     const { groups, totalPages, totalGroups } = paginatedData;
@@ -70,5 +70,3 @@ export default async function AdminPage() {
     return notFound();
   }
 }
-
-    

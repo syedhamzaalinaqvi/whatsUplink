@@ -27,9 +27,9 @@ export default async function Home() {
   // Seed initial data if necessary.
   await seedInitialData();
 
-  // Fetch all groups on the server.
+  // Fetch all groups on the server, sorting by the last submission date.
   const db = getFirestoreInstance();
-  const groupsQuery = query(collection(db, 'groups'), orderBy('createdAt', 'desc'));
+  const groupsQuery = query(collection(db, 'groups'), orderBy('lastSubmittedAt', 'desc'));
   const groupSnapshot = await getDocs(groupsQuery);
   const allGroups = groupSnapshot.docs.map(g => {
     const group = mapDocToGroupLink(g);
