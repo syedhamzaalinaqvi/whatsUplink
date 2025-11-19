@@ -34,6 +34,7 @@ import { AdminReports } from './admin-reports';
 
 type AdminDashboardProps = {
   initialGroups: GroupLink[];
+  allGroupsForStats: GroupLink[];
   initialTotalPages: number;
   initialTotalGroups: number;
   initialModerationSettings: ModerationSettings;
@@ -45,6 +46,7 @@ type AdminDashboardProps = {
 
 export function AdminDashboard({
   initialGroups,
+  allGroupsForStats,
   initialTotalPages,
   initialTotalGroups,
   initialModerationSettings,
@@ -188,7 +190,7 @@ export function AdminDashboard({
           </div>
         </div>
 
-        <AdminStats groups={initialGroups} />
+        <AdminStats groups={allGroupsForStats} />
 
         <Tabs defaultValue="groups" className="mt-6">
              <TabsList className="h-auto w-full md:w-fit md:h-10 flex flex-col md:inline-flex md:flex-row">

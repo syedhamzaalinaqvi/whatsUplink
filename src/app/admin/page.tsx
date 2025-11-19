@@ -3,7 +3,7 @@ import { getCategories, getCountries, seedInitialData, getLayoutSettings, getRep
 import { getModerationSettings } from '@/lib/admin-settings';
 import { notFound } from 'next/navigation';
 import { AdminPageClient } from './admin-page-client';
-import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
@@ -27,21 +27,35 @@ export default async function AdminPage() {
 
   try {
     await seedInitialData();
+    const db = getFirestoreInstance();
     
-    const [moderationSettings, categories, countries, layoutSettings, reports] = await Promise.all([
+    // Fetch all data in parallel for performance
+    const [
+        moderationSettings, 
+        categories, 
+        countries, 
+        layoutSettings, 
+        reports,
+        paginatedData,
+        allGroupsSnapshot
+    ] = await Promise.all([
       getModerationSettings(),
       getCategories(),
       getCountries(),
       getLayoutSettings(),
       getReports(),
+      getPaginatedGroups(1, 50), // Fetch initial paginated groups for the table
+      getDocs(query(collection(db, 'groups'), orderBy('createdAt', 'desc'))) // Fetch ALL groups for stats
     ]);
 
-    // Fetch initial paginated groups
-    const { groups, totalPages, totalGroups } = await getPaginatedGroups(1, 50);
+    const { groups, totalPages, totalGroups } = paginatedData;
+    const allGroupsForStats = allGroupsSnapshot.docs.map(mapDocToGroupLink);
+
 
     return (
       <AdminPageClient
         initialGroups={groups}
+        allGroupsForStats={allGroupsForStats}
         initialTotalPages={totalPages}
         initialTotalGroups={totalGroups}
         initialModerationSettings={moderationSettings}

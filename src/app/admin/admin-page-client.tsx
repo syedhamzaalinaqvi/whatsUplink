@@ -8,6 +8,7 @@ import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
 type AdminPageClientProps = {
   initialGroups: GroupLink[];
+  allGroupsForStats: GroupLink[];
   initialTotalPages: number;
   initialTotalGroups: number;
   initialModerationSettings: ModerationSettings;
@@ -19,6 +20,7 @@ type AdminPageClientProps = {
 
 export function AdminPageClient({
   initialGroups,
+  allGroupsForStats,
   initialTotalPages,
   initialTotalGroups,
   initialModerationSettings,
@@ -36,6 +38,7 @@ export function AdminPageClient({
   return (
     <AdminDashboard
       initialGroups={initialGroups}
+      allGroupsForStats={allGroupsForStats}
       initialTotalPages={initialTotalPages}
       initialTotalGroups={initialTotalGroups}
       initialModerationSettings={initialModerationSettings}
