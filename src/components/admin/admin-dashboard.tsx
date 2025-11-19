@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Search, Trash2, Star, Eye, Repeat, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreVertical, Search, Trash2, Star, Eye, Repeat, Loader2, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { AdminDeleteDialog } from './admin-delete-dialog';
 import { AdminEditDialog } from './admin-edit-dialog';
@@ -77,6 +77,7 @@ export function AdminDashboard({
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState<'all' | 'group' | 'channel'>('all');
+  const [selectedFeatured, setSelectedFeatured] = useState<'all' | 'featured' | 'not_featured'>('all');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -105,7 +106,7 @@ export function AdminDashboard({
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [searchQuery, selectedCountry, selectedCategory, selectedType]);
+  }, [searchQuery, selectedCountry, selectedCategory, selectedType, selectedFeatured]);
 
   const handleEdit = (group: GroupLink) => {
     setSelectedGroup(group);
@@ -166,9 +167,13 @@ export function AdminDashboard({
       const countryMatch = selectedCountry === 'all' || group.country === selectedCountry;
       const categoryMatch = selectedCategory === 'all' || group.category.toLowerCase() === selectedCategory.toLowerCase();
       const typeMatch = selectedType === 'all' || group.type === selectedType;
-      return searchMatch && countryMatch && categoryMatch && typeMatch;
+      const featuredMatch = selectedFeatured === 'all' ||
+        (selectedFeatured === 'featured' && group.featured) ||
+        (selectedFeatured === 'not_featured' && !group.featured);
+
+      return searchMatch && countryMatch && categoryMatch && typeMatch && featuredMatch;
     });
-  }, [groups, searchQuery, selectedCountry, selectedCategory, selectedType]);
+  }, [groups, searchQuery, selectedCountry, selectedCategory, selectedType, selectedFeatured]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -207,7 +212,7 @@ export function AdminDashboard({
             </TabsList>
             <TabsContent value="groups">
                 <div className="mb-6 mt-6 p-4 border rounded-lg bg-background">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="relative lg:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -248,6 +253,16 @@ export function AdminDashboard({
                             <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                         ))}
                     </SelectContent>
+                    </Select>
+                    <Select value={selectedFeatured} onValueChange={(v) => setSelectedFeatured(v as any)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filter by Featured Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="featured">Featured</SelectItem>
+                            <SelectItem value="not_featured">Not Featured</SelectItem>
+                        </SelectContent>
                     </Select>
                 </div>
                 </div>
@@ -478,5 +493,3 @@ export function AdminDashboard({
     </div>
   );
 }
-
-    
