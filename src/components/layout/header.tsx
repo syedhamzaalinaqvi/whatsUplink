@@ -124,7 +124,7 @@ export function Header({
             <NavigationMenuList>
                 {navLinks.filter(link => link.href === '/').map(link => (
                     <NavigationMenuItem key={link.id}>
-                        <Link href={link.href} legacyBehavior passHref>
+                        <Link href={link.href} legacyBehavior={false} passHref>
                           <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                               {link.label}
                           </NavigationMenuLink>
@@ -172,7 +172,7 @@ export function Header({
 
                  {navLinks.filter(link => !['/', '/submit'].includes(link.href)).map(link => (
                     <NavigationMenuItem key={link.id}>
-                         <Link href={link.href} legacyBehavior passHref>
+                         <Link href={link.href} legacyBehavior={false} passHref>
                             <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                                 {link.label}
                             </NavigationMenuLink>
