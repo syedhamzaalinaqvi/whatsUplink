@@ -83,8 +83,9 @@ export function Header({
     return (
       <li>
         <NavigationMenuLink asChild>
-          <a
+          <Link
             ref={ref}
+            href={props.href || '/'}
             className={cn(
               "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
               className
@@ -95,7 +96,7 @@ export function Header({
             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
               {children}
             </p>
-          </a>
+          </Link>
         </NavigationMenuLink>
       </li>
     )
@@ -124,7 +125,7 @@ export function Header({
             <NavigationMenuList>
                 {navLinks.filter(link => link.href === '/').map(link => (
                     <NavigationMenuItem key={link.id}>
-                        <Link href={link.href} passHref legacyBehavior>
+                        <Link href={link.href} passHref legacyBehavior={false}>
                           <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                               {link.label}
                           </NavigationMenuLink>
@@ -172,7 +173,7 @@ export function Header({
 
                  {navLinks.filter(link => !['/', '/submit'].includes(link.href)).map(link => (
                     <NavigationMenuItem key={link.id}>
-                         <Link href={link.href} passHref legacyBehavior>
+                         <Link href={link.href} passHref legacyBehavior={false}>
                             <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                                 {link.label}
                             </NavigationMenuLink>
