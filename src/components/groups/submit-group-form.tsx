@@ -70,10 +70,15 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     startFetching(async () => {
         const result = await getGroupPreview(linkValue);
         if (result.success && result.data) {
-            form.setValue('title', result.data.title, { shouldValidate: true });
-            form.setValue('description', result.data.description, { shouldValidate: true });
-            form.setValue('imageUrl', result.data.imageUrl, { shouldValidate: true });
-            form.setValue('imageHint', result.data.imageHint, { shouldValidate: true });
+            // When editing, only update the image. Otherwise, update all fields.
+            if (groupToEdit) {
+                 form.setValue('imageUrl', result.data.imageUrl, { shouldValidate: true });
+            } else {
+                form.setValue('title', result.data.title, { shouldValidate: true });
+                form.setValue('description', result.data.description, { shouldValidate: true });
+                form.setValue('imageUrl', result.data.imageUrl, { shouldValidate: true });
+                form.setValue('imageHint', result.data.imageHint, { shouldValidate: true });
+            }
         } else {
             toast({
               title: 'Could not fetch info',
@@ -82,12 +87,10 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             })
         }
     });
-  }, [linkValue, form, toast]);
+  }, [linkValue, form, toast, groupToEdit]);
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
-    if (groupToEdit) return; // Don't auto-fetch in edit mode
-
     const handler = setTimeout(() => {
       if (isValidLink(linkValue)) {
         handleFetchInfo();
@@ -97,7 +100,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return () => {
       clearTimeout(handler);
     };
-  }, [linkValue, handleFetchInfo, groupToEdit]);
+  }, [linkValue, handleFetchInfo]);
 
 
   useEffect(() => {
@@ -110,8 +113,8 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         variant: 'default',
       });
 
-      if (formState.newGroupId) {
-        // Redirect to the new group page
+      if (formState.newGroupId && !groupToEdit) {
+        // Redirect to the new group page ONLY on creation, not edit
         router.push(`/group/invite/${formState.newGroupId}`);
       }
       
