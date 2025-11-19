@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useTransition, useActionState, useCallback } from 'react';
+import { useEffect, useTransition, useActionState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { submitGroupSchema } from '@/lib/zod-schemas';
@@ -64,7 +64,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return link.startsWith('https://chat.whatsapp.com/') || link.startsWith('https://www.whatsapp.com/channel/');
   };
 
-  const handleFetchInfo = useCallback(() => {
+  const handleFetchInfo = () => {
     if (!isValidLink(linkValue)) return;
 
     startFetching(async () => {
@@ -87,12 +87,12 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             })
         }
     });
-  }, [linkValue, form, toast, groupToEdit]);
+  };
 
   // Debounce effect to auto-fetch info
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (isValidLink(linkValue)) {
+      if (isValidLink(linkValue) && !groupToEdit) { // Only auto-fetch for new groups
         handleFetchInfo();
       }
     }, 500); // Wait for 500ms after user stops typing
@@ -100,7 +100,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return () => {
       clearTimeout(handler);
     };
-  }, [linkValue, handleFetchInfo]);
+  }, [linkValue, groupToEdit]);
 
 
   useEffect(() => {
