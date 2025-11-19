@@ -1,15 +1,29 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, NavLink } from '@/lib/data';
-import { Menu } from 'lucide-react';
+import { Menu, Globe, Folder } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { SubmitGroupDialog } from '../groups/submit-group-dialog';
 import { Dialog } from '../ui/dialog';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
+import React from 'react';
+
 
 type HeaderProps = {
   navLinks?: NavLink[];
@@ -62,6 +76,32 @@ export function Header({
     }
   };
 
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a">
+  >(({ className, title, children, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <a
+            ref={ref}
+            className={cn(
+              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
+            )}
+            {...props}
+          >
+            <div className="text-sm font-medium leading-none">{title}</div>
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          </a>
+        </NavigationMenuLink>
+      </li>
+    )
+  })
+  ListItem.displayName = "ListItem"
+
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
@@ -80,13 +120,68 @@ export function Header({
             </h1>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.filter(link => link.href !== '/submit').map((link) => (
-              <Link key={link.id} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+                {navLinks.filter(link => link.href === '/').map(link => (
+                    <NavigationMenuItem key={link.id}>
+                        <Link href={link.href} legacyBehavior passHref>
+                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                            {link.label}
+                        </NavigationMenuLink>
+                        </Link>
+                    </NavigationMenuItem>
+                ))}
+
+                <NavigationMenuItem>
+                    <NavigationMenuTrigger>
+                        <Folder className='mr-2 h-4 w-4'/> Categories
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                        <ScrollArea className="h-96 w-64">
+                            <ul className="p-4">
+                                {categories.map((category) => (
+                                <ListItem
+                                    key={category.id}
+                                    title={category.label}
+                                    href={`/category/${category.value}`}
+                                />
+                                ))}
+                            </ul>
+                        </ScrollArea>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                    <NavigationMenuTrigger>
+                         <Globe className='mr-2 h-4 w-4'/> Countries
+                    </NavigationMenuTrigger>
+                     <NavigationMenuContent>
+                        <ScrollArea className="h-96 w-64">
+                            <ul className="p-4">
+                                {countries.map((country) => (
+                                <ListItem
+                                    key={country.id}
+                                    title={country.label}
+                                    href={`/country/${country.value}`}
+                                />
+                                ))}
+                            </ul>
+                        </ScrollArea>
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                 {navLinks.filter(link => !['/', '/submit'].includes(link.href)).map(link => (
+                    <NavigationMenuItem key={link.id}>
+                        <Link href={link.href} legacyBehavior passHref>
+                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                            {link.label}
+                        </NavigationMenuLink>
+                        </Link>
+                    </NavigationMenuItem>
+                ))}
+
+            </NavigationMenuList>
+          </NavigationMenu>
           
           <div className="hidden md:flex items-center gap-4">
              <Button onClick={openSubmitDialog}>Submit Group</Button>

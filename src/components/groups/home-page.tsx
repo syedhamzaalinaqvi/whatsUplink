@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -21,13 +22,15 @@ type HomePageProps = {
   allGroups: GroupLink[];
   initialCategories: Category[];
   initialCountries: Country[];
+  pageTitle?: string;
 };
 
 export function HomePage({ 
     initialSettings, 
     allGroups, 
     initialCategories, 
-    initialCountries 
+    initialCountries,
+    pageTitle
 }: HomePageProps) {
   const [settings] = useState(initialSettings);
   const [initialSearchTag, setInitialSearchTag] = useState('');
@@ -54,6 +57,7 @@ export function HomePage({
   }, []);
   
   const featuredGroups = useMemo(() => allGroups.filter(g => g.featured), [allGroups]);
+  const isDynamicPage = !!pageTitle;
 
   const renderFeaturedGroups = () => {
     if (featuredGroups.length === 0) return null;
@@ -106,15 +110,17 @@ export function HomePage({
         <section className="bg-card/50 border-b border-primary/20">
             <div className="container py-12 md:py-16 text-center">
               <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-foreground">
-                The Ultimate WhatsApp Group Directory
+                {pageTitle || 'The Ultimate WhatsApp Group Directory'}
               </h1>
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">
-                Discover and join thousands of WhatsApp groups and channels from around the world. Submit your own and connect with new communities!
+                {isDynamicPage
+                  ? `Browse all groups in this collection. Use the filters below to narrow your search.`
+                  : `Discover and join thousands of WhatsApp groups and channels from around the world. Submit your own and connect with new communities!`}
               </p>
             </div>
         </section>
         
-        {featuredGroups.length > 0 && (
+        {featuredGroups.length > 0 && !isDynamicPage && (
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
