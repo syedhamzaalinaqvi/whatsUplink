@@ -100,6 +100,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
     return () => {
       clearTimeout(handler);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linkValue, groupToEdit]);
 
 
@@ -141,6 +142,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formState, form, toast, onSuccess, groupToEdit, router]);
   
 
