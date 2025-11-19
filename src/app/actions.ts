@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings, Report } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch, limit } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -14,6 +14,7 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import { differenceInMilliseconds } from 'date-fns';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -221,18 +222,9 @@ export async function submitGroup(
   state: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const validatedFields = submitGroupSchema.safeParse({
-    groupId: formData.get('groupId') || undefined,
-    link: formData.get('link'),
-    title: formData.get('title'),
-    description: formData.get('description'),
-    category: formData.get('category'),
-    country: formData.get('country'),
-    type: formData.get('type'),
-    tags: formData.get('tags'),
-    imageUrl: formData.get('imageUrl'),
-    imageHint: formData.get('imageHint'),
-  });
+  const validatedFields = submitGroupSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
 
   if (!validatedFields.success) {
     return {
@@ -240,7 +232,6 @@ export async function submitGroup(
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
-
   const { groupId, ...groupData } = validatedFields.data;
   const isUpdate = !!groupId;
 
@@ -248,8 +239,59 @@ export async function submitGroup(
     const db = getFirestoreInstance();
     const tags = groupData.tags ? groupData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
     
+    // Check for existing group link
+    const groupsRef = collection(db, "groups");
+    const q = query(groupsRef, where("link", "==", groupData.link), limit(1));
+    const existingGroupSnapshot = await getDocs(q);
+    const existingGroupDoc = existingGroupSnapshot.docs[0];
+
+    const moderationSettings = await getModerationSettings();
+
+    // Cooldown logic
+    if (existingGroupDoc && !isUpdate) { // Only apply cooldown for new submissions, not admin edits
+      const existingGroup = mapDocToGroupLink(existingGroupDoc);
+      if (moderationSettings.cooldownEnabled && existingGroup.lastSubmittedAt) {
+        const lastSubmissionDate = new Date(existingGroup.lastSubmittedAt);
+        const now = new Date();
+        const diff = differenceInMilliseconds(now, lastSubmissionDate);
+
+        let cooldownPeriod = 0;
+        switch (moderationSettings.cooldownUnit) {
+            case 'hours':
+                cooldownPeriod = moderationSettings.cooldownValue * 60 * 60 * 1000;
+                break;
+            case 'days':
+                cooldownPeriod = moderationSettings.cooldownValue * 24 * 60 * 60 * 1000;
+                break;
+            case 'months':
+                // Approximation
+                cooldownPeriod = moderationSettings.cooldownValue * 30 * 24 * 60 * 60 * 1000;
+                break;
+        }
+
+        if (diff < cooldownPeriod) {
+            const timeLeft = Math.ceil((cooldownPeriod - diff) / (1000 * 60 * 60)); // in hours
+            return { message: `This group was submitted recently. Please wait about ${timeLeft} more hour(s) before submitting again.` };
+        }
+      }
+      
+      // Cooldown passed, update the existing group
+      const groupRef = doc(db, 'groups', existingGroup.id);
+      await updateDoc(groupRef, {
+        ...groupData, // update details in case they changed
+        tags: tags,
+        submissionCount: increment(1),
+        lastSubmittedAt: serverTimestamp(), // This is the "bump"
+      });
+
+      revalidatePath('/');
+      revalidatePath(`/group/invite/${existingGroup.id}`);
+      return { message: 'Group re-submitted successfully!', success: true, newGroupId: existingGroup.id };
+    }
+
+
     if (isUpdate && groupId) {
-      // This is an UPDATE operation
+      // This is an ADMIN UPDATE operation
       const groupRef = doc(db, 'groups', groupId);
       const updateData = {
         ...groupData,
@@ -263,7 +305,7 @@ export async function submitGroup(
       return { message: 'Group updated successfully!', success: true, newGroupId: groupId };
 
     } else {
-      // This is a CREATE operation
+      // This is a new CREATE operation
       const newGroupData = {
         ...groupData,
         tags: tags,

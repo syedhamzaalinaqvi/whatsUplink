@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useTransition, useActionState, useCallback } from 'react';
@@ -38,7 +39,7 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
   const { toast } = useToast();
   const router = useRouter();
   const [isFetching, startFetching] = useTransition();
-  const [formState, formAction, isSubmitting] = useActionState(submitGroup, initialState);
+  const [formState, formAction] = useActionState(submitGroup, initialState);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(submitGroupSchema),
@@ -298,9 +299,9 @@ export function SubmitGroupForm({ categories, countries, groupToEdit, onSuccess 
             <Button
                 type="submit"
                 className="w-full text-lg py-6"
-                disabled={isFetching || isSubmitting}
+                disabled={isFetching || formState.pending}
             >
-              {(isFetching || isSubmitting) ? (
+              {(isFetching || formState.pending) ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {groupToEdit ? 'Updating...' : 'Submitting...'}</>
               ) : groupToEdit ? 'Update Group' : 'Submit Group'}
             </Button>
