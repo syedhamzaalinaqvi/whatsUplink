@@ -124,7 +124,7 @@ export function Header({
             <NavigationMenuList>
                 {navLinks.filter(link => link.href === '/').map(link => (
                     <NavigationMenuItem key={link.id}>
-                        <Link href={link.href} passHref>
+                        <Link href={link.href} legacyBehavior passHref>
                           <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                             {link.label}
                           </NavigationMenuLink>
@@ -140,11 +140,11 @@ export function Header({
                         <ScrollArea className="h-96 w-64">
                             <ul className="p-4">
                                 {categories.map((category) => (
-                                <ListItem
-                                    key={category.id}
-                                    title={category.label}
-                                    href={`/category/${category.value}`}
-                                />
+                                  <Link href={`/category/${category.value}`} key={category.id} passHref legacyBehavior>
+                                    <ListItem
+                                        title={category.label}
+                                    />
+                                  </Link>
                                 ))}
                             </ul>
                         </ScrollArea>
@@ -159,11 +159,11 @@ export function Header({
                         <ScrollArea className="h-96 w-64">
                             <ul className="p-4">
                                 {countries.map((country) => (
-                                <ListItem
-                                    key={country.id}
-                                    title={country.label}
-                                    href={`/country/${country.value}`}
-                                />
+                                  <Link href={`/country/${country.value}`} key={country.id} passHref legacyBehavior>
+                                    <ListItem
+                                        title={country.label}
+                                    />
+                                  </Link>
                                 ))}
                             </ul>
                         </ScrollArea>
@@ -172,7 +172,7 @@ export function Header({
 
                  {navLinks.filter(link => !['/', '/submit'].includes(link.href)).map(link => (
                     <NavigationMenuItem key={link.id}>
-                         <Link href={link.href} passHref>
+                         <Link href={link.href} passHref legacyBehavior>
                            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                              {link.label}
                            </NavigationMenuLink>
@@ -238,5 +238,3 @@ export function Header({
     </>
   );
 }
-
-    
