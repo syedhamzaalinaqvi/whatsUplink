@@ -4,6 +4,7 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
+import { getCategories, getCountries } from '@/app/admin/actions';
 
 function getDb() {
     if (!getApps().length) {
@@ -25,19 +26,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
+    changeFrequency: 'weekly' as const,
+    priority: route === '/' ? 1.0 : 0.8,
   }));
   
   const db = getDb();
-  // Fetch all documents. The select() optimization was incorrect for the client SDK.
-  // A full getDocs() is necessary here, but should be fast enough given other recent optimizations.
-  const groupsQuery = query(collection(db, 'groups'));
-  const querySnapshot = await getDocs(groupsQuery);
-  const groupIds = querySnapshot.docs.map(doc => doc.id);
+  
+  // Fetch all dynamic routes in parallel
+  const [
+    groupsSnapshot,
+    categories,
+    countries
+  ] = await Promise.all([
+    getDocs(query(collection(db, 'groups'))),
+    getCategories(),
+    getCountries()
+  ]);
 
-  const dynamicRoutes = groupIds.map((id) => ({
-    url: `${baseUrl}/group/invite/${id}`,
-    lastModified: new Date().toISOString(),
+  const groupRoutes = groupsSnapshot.docs.map(doc => ({
+    url: `${baseUrl}/group/invite/${doc.id}`,
+    lastModified: doc.data().lastSubmittedAt?.toDate().toISOString() || new Date().toISOString(),
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
   }));
 
-  return [...staticRoutes, ...dynamicRoutes];
+  const categoryRoutes = categories.map((category) => ({
+    url: `${baseUrl}/category/${category.value}`,
+    lastModified: new Date().toISOString(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }));
+
+  const countryRoutes = countries.map((country) => ({
+    url: `${baseUrl}/country/${country.value}`,
+    lastModified: new Date().toISOString(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }));
+
+  return [...staticRoutes, ...groupRoutes, ...categoryRoutes, ...countryRoutes];
 }
