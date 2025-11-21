@@ -52,16 +52,21 @@ export default async function CountryPage({ params }: Props) {
   ]);
 
   const db = getFirestoreInstance();
+  // Remove orderby from query to avoid needing a composite index
   const groupsQuery = query(
     collection(db, 'groups'), 
-    where('country', '==', country),
-    orderBy('lastSubmittedAt', 'desc')
+    where('country', '==', country)
   );
   const groupSnapshot = await getDocs(groupsQuery);
   const allGroups = groupSnapshot.docs.map(g => {
     const group = mapDocToGroupLink(g);
     group.showClicks = settings.showClicks; // Ensure global setting is applied
     return group;
+  }).sort((a, b) => {
+    // Sort manually after fetching
+    const dateA = a.lastSubmittedAt ? new Date(a.lastSubmittedAt).getTime() : 0;
+    const dateB = b.lastSubmittedAt ? new Date(b.lastSubmittedAt).getTime() : 0;
+    return dateB - dateA;
   });
 
   return (
