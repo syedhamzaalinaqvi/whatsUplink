@@ -150,7 +150,7 @@ export function HomePage({
                 initialCategories={initialCategories}
                 initialCountries={initialCountries}
                 initialSearchQuery={initialSearchTag}
-                isLoading={allGroups.length === 0 && isDynamicPage}
+                isLoading={false} // Pass false here; loading state is now handled inside GroupClientPage
             />
         </Suspense>
 

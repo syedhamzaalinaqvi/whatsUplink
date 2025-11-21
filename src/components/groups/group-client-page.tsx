@@ -15,7 +15,7 @@ type GroupClientPageProps = {
     initialCategories: Category[];
     initialCountries: Country[];
     initialSearchQuery?: string;
-    isLoading?: boolean; // New prop to indicate if data is loading server-side
+    isLoading?: boolean; // Prop to indicate if data is loading server-side
 };
 
 export function GroupClientPage({
@@ -24,7 +24,7 @@ export function GroupClientPage({
   initialCategories,
   initialCountries,
   initialSearchQuery = '',
-  isLoading = false, // Default to false
+  isLoading: isInitiallyLoading = false, // Default to false
 }: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
@@ -36,6 +36,9 @@ export function GroupClientPage({
 
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [countries, setCountries] = useState<Country[]>(initialCountries);
+  
+  // Use a separate state for loading to avoid re-triggering skeletons on filter change
+  const [isLoading, setIsLoading] = useState(isInitiallyLoading);
 
   // Restore scroll position on mount
   useLayoutEffect(() => {
@@ -47,6 +50,11 @@ export function GroupClientPage({
       }, 0);
     }
   }, []);
+
+  // When allGroups prop updates, turn off the loading state
+  useEffect(() => {
+    setIsLoading(false);
+  }, [allGroups]);
 
   // Update categories and countries if they change
   useEffect(() => {
