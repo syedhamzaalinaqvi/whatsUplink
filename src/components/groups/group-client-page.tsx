@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useLayoutEffect, useEffect } from 'react';
@@ -14,6 +15,7 @@ type GroupClientPageProps = {
     initialCategories: Category[];
     initialCountries: Country[];
     initialSearchQuery?: string;
+    isLoading?: boolean; // New prop to indicate if data is loading server-side
 };
 
 export function GroupClientPage({
@@ -22,6 +24,7 @@ export function GroupClientPage({
   initialCategories,
   initialCountries,
   initialSearchQuery = '',
+  isLoading = false, // Default to false
 }: GroupClientPageProps) {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
@@ -98,9 +101,9 @@ export function GroupClientPage({
             isLoadingFilters={false} // Data is now pre-loaded
         />
         
-        {allGroups.length === 0 ? (
+        {isLoading ? (
             <div className={gridClass}>
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: initialSettings.groupsPerPage }).map((_, i) => (
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />
                 ))}
             </div>

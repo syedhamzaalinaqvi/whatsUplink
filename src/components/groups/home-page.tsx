@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
@@ -142,13 +142,17 @@ export function HomePage({
           </section>
         )}
 
-        <GroupClientPage 
-            allGroups={allGroups}
-            initialSettings={settings}
-            initialCategories={initialCategories}
-            initialCountries={initialCountries}
-            initialSearchQuery={initialSearchTag}
-        />
+        {/* Use Suspense to handle the initial loading state for allGroups */}
+        <Suspense fallback={<div>Loading...</div>}>
+            <GroupClientPage 
+                allGroups={allGroups}
+                initialSettings={settings}
+                initialCategories={initialCategories}
+                initialCountries={initialCountries}
+                initialSearchQuery={initialSearchTag}
+                isLoading={allGroups.length === 0 && isDynamicPage}
+            />
+        </Suspense>
 
         {/* Show static SEO content on homepage, or dynamic SEO content on category/country pages */}
         {!isDynamicPage && settings.layout.seoContent.enabled && (
