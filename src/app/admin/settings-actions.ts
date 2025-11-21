@@ -24,6 +24,7 @@ const moderationSettingsSchema = z.object({
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot exceed 100'),
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
     showNewsletter: z.enum(['on', 'off']).transform(val => val === 'on'),
+    showDynamicSeoContent: z.enum(['on', 'off']).transform(val => val === 'on'),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -34,6 +35,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         groupsPerPage: formData.get('groupsPerPage'),
         featuredGroupsDisplay: formData.get('featuredGroupsDisplay'),
         showNewsletter: formData.get('showNewsletter'),
+        showDynamicSeoContent: formData.get('showDynamicSeoContent'),
     });
     
     if (!validatedFields.success) {

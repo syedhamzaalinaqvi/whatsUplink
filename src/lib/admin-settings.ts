@@ -31,6 +31,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 groupsPerPage: data.groupsPerPage ?? 20,
                 featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
                 showNewsletter: data.showNewsletter ?? false,
+                showDynamicSeoContent: data.showDynamicSeoContent ?? true,
             };
         } else {
             // If the document doesn't exist, create it with default values
@@ -42,6 +43,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 groupsPerPage: 20,
                 featuredGroupsDisplay: 'slider',
                 showNewsletter: false,
+                showDynamicSeoContent: true,
             };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
@@ -58,5 +60,6 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         groupsPerPage: 20,
         featuredGroupsDisplay: 'slider',
         showNewsletter: false,
+        showDynamicSeoContent: true,
     };
 }

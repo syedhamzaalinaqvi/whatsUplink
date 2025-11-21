@@ -13,9 +13,10 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { LayoutGrid, List, Loader2, SlidersHorizontal } from 'lucide-react';
+import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Separator } from '../ui/separator';
 
 const moderationSettingsSchema = z.object({
     showClicks: z.boolean(),
@@ -25,6 +26,7 @@ const moderationSettingsSchema = z.object({
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot be more than 100'),
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
     showNewsletter: z.boolean(),
+    showDynamicSeoContent: z.boolean(),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -41,28 +43,12 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
     const form = useForm<ModerationFormValues>({
         resolver: zodResolver(moderationSettingsSchema),
         defaultValues: {
-            showClicks: initialSettings.showClicks,
-            cooldownEnabled: initialSettings.cooldownEnabled,
-            cooldownValue: initialSettings.cooldownValue,
-            cooldownUnit: initialSettings.cooldownUnit,
-            groupsPerPage: initialSettings.groupsPerPage,
-            featuredGroupsDisplay: initialSettings.featuredGroupsDisplay || 'slider',
-            showNewsletter: initialSettings.showNewsletter,
+            ...initialSettings
         },
     });
 
     useEffect(() => {
-        // Reset the form if the initial settings from the parent change.
-        // This is important for keeping the UI in sync if data is refetched.
-        form.reset({
-            showClicks: initialSettings.showClicks,
-            cooldownEnabled: initialSettings.cooldownEnabled,
-            cooldownValue: initialSettings.cooldownValue,
-            cooldownUnit: initialSettings.cooldownUnit,
-            groupsPerPage: initialSettings.groupsPerPage,
-            featuredGroupsDisplay: initialSettings.featuredGroupsDisplay,
-            showNewsletter: initialSettings.showNewsletter,
-        });
+        form.reset(initialSettings);
     }, [initialSettings, form]);
 
     const onSubmit = (data: ModerationFormValues) => {
@@ -77,6 +63,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('groupsPerPage', String(data.groupsPerPage));
             formData.append('featuredGroupsDisplay', data.featuredGroupsDisplay);
             formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
+            formData.append('showDynamicSeoContent', data.showDynamicSeoContent ? 'on' : 'off');
             
             const result = await saveModerationSettings(formData);
 
@@ -210,7 +197,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
 
                             {/* Moderation Settings Column */}
                             <div className="space-y-6">
-                                <h4 className="font-semibold text-lg">Moderation Settings</h4>
+                                <h4 className="font-semibold text-lg">Content & Moderation</h4>
                                 <div className="space-y-6 rounded-lg border p-4">
                                     <FormField
                                         control={form.control}
@@ -272,6 +259,29 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                         </div>
                                     )}
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="showDynamicSeoContent"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel htmlFor="show-dynamic-seo-toggle" className="text-base flex items-center gap-2">
+                                                    <FileText className='h-4 w-4'/> Show Dynamic SEO Block
+                                                </FormLabel>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Show SEO text on category/country pages.
+                                                </p>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    id="show-dynamic-seo-toggle"
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
 

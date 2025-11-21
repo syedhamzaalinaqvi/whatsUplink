@@ -39,6 +39,7 @@ export type ModerationSettings = {
     groupsPerPage: number;
     featuredGroupsDisplay: 'slider' | 'grid' | 'list';
     showNewsletter: boolean;
+    showDynamicSeoContent: boolean;
 };
 
 export type Category = {

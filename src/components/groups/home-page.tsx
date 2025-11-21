@@ -25,6 +25,8 @@ type HomePageProps = {
   initialCategories: Category[];
   initialCountries: Country[];
   pageTitle?: string;
+  seoTitle?: string;
+  seoContent?: string;
 };
 
 export function HomePage({ 
@@ -32,7 +34,9 @@ export function HomePage({
     allGroups, 
     initialCategories, 
     initialCountries,
-    pageTitle
+    pageTitle,
+    seoTitle,
+    seoContent,
 }: HomePageProps) {
   const [settings] = useState(initialSettings);
   const [initialSearchTag, setInitialSearchTag] = useState('');
@@ -146,10 +150,17 @@ export function HomePage({
             initialSearchQuery={initialSearchTag}
         />
 
+        {/* Show static SEO content on homepage, or dynamic SEO content on category/country pages */}
         {!isDynamicPage && settings.layout.seoContent.enabled && (
             <SeoContent 
                 heading={settings.layout.seoContent.heading}
                 content={settings.layout.seoContent.content}
+            />
+        )}
+        {isDynamicPage && settings.showDynamicSeoContent && seoTitle && seoContent && (
+             <SeoContent 
+                heading={seoTitle}
+                content={seoContent}
             />
         )}
       </main>

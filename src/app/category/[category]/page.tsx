@@ -1,7 +1,7 @@
 
 import { HomePage } from '@/components/groups/home-page';
 import { getModerationSettings } from '@/lib/admin-settings';
-import { getCategories, getCountries } from '@/app/admin/actions';
+import { getCategories, getCountries, getLayoutSettings } from '@/app/admin/actions';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
@@ -46,10 +46,11 @@ export default async function CategoryPage({ params }: Props) {
   if (!category) notFound();
 
   // Fetch settings and taxonomies on the server.
-  const [settings, categories, countries] = await Promise.all([
+  const [settings, categories, countries, layoutSettings] = await Promise.all([
     getModerationSettings(),
     getCategories(),
-    getCountries()
+    getCountries(),
+    getLayoutSettings()
   ]);
 
   const db = getFirestoreInstance();
@@ -70,13 +71,23 @@ export default async function CategoryPage({ params }: Props) {
     return dateB - dateA;
   });
 
+  const categoryLabel = categories.find(c => c.value === category)?.label || category;
+  const combinedSettings = { ...settings, layout: layoutSettings };
+
+  // Dynamic SEO Content
+  const seoTitle = `Explore the Best ${categoryLabel} WhatsApp Group Links`;
+  const seoContent = `Dive into our extensive collection of active WhatsApp group links dedicated to ${categoryLabel}. WhatsUpLink is your number one source for discovering and joining the most engaging and active communities. Whether you're looking for ${categoryLabel} groups for discussion, sharing content, or connecting with like-minded people, you'll find the best active links right here. Our directory is constantly updated to ensure you get access to fresh and active WhatsApp groups in the ${categoryLabel} category.`;
+
+
   return (
     <HomePage 
-      initialSettings={settings}
+      initialSettings={combinedSettings}
       allGroups={allGroups}
       initialCategories={categories}
       initialCountries={countries}
-      pageTitle={`Groups in '${categories.find(c => c.value === category)?.label || category}'`}
+      pageTitle={`Groups in '${categoryLabel}'`}
+      seoTitle={seoTitle}
+      seoContent={seoContent}
     />
   );
 }

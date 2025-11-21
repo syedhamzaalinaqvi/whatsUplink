@@ -1,7 +1,7 @@
 
 import { HomePage } from '@/components/groups/home-page';
 import { getModerationSettings } from '@/lib/admin-settings';
-import { getCategories, getCountries } from '@/app/admin/actions';
+import { getCategories, getCountries, getLayoutSettings } from '@/app/admin/actions';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
@@ -45,10 +45,11 @@ export default async function CountryPage({ params }: Props) {
   if (!country) notFound();
 
   // Fetch settings and taxonomies on the server.
-  const [settings, categories, countries] = await Promise.all([
+  const [settings, categories, countries, layoutSettings] = await Promise.all([
     getModerationSettings(),
     getCategories(),
-    getCountries()
+    getCountries(),
+    getLayoutSettings()
   ]);
 
   const db = getFirestoreInstance();
@@ -69,13 +70,22 @@ export default async function CountryPage({ params }: Props) {
     return dateB - dateA;
   });
 
+  const countryLabel = countries.find(c => c.value === country)?.label || country;
+  const combinedSettings = { ...settings, layout: layoutSettings };
+
+  // Dynamic SEO Content
+  const seoTitle = `Top Active WhatsApp Group Links in ${countryLabel}`;
+  const seoContent = `Looking for active WhatsApp group links from ${countryLabel}? You've found the ultimate resource. WhatsUpLink offers the largest, most up-to-date list of active group links for ${countryLabel}. Whether you're searching for local community groups, business networking, or entertainment, our active WhatsApp link directory is your best bet. All links are verified to ensure you're joining active and relevant groups from ${countryLabel}. Explore the best active WhatsApp group links today!`;
+
   return (
     <HomePage 
-      initialSettings={settings}
+      initialSettings={combinedSettings}
       allGroups={allGroups}
       initialCategories={categories}
       initialCountries={countries}
-      pageTitle={`Groups in '${countries.find(c => c.value === country)?.label || country}'`}
+      pageTitle={`Groups in '${countryLabel}'`}
+      seoTitle={seoTitle}
+      seoContent={seoContent}
     />
   );
 }
