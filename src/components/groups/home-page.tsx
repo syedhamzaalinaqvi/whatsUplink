@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
+import Link from 'next/link';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -117,6 +118,12 @@ export function HomePage({
                   ? `Browse all groups in this collection. Use the filters below to narrow your search.`
                   : `Discover and join thousands of WhatsApp groups and channels from around the world. Submit your own and connect with new communities!`}
               </p>
+               <div className="mt-8 hidden md:flex items-center justify-center">
+                    <Button size="lg" className="h-12 text-lg px-8" onClick={handleOpenSubmitDialog}>
+                        <PlusCircle className="mr-2 h-6 w-6" />
+                        Submit Group
+                    </Button>
+                </div>
             </div>
         </section>
         

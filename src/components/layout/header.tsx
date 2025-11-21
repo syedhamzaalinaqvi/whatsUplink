@@ -23,6 +23,7 @@ import {
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 
 type HeaderProps = {
@@ -101,6 +102,86 @@ export function Header({
     )
   })
   ListItem.displayName = "ListItem"
+
+  const renderMobileNavContent = () => (
+    <div className="flex flex-col gap-2 p-6 pt-0">
+        <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+            <Image
+              src={finalLogoUrl}
+              alt="WhatsUpLink Logo"
+              width={36}
+              height={36}
+              className="h-9 w-9"
+              unoptimized
+            />
+            <h1 className="text-2xl font-bold tracking-tighter text-foreground">
+                WhatsUp<span className="text-primary">Link</span>
+            </h1>
+        </Link>
+        <nav className="flex flex-col gap-1 text-lg font-medium">
+             {navLinks.filter(link => link.href === '/').map(link => (
+                 <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="py-2 text-foreground transition-colors hover:text-primary">
+                    {link.label}
+                 </Link>
+             ))}
+            
+            <Accordion type="multiple" className="w-full">
+                <AccordionItem value="categories">
+                    <AccordionTrigger className="py-2 text-lg font-medium text-foreground transition-colors hover:text-primary hover:no-underline">
+                        <div className="flex items-center gap-2">
+                           <Folder className='h-5 w-5'/> Categories
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <ScrollArea className="h-64">
+                             <div className="flex flex-col gap-1 pl-4 pt-2">
+                                {categories.map(category => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/category/${category.value}`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="py-2 text-base font-normal text-muted-foreground transition-colors hover:text-primary"
+                                    >
+                                        {category.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="countries">
+                    <AccordionTrigger className="py-2 text-lg font-medium text-foreground transition-colors hover:text-primary hover:no-underline">
+                        <div className="flex items-center gap-2">
+                            <Globe className='h-5 w-5'/> Countries
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                         <ScrollArea className="h-64">
+                             <div className="flex flex-col gap-1 pl-4 pt-2">
+                                {countries.map(country => (
+                                    <Link
+                                        key={country.id}
+                                        href={`/country/${country.value}`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="py-2 text-base font-normal text-muted-foreground transition-colors hover:text-primary"
+                                    >
+                                        {country.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+            
+            {navLinks.filter(link => !['/', '/submit'].includes(link.href)).map((link) => (
+              <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="py-2 text-lg font-medium text-foreground transition-colors hover:text-primary">
+                {link.label}
+              </Link>
+            ))}
+      </nav>
+    </div>
+  );
 
   return (
     <>
@@ -184,7 +265,7 @@ export function Header({
           </NavigationMenu>
           
           <div className="hidden md:flex items-center gap-4">
-             <Button onClick={openSubmitDialog}>Submit Group</Button>
+            {/* The "Submit Group" button is now in the hero section for desktop */}
           </div>
 
           <div className="md:hidden">
@@ -196,32 +277,10 @@ export function Header({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0">
-                <SheetHeader className="p-6">
+                <SheetHeader className="p-6 pb-0">
                     <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-6 p-6 pt-0">
-                    <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Image
-                          src={finalLogoUrl}
-                          alt="WhatsUpLink Logo"
-                          width={36}
-                          height={36}
-                          className="h-9 w-9"
-                          unoptimized
-                        />
-                        <h1 className="text-2xl font-bold tracking-tighter text-foreground">
-                            WhatsUp<span className="text-primary">Link</span>
-                        </h1>
-                    </Link>
-                    <nav className="flex flex-col gap-4">
-                    {navLinks.filter(link => link.href !== '/submit').map((link) => (
-                      <Link key={link.id} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-foreground transition-colors hover:text-primary">
-                        {link.label}
-                      </Link>
-                    ))}
-                  </nav>
-                  <Button onClick={openSubmitDialog}>Submit Group</Button>
-                </div>
+                {renderMobileNavContent()}
               </SheetContent>
             </Sheet>
           </div>
