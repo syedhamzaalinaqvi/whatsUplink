@@ -1,7 +1,7 @@
 
 import { HomePage } from '@/components/groups/home-page';
 import { getModerationSettings } from '@/lib/admin-settings';
-import { getCategories, getCountries, seedInitialData } from '@/app/admin/actions';
+import { getCategories, getCountries, seedInitialData, getLayoutSettings } from '@/app/admin/actions';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
@@ -18,10 +18,11 @@ function getFirestoreInstance() {
 
 export default async function Home() {
   // Fetch settings and taxonomies on the server.
-  const [settings, categories, countries] = await Promise.all([
+  const [settings, categories, countries, layoutSettings] = await Promise.all([
     getModerationSettings(),
     getCategories(),
-    getCountries()
+    getCountries(),
+    getLayoutSettings()
   ]);
 
   // Seed initial data if necessary.
@@ -37,11 +38,13 @@ export default async function Home() {
     return group;
   });
 
+  const combinedSettings = { ...settings, layout: layoutSettings };
+
   // Pass the server-fetched data to the client component.
   // The client component will handle filtering and displaying the data.
   return (
     <HomePage 
-      initialSettings={settings}
+      initialSettings={combinedSettings}
       allGroups={allGroups}
       initialCategories={categories}
       initialCountries={countries}

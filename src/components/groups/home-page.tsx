@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { Category, Country, GroupLink, ModerationSettings } from '@/lib/data';
+import type { Category, Country, GroupLink, LayoutSettings, ModerationSettings } from '@/lib/data';
 import { GroupClientPage } from '@/components/groups/group-client-page';
 import { GroupCard } from './group-card';
 import { Separator } from '../ui/separator';
@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { SeoContent } from '../layout/seo-content';
 
 type HomePageProps = {
-  initialSettings: ModerationSettings;
+  initialSettings: ModerationSettings & { layout: LayoutSettings };
   allGroups: GroupLink[];
   initialCategories: Category[];
   initialCountries: Country[];
@@ -146,7 +146,12 @@ export function HomePage({
             initialSearchQuery={initialSearchTag}
         />
 
-        {!isDynamicPage && <SeoContent />}
+        {!isDynamicPage && settings.layout.seoContent.enabled && (
+            <SeoContent 
+                heading={settings.layout.seoContent.heading}
+                content={settings.layout.seoContent.content}
+            />
+        )}
       </main>
       
       {!isSubmitPage && (

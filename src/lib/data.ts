@@ -70,12 +70,19 @@ export type BackgroundSettings = {
   bgImageUrl: string;
 };
 
+export type SeoContentSettings = {
+    enabled: boolean;
+    heading: string;
+    content: string;
+};
+
 export type LayoutSettings = {
   headerScripts: string;
   logoUrl?: string;
   navLinks: NavLink[];
   footerContent: FooterContent;
   backgroundSettings: BackgroundSettings;
+  seoContent: SeoContentSettings;
 };
 
 const formatTimestamp = (timestamp: any): string | null => {

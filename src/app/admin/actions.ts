@@ -335,6 +335,15 @@ const defaultLayoutSettings: LayoutSettings = {
         bgImageEnabled: true,
         bgImageUrl: '/whatsapp_background_official_image.png',
     },
+    seoContent: {
+        enabled: true,
+        heading: 'Your Ultimate Hub for Active WhatsApp Group Links',
+        content: `Welcome to WhatsUpLink, the largest and most up-to-date directory of active WhatsApp group links on the internet. If you're searching for the best WhatsApp groups to join, you've come to the right place. Our platform is dedicated to providing a comprehensive collection of genuine and active group links, making it easy for you to discover communities that match your interests. Whether you are looking for USA WhatsApp group links, entertainment groups, or specific hobby communities, our active directory is your number one resource.
+
+We continuously update our database to ensure you find only the most relevant and active WhatsApp links. Forget dead links and inactive groups; we focus on quality. You can easily find active groups for everything from gaming, like PUBG and Freefire, to professional networking, family groups, and even adult WhatsApp group links. Every link is a gateway to a new community.
+
+Our mission is to be the best source for discovering and sharing WhatsApp group links. Join thousands of users who trust WhatsUpLink to find active and engaging WhatsApp groups. Start exploring our vast collection of active links today and connect with people from all over the world. Submit your own WhatsApp group link to grow your community and become part of our ever-expanding network of active groups.`
+    }
 };
 
 export async function getLayoutSettings(): Promise<LayoutSettings> {
@@ -358,6 +367,10 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
                     ...defaultLayoutSettings.backgroundSettings,
                     ...data.backgroundSettings,
                 },
+                seoContent: {
+                    ...defaultLayoutSettings.seoContent,
+                    ...data.seoContent,
+                },
             };
         } else {
             // Document doesn't exist, create it with defaults
@@ -380,6 +393,9 @@ const layoutSettingsSchema = z.object({
   footerCopyright: z.string(),
   bgImageEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
   bgImageUrl: z.string().optional(),
+  seoEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
+  seoHeading: z.string(),
+  seoContent: z.string(),
 });
 
 export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -392,6 +408,9 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
         footerCopyright: formData.get('footerCopyright'),
         bgImageEnabled: formData.get('bgImageEnabled'),
         bgImageUrl: formData.get('bgImageUrl'),
+        seoEnabled: formData.get('seoEnabled'),
+        seoHeading: formData.get('seoHeading'),
+        seoContent: formData.get('seoContent'),
     });
 
     if (!validatedFields.success) {
@@ -400,7 +419,10 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
     }
 
     try {
-        const { headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, logoUrl, bgImageEnabled, bgImageUrl } = validatedFields.data;
+        const { 
+            headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, 
+            logoUrl, bgImageEnabled, bgImageUrl, seoEnabled, seoHeading, seoContent 
+        } = validatedFields.data;
         
         const settingsToSave: Partial<LayoutSettings> = {
             headerScripts: headerScripts || '',
@@ -414,6 +436,11 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
             backgroundSettings: {
                 bgImageEnabled,
                 bgImageUrl: bgImageUrl || '',
+            },
+            seoContent: {
+                enabled: seoEnabled,
+                heading: seoHeading,
+                content: seoContent,
             }
         };
 
