@@ -107,6 +107,11 @@ export function GroupClientPage({
                     <Skeleton key={i} className={view === 'grid' ? 'h-40' : 'h-48'} />
                 ))}
             </div>
+        ) : allGroups.length === 0 ? ( // Check initial `allGroups` first
+             <div className="mt-16 text-center text-muted-foreground">
+                <h3 className="text-xl font-semibold">No groups found</h3>
+                <p>Try adjusting your filters or submit a new group!</p>
+            </div>
         ) : visibleGroups.length > 0 ? (
             <div className={gridClass}>
                 {visibleGroups.map(group => (
