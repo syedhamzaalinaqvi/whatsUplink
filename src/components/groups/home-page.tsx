@@ -17,6 +17,7 @@ import {
 import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { SeoContent } from '../layout/seo-content';
 
 type HomePageProps = {
   initialSettings: ModerationSettings;
@@ -144,6 +145,8 @@ export function HomePage({
             initialCountries={initialCountries}
             initialSearchQuery={initialSearchTag}
         />
+
+        {!isDynamicPage && <SeoContent />}
       </main>
       
       {!isSubmitPage && (
