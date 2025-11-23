@@ -64,5 +64,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...staticRoutes, ...groupRoutes, ...categoryRoutes, ...countryRoutes];
+  const allTags = new Set<string>();
+  groupsSnapshot.docs.forEach(doc => {
+      const tags = doc.data().tags;
+      if (Array.isArray(tags)) {
+          tags.forEach(tag => allTags.add(tag));
+      }
+  });
+
+  const tagRoutes = Array.from(allTags).map(tag => ({
+      url: `${baseUrl}/tag/${encodeURIComponent(tag)}`,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...groupRoutes, ...categoryRoutes, ...countryRoutes, ...tagRoutes];
 }

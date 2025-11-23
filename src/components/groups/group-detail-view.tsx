@@ -85,8 +85,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
   };
   
   const handleTagClick = (tag: string) => {
-    sessionStorage.setItem('tagSearch', tag);
-    router.push('/');
+    router.push(`/tag/${encodeURIComponent(tag)}`);
   };
 
   const handleRatingSubmit = (rating: number) => {
@@ -275,9 +274,9 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                     <div className="flex flex-wrap gap-2 items-center mt-6">
                         <Tag className="h-4 w-4 text-muted-foreground" />
                         {group.tags.map(tag => (
-                            <button key={tag} onClick={() => handleTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                            <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} onClick={() => handleTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
                                 <Badge variant="default" className="cursor-pointer bg-primary/90 hover:bg-primary/80">{tag}</Badge>
-                            </button>
+                            </Link>
                         ))}
                     </div>
                   )}

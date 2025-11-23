@@ -46,6 +46,12 @@ export function GroupCard({ group, view, onTagClick, showClicks, showRatings }: 
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
     NProgress.start();
   };
+
+  const handleLocalTagClick = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onTagClick(tag);
+  }
   
   const averageRating = (group.ratingCount ?? 0) > 0 ? (group.totalRating ?? 0) / (group.ratingCount ?? 0) : 0;
 
@@ -139,9 +145,9 @@ export function GroupCard({ group, view, onTagClick, showClicks, showRatings }: 
             <div className="flex flex-wrap gap-2 items-center">
                 <Tag className="h-4 w-4 text-muted-foreground" />
                 {group.tags.map(tag => (
-                    <button key={tag} onClick={() => onTagClick(tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+                    <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`} onClick={(e) => handleLocalTagClick(e, tag)} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full z-10">
                         <Badge variant="default" className="cursor-pointer bg-primary hover:bg-primary/80">{tag}</Badge>
-                    </button>
+                    </Link>
                 ))}
             </div>
           )}
@@ -171,7 +177,7 @@ export function GroupCard({ group, view, onTagClick, showClicks, showRatings }: 
                     <span className="sr-only">Share</span>
                 </Button>
             </SharePopover>
-            <Button asChild className="w-full" variant="secondary" onClick={handleCardClick}>
+            <Button asChild className="w-full z-10" variant="secondary" onClick={handleCardClick}>
                 <Link href={detailUrl}>
                 View Details
                 <ExternalLink className="ml-2 h-4 w-4" />
