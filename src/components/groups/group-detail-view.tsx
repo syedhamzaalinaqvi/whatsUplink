@@ -16,7 +16,8 @@ import {
   Flag,
   Tag,
   Repeat,
-  Star
+  Star,
+  Loader2,
 } from 'lucide-react';
 import type { GroupLink, Category, Country, ModerationSettings } from '@/lib/data';
 import {
@@ -59,6 +60,10 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
   const { toast } = useToast();
   const [isRating, startRatingTransition] = useTransition();
 
+  const [selectedRating, setSelectedRating] = useState<number>(0);
+  const [hasRated, setHasRated] = useState(false);
+
+
   useEffect(() => {
     // Ensure this runs only on the client
     setDetailUrl(window.location.href);
@@ -88,11 +93,13 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
     router.push(`/tag/${encodeURIComponent(tag)}`);
   };
 
-  const handleRatingSubmit = (rating: number) => {
+  const handleRatingSubmit = () => {
+    if (selectedRating === 0) return;
+
     startRatingTransition(async () => {
       const formData = new FormData();
       formData.append('groupId', group.id);
-      formData.append('rating', String(rating));
+      formData.append('rating', String(selectedRating));
       
       const result = await submitRating(formData);
 
@@ -105,9 +112,13 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
       if (result.success && result.newAverage !== undefined) {
         setGroup(prev => ({
             ...prev,
-            totalRating: (prev.totalRating ?? 0) + rating,
+            totalRating: (prev.totalRating ?? 0) + selectedRating,
             ratingCount: (prev.ratingCount ?? 0) + 1,
         }));
+        setHasRated(true); // Mark as rated to hide submission UI
+        setSelectedRating(0);
+      } else if (result.message.includes('already rated')) {
+        setHasRated(true); // Also hide if user has already rated from another session
       }
     });
   };
@@ -246,25 +257,40 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                   </div>
 
                   {settings?.showRatings && (
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 my-4 rounded-lg border p-4 bg-muted/50">
-                        <div className='flex-shrink-0'>
-                            <h4 className="font-semibold text-center sm:text-left">Rate this group</h4>
-                             <div className="flex items-center gap-2 mt-1 justify-center sm:justify-start">
-                                <Star className="h-5 w-5 text-yellow-400" />
-                                <span className="text-lg font-bold">{averageRating.toFixed(1)}</span>
-                                <span className="text-sm text-muted-foreground">({group.ratingCount ?? 0} ratings)</span>
+                     <div className="flex flex-col items-center gap-4 my-4 rounded-lg border p-4 bg-muted/50">
+                        <div className='flex flex-col sm:flex-row items-center justify-between w-full'>
+                            <div className='flex-shrink-0 text-center sm:text-left'>
+                                <h4 className="font-semibold">Rate this group</h4>
+                                <div className="flex items-center gap-2 mt-1 justify-center sm:justify-start">
+                                    <Star className="h-5 w-5 text-yellow-400" />
+                                    <span className="text-lg font-bold">{averageRating.toFixed(1)}</span>
+                                    <span className="text-sm text-muted-foreground">({group.ratingCount ?? 0} ratings)</span>
+                                </div>
+                            </div>
+                             <div className="flex-1 w-full flex items-center justify-center mt-4 sm:mt-0">
+                               <StarRating 
+                                    rating={selectedRating || averageRating} 
+                                    onRatingChange={setSelectedRating}
+                                    size={32}
+                                    disabled={isRating || hasRated}
+                                />
                             </div>
                         </div>
-                        <div className="flex-1 w-full flex items-center justify-center">
-                           <StarRating 
-                                rating={averageRating} 
-                                onRating={handleRatingSubmit}
-                                size={32}
-                                disabled={isRating}
-                            />
-                        </div>
+                        {selectedRating > 0 && !hasRated && (
+                            <div className="mt-2 w-full flex justify-center">
+                                <Button onClick={handleRatingSubmit} disabled={isRating} size="sm">
+                                    {isRating ? (
+                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</>
+                                    ) : (
+                                        `Submit ${selectedRating} Star Rating`
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+                        {hasRated && <p className='text-sm text-muted-foreground mt-2'>Thank you for your rating!</p>}
                     </div>
                   )}
+
 
                   <p className="text-base text-foreground/80 whitespace-pre-wrap mt-6">
                     {group.description}

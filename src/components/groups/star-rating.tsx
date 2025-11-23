@@ -7,18 +7,18 @@ import { cn } from '@/lib/utils';
 
 type StarRatingProps = {
   rating: number;
-  onRating?: (rating: number) => void;
+  onRatingChange?: (rating: number) => void;
   size?: number;
   readOnly?: boolean;
   disabled?: boolean;
 };
 
-export function StarRating({ rating, onRating, size = 24, readOnly = false, disabled = false }: StarRatingProps) {
+export function StarRating({ rating, onRatingChange, size = 24, readOnly = false, disabled = false }: StarRatingProps) {
   const [hoverRating, setHoverRating] = useState(0);
 
   const handleClick = (rate: number) => {
-    if (!readOnly && onRating && !disabled) {
-      onRating(rate);
+    if (!readOnly && onRatingChange && !disabled) {
+      onRatingChange(rate);
     }
   };
 
