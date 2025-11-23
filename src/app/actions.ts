@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import type { GroupLink, ModerationSettings, Report } from '@/lib/data';
 import { getLinkPreview } from 'link-preview-js';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, increment, getDoc, doc, writeBatch, limit, runTransaction } from 'firebase/firestore';
 import { mapDocToGroupLink } from '@/lib/data';
 import { getModerationSettings } from '@/lib/admin-settings';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -15,6 +15,7 @@ import { submitGroupSchema } from '@/lib/zod-schemas';
 import type { FormState } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { differenceInMilliseconds } from 'date-fns';
+import { cookies } from 'next/headers';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -306,14 +307,16 @@ export async function submitGroup(
 
     } else {
       // This is a new CREATE operation
-      const newGroupData = {
+      const newGroupData: Partial<GroupLink> = {
         ...groupData,
         tags: tags,
-        createdAt: serverTimestamp(),
-        lastSubmittedAt: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
+        lastSubmittedAt: serverTimestamp() as any,
         clicks: 0,
         submissionCount: 1,
         featured: false,
+        totalRating: 0,
+        ratingCount: 0,
       };
       const docRef = await addDoc(collection(db, 'groups'), newGroupData);
 
@@ -326,4 +329,74 @@ export async function submitGroup(
     console.error('Firestore submission error:', error);
     return { message: 'An unexpected error occurred. Please try again.' };
   }
+}
+
+const submitRatingSchema = z.object({
+  groupId: z.string().min(1),
+  rating: z.coerce.number().min(1).max(5),
+});
+
+export async function submitRating(formData: FormData): Promise<{ success: boolean; message: string; newAverage?: number }> {
+    const validatedFields = submitRatingSchema.safeParse({
+        groupId: formData.get('groupId'),
+        rating: formData.get('rating'),
+    });
+
+    if (!validatedFields.success) {
+        return { success: false, message: "Invalid rating data." };
+    }
+    const { groupId, rating } = validatedFields.data;
+
+    const cookieStore = cookies();
+    const ratedGroupsCookie = cookieStore.get('ratedGroups');
+    const ratedGroups = ratedGroupsCookie ? JSON.parse(ratedGroupsCookie.value) : [];
+
+    if (ratedGroups.includes(groupId)) {
+        return { success: false, message: "You have already rated this group." };
+    }
+    
+    try {
+        const db = getFirestoreInstance();
+        const groupRef = doc(db, 'groups', groupId);
+
+        let newAverage = 0;
+        
+        await runTransaction(db, async (transaction) => {
+            const groupDoc = await transaction.get(groupRef);
+            if (!groupDoc.exists()) {
+                throw new Error("Group not found!");
+            }
+            
+            const groupData = groupDoc.data();
+            const currentTotalRating = groupData.totalRating || 0;
+            const currentRatingCount = groupData.ratingCount || 0;
+
+            const newTotalRating = currentTotalRating + rating;
+            const newRatingCount = currentRatingCount + 1;
+            newAverage = newTotalRating / newRatingCount;
+
+            transaction.update(groupRef, {
+                totalRating: newTotalRating,
+                ratingCount: newRatingCount,
+            });
+        });
+
+        // Set cookie after successful transaction
+        ratedGroups.push(groupId);
+        cookieStore.set('ratedGroups', JSON.stringify(ratedGroups), {
+            maxAge: 60 * 60 * 24 * 365, // 1 year
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+        
+        revalidatePath(`/group/invite/${groupId}`);
+        revalidatePath('/');
+
+        return { success: true, message: "Thank you for your rating!", newAverage };
+
+    } catch (error) {
+        console.error("Error submitting rating:", error);
+        return { success: false, message: "Could not submit your rating. Please try again." };
+    }
 }

@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, Tag, Share2, Users, Clock, RadioTower, Eye } from 'lucide-react';
+import { ExternalLink, Tag, Share2, Users, Clock, RadioTower, Eye, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { MessagesSquare } from 'lucide-react';
 import { SharePopover } from './share-popover';
 import NProgress from 'nprogress';
+import { StarRating } from './star-rating';
 
 type GroupCardProps = {
   group: GroupLink;
@@ -44,6 +45,8 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
     sessionStorage.setItem('scrollPosition', window.scrollY.toString());
     NProgress.start();
   };
+  
+  const averageRating = (group.ratingCount ?? 0) > 0 ? (group.totalRating ?? 0) / (group.ratingCount ?? 0) : 0;
 
   if (view === 'grid') {
     return (
@@ -61,6 +64,11 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
             </AvatarFallback>
         </Avatar>
         <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
+        
+         <div className="mt-2 flex items-center gap-1">
+            <StarRating rating={averageRating} size={16} readOnly />
+            <span className="text-xs text-muted-foreground ml-1">({group.ratingCount ?? 0})</span>
+        </div>
         
         <div className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-4">
             <span className="flex items-center gap-1">
@@ -112,8 +120,11 @@ export function GroupCard({ group, view, onTagClick, showClicks }: GroupCardProp
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-lg font-semibold">{group.title}</CardTitle>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1">
+                    <StarRating rating={averageRating} size={16} readOnly />
+                    <span className="text-xs text-muted-foreground">({group.ratingCount ?? 0})</span>
+                </div>
                 <Badge variant="secondary" className="whitespace-nowrap">{group.category}</Badge>
-                <Badge variant="outline" className="whitespace-nowrap capitalize">{group.country}</Badge>
             </div>
           </div>
           <CardDescription className="pt-2 line-clamp-3">{group.description}</CardDescription>

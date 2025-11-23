@@ -15,7 +15,8 @@ import {
   RadioTower,
   Flag,
   Tag,
-  Repeat
+  Repeat,
+  Star
 } from 'lucide-react';
 import type { GroupLink, Category, Country } from '@/lib/data';
 import {
@@ -31,11 +32,14 @@ import { GroupCard } from '@/components/groups/group-card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SharePopover } from './share-popover';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useFirestore } from '@/firebase/provider';
 import { doc, increment, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { GroupReportDialog } from './group-report-dialog';
+import { StarRating } from './star-rating';
+import { submitRating } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -44,16 +48,23 @@ type GroupDetailViewProps = {
   countries: Country[];
 };
 
-export function GroupDetailView({ group, relatedGroups, categories, countries }: GroupDetailViewProps) {
+export function GroupDetailView({ group: initialGroup, relatedGroups, categories, countries }: GroupDetailViewProps) {
+  const [group, setGroup] = useState(initialGroup);
   const [detailUrl, setDetailUrl] = useState('');
   const [isReportOpen, setIsReportOpen] = useState(false);
   const { firestore } = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
+  const [isRating, startRatingTransition] = useTransition();
 
   useEffect(() => {
     // Ensure this runs only on the client
     setDetailUrl(window.location.href);
   }, []);
+  
+  useEffect(() => {
+    setGroup(initialGroup);
+  }, [initialGroup]);
 
   const handleJoinClick = () => {
     if (firestore && group.id) {
@@ -69,6 +80,29 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
     router.push('/');
   };
 
+  const handleRatingSubmit = (rating: number) => {
+    startRatingTransition(async () => {
+      const formData = new FormData();
+      formData.append('groupId', group.id);
+      formData.append('rating', String(rating));
+      
+      const result = await submitRating(formData);
+
+      toast({
+        title: result.success ? 'Rating Submitted!' : 'Error',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
+      });
+      
+      if (result.success && result.newAverage !== undefined) {
+        setGroup(prev => ({
+            ...prev,
+            totalRating: (prev.totalRating ?? 0) + rating,
+            ratingCount: (prev.ratingCount ?? 0) + 1,
+        }));
+      }
+    });
+  };
 
   const rules = [
     {
@@ -102,6 +136,8 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
   const categoryLabel = categories.find(c => c.value === group.category)?.label || group.category;
   const countryLabel = countries.find(c => c.value === group.country)?.label || group.country;
 
+  const averageRating = (group.ratingCount ?? 0) > 0 ? (group.totalRating ?? 0) / (group.ratingCount ?? 0) : 0;
+  
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -124,6 +160,11 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
       },
       // Use lastSubmittedAt for more accurate date, fallback to createdAt
       datePublished: group.lastSubmittedAt || group.createdAt,
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: averageRating.toFixed(1),
+        ratingCount: group.ratingCount ?? 0,
+      },
     },
   };
 
@@ -195,7 +236,27 @@ export function GroupDetailView({ group, relatedGroups, categories, countries }:
                         </div>
                     )}
                   </div>
-                  <p className="text-base text-foreground/80 whitespace-pre-wrap">
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 my-4 rounded-lg border p-4 bg-muted/50">
+                        <div className='flex-shrink-0'>
+                            <h4 className="font-semibold text-center sm:text-left">Rate this group</h4>
+                             <div className="flex items-center gap-2 mt-1 justify-center sm:justify-start">
+                                <Star className="h-5 w-5 text-yellow-400" />
+                                <span className="text-lg font-bold">{averageRating.toFixed(1)}</span>
+                                <span className="text-sm text-muted-foreground">({group.ratingCount ?? 0} ratings)</span>
+                            </div>
+                        </div>
+                        <div className="flex-1 w-full flex items-center justify-center">
+                           <StarRating 
+                                rating={averageRating} 
+                                onRating={handleRatingSubmit}
+                                size={32}
+                                disabled={isRating}
+                            />
+                        </div>
+                  </div>
+
+                  <p className="text-base text-foreground/80 whitespace-pre-wrap mt-6">
                     {group.description}
                   </p>
                   

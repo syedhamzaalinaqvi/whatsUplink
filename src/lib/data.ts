@@ -20,6 +20,8 @@ export type GroupLink = {
   showClicks?: boolean;
   submissionCount?: number;
   lastSubmittedAt?: string | null;
+  totalRating?: number;
+  ratingCount?: number;
 };
 
 export type Report = {
@@ -127,6 +129,8 @@ export function mapDocToGroupLink(doc: DocumentData): GroupLink {
         showClicks: typeof data.showClicks === 'boolean' ? data.showClicks : true,
         submissionCount: data.submissionCount || 1,
         lastSubmittedAt: formatTimestamp(data.lastSubmittedAt),
+        totalRating: data.totalRating || 0,
+        ratingCount: data.ratingCount || 0,
     };
 }
 
