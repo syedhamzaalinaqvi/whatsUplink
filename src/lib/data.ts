@@ -42,6 +42,7 @@ export type ModerationSettings = {
     featuredGroupsDisplay: 'slider' | 'grid' | 'list';
     showNewsletter: boolean;
     showDynamicSeoContent: boolean;
+    showRatings: boolean;
 };
 
 export type Category = {

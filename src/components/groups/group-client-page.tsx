@@ -123,7 +123,7 @@ export function GroupClientPage({
         ) : visibleGroups.length > 0 ? (
             <div className={gridClass}>
                 {visibleGroups.map(group => (
-                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={initialSettings.showClicks} />
+                    <GroupCard key={group.id} group={group} view={view} onTagClick={handleTagClick} showClicks={initialSettings.showClicks} showRatings={initialSettings.showRatings} />
                 ))}
             </div>
         ) : (

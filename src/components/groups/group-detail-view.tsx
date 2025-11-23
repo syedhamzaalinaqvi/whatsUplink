@@ -18,7 +18,7 @@ import {
   Repeat,
   Star
 } from 'lucide-react';
-import type { GroupLink, Category, Country } from '@/lib/data';
+import type { GroupLink, Category, Country, ModerationSettings } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -40,6 +40,7 @@ import { GroupReportDialog } from './group-report-dialog';
 import { StarRating } from './star-rating';
 import { submitRating } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { getModerationSettings } from '@/lib/admin-settings';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -52,6 +53,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
   const [group, setGroup] = useState(initialGroup);
   const [detailUrl, setDetailUrl] = useState('');
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [settings, setSettings] = useState<ModerationSettings | null>(null);
   const { firestore } = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -60,6 +62,13 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
   useEffect(() => {
     // Ensure this runs only on the client
     setDetailUrl(window.location.href);
+    
+    // Fetch moderation settings on the client
+    async function fetchSettings() {
+        const fetchedSettings = await getModerationSettings();
+        setSettings(fetchedSettings);
+    }
+    fetchSettings();
   }, []);
   
   useEffect(() => {
@@ -237,7 +246,8 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 my-4 rounded-lg border p-4 bg-muted/50">
+                  {settings?.showRatings && (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 my-4 rounded-lg border p-4 bg-muted/50">
                         <div className='flex-shrink-0'>
                             <h4 className="font-semibold text-center sm:text-left">Rate this group</h4>
                              <div className="flex items-center gap-2 mt-1 justify-center sm:justify-start">
@@ -254,7 +264,8 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                                 disabled={isRating}
                             />
                         </div>
-                  </div>
+                    </div>
+                  )}
 
                   <p className="text-base text-foreground/80 whitespace-pre-wrap mt-6">
                     {group.description}
@@ -363,6 +374,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                         view="grid"
                         onTagClick={handleTagClick}
                         showClicks={relatedGroup.showClicks ?? true}
+                        showRatings={settings?.showRatings ?? true}
                       />
                     ))
                   ) : (

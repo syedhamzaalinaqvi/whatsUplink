@@ -13,7 +13,7 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText } from 'lucide-react';
+import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText, Star } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { Separator } from '../ui/separator';
@@ -27,6 +27,7 @@ const moderationSettingsSchema = z.object({
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
     showNewsletter: z.boolean(),
     showDynamicSeoContent: z.boolean(),
+    showRatings: z.boolean(),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -64,6 +65,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('featuredGroupsDisplay', data.featuredGroupsDisplay);
             formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
             formData.append('showDynamicSeoContent', data.showDynamicSeoContent ? 'on' : 'off');
+            formData.append('showRatings', data.showRatings ? 'on' : 'off');
             
             const result = await saveModerationSettings(formData);
 
@@ -108,6 +110,30 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                             <FormControl>
                                                 <Switch
                                                     id="show-clicks-toggle"
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="showRatings"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel htmlFor="show-ratings-toggle" className="text-base flex items-center gap-2">
+                                                    <Star className='h-4 w-4' /> Show Ratings
+                                                </FormLabel>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Display the 5-star rating system.
+                                                </p>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    id="show-ratings-toggle"
                                                     checked={field.value}
                                                     onCheckedChange={field.onChange}
                                                 />

@@ -25,6 +25,7 @@ const moderationSettingsSchema = z.object({
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
     showNewsletter: z.enum(['on', 'off']).transform(val => val === 'on'),
     showDynamicSeoContent: z.enum(['on', 'off']).transform(val => val === 'on'),
+    showRatings: z.enum(['on', 'off']).transform(val => val === 'on'),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -36,6 +37,7 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         featuredGroupsDisplay: formData.get('featuredGroupsDisplay'),
         showNewsletter: formData.get('showNewsletter'),
         showDynamicSeoContent: formData.get('showDynamicSeoContent'),
+        showRatings: formData.get('showRatings'),
     });
     
     if (!validatedFields.success) {

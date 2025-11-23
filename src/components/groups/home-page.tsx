@@ -72,7 +72,7 @@ export function HomePage({
       return (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
           {featuredGroups.map(group => (
-            <GroupCard key={group.id} group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
+            <GroupCard key={group.id} group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} showRatings={settings.showRatings} />
           ))}
         </div>
       );
@@ -82,7 +82,7 @@ export function HomePage({
       return (
         <div className="flex flex-col gap-6">
           {featuredGroups.map(group => (
-            <GroupCard key={group.id} group={group} view="list" onTagClick={() => {}} showClicks={settings.showClicks} />
+            <GroupCard key={group.id} group={group} view="list" onTagClick={() => {}} showClicks={settings.showClicks} showRatings={settings.showRatings} />
           ))}
         </div>
       );
@@ -100,7 +100,7 @@ export function HomePage({
         <CarouselContent>
           {featuredGroups.map((group) => (
             <CarouselItem key={group.id} className="basis-1/2 sm:basis-1/3 lg:basis-1/4">
-                <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} />
+                <GroupCard group={group} view="grid" onTagClick={() => {}} showClicks={settings.showClicks} showRatings={settings.showRatings} />
             </CarouselItem>
           ))}
         </CarouselContent>
@@ -150,7 +150,7 @@ export function HomePage({
                 initialCategories={initialCategories}
                 initialCountries={initialCountries}
                 initialSearchQuery={initialSearchTag}
-                isLoading={false} // Pass false here; loading state is now handled inside GroupClientPage
+                isLoading={allGroups.length === 0 && !isDynamicPage} 
             />
         </Suspense>
 

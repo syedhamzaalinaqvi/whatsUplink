@@ -32,6 +32,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
                 showNewsletter: data.showNewsletter ?? false,
                 showDynamicSeoContent: data.showDynamicSeoContent ?? true,
+                showRatings: data.showRatings ?? true,
             };
         } else {
             // If the document doesn't exist, create it with default values
@@ -44,6 +45,7 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
                 featuredGroupsDisplay: 'slider',
                 showNewsletter: false,
                 showDynamicSeoContent: true,
+                showRatings: true,
             };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
@@ -61,5 +63,6 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         featuredGroupsDisplay: 'slider',
         showNewsletter: false,
         showDynamicSeoContent: true,
+        showRatings: true,
     };
 }
