@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
@@ -26,6 +26,7 @@ const moderationSettingsSchema = z.object({
     showNewsletter: z.enum(['on', 'off']).transform(val => val === 'on'),
     showDynamicSeoContent: z.enum(['on', 'off']).transform(val => val === 'on'),
     showRatings: z.enum(['on', 'off']).transform(val => val === 'on'),
+    showClicks: z.enum(['on', 'off']).transform(val => val === 'on'),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -38,21 +39,25 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         showNewsletter: formData.get('showNewsletter'),
         showDynamicSeoContent: formData.get('showDynamicSeoContent'),
         showRatings: formData.get('showRatings'),
+        showClicks: formData.get('showClicks'),
     });
     
     if (!validatedFields.success) {
-        return { success: false, message: 'Invalid settings.' };
+        const errorMsg = validatedFields.error.flatten().fieldErrors;
+        console.error("Validation errors:", errorMsg);
+        return { success: false, message: 'Invalid settings provided.' };
     }
 
     try {
         const db = getFirestoreInstance();
         const settingsDocRef = doc(db, 'settings', 'moderation');
-        await updateDoc(settingsDocRef, {
-            ...validatedFields.data,
-        });
+        // Use setDoc with merge to ensure the document is created if it doesn't exist
+        await setDoc(settingsDocRef, validatedFields.data, { merge: true });
+        
         revalidatePath('/admin');
         revalidatePath('/');
-        return { success: true, message: 'Moderation settings saved successfully.' };
+        
+        return { success: true, message: 'Global settings saved successfully.' };
     } catch (error) {
         console.error('Error saving moderation settings:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

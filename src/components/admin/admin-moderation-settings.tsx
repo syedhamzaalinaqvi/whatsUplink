@@ -13,10 +13,9 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText, Star } from 'lucide-react';
+import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText, Star, Eye } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { Separator } from '../ui/separator';
 
 const moderationSettingsSchema = z.object({
     showClicks: z.boolean(),
@@ -55,9 +54,6 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
     const onSubmit = (data: ModerationFormValues) => {
         startSaving(async () => {
             const formData = new FormData();
-            // Note: The 'showClicks' setting is handled by a separate action now
-            // and is not included in this form submission to prevent conflicts.
-            // We pass it to the form for UI consistency only.
             formData.append('cooldownEnabled', data.cooldownEnabled ? 'on' : 'off');
             formData.append('cooldownValue', String(data.cooldownValue));
             formData.append('cooldownUnit', data.cooldownUnit);
@@ -66,11 +62,11 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
             formData.append('showDynamicSeoContent', data.showDynamicSeoContent ? 'on' : 'off');
             formData.append('showRatings', data.showRatings ? 'on' : 'off');
+            formData.append('showClicks', data.showClicks ? 'on' : 'off');
             
             const result = await saveModerationSettings(formData);
 
             if (result.success) {
-                 // Update the parent component's state AFTER successful save.
                  onSettingsChange({ ...initialSettings, ...data });
             }
 
@@ -102,7 +98,9 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                     render={({ field }) => (
                                         <FormItem className="flex items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel htmlFor="show-clicks-toggle" className="text-base">Show Click Counts</FormLabel>
+                                                <FormLabel htmlFor="show-clicks-toggle" className="text-base flex items-center gap-2">
+                                                    <Eye className="h-4 w-4" /> Show Click Counts
+                                                </FormLabel>
                                                 <p className="text-sm text-muted-foreground">
                                                     Display join link click counts publicly.
                                                 </p>
