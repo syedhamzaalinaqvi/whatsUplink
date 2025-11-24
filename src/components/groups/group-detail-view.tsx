@@ -248,7 +248,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                             </div>
                         </Badge>
                      )}
-                    {group.showClicks && (
+                    {settings?.showClicks && (
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <Eye className="h-4 w-4" />
                             <span>{group.clicks ?? 0} views</span>
@@ -398,7 +398,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                         group={relatedGroup}
                         view="grid"
                         onTagClick={handleTagClick}
-                        showClicks={relatedGroup.showClicks ?? true}
+                        showClicks={settings?.showClicks ?? true}
                         showRatings={settings?.showRatings ?? true}
                       />
                     ))
