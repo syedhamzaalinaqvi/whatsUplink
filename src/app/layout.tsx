@@ -90,10 +90,9 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* AdSense script is handled via the next/script component below */}
+        {/* AdSense script is now handled via the next/script component below */}
       </head>
       <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
-        {/* AdSense script is now handled via the next/script component below */}
         {layoutSettings.headerScripts && (
            <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
         )}
