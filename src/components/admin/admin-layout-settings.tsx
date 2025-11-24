@@ -109,7 +109,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle>Layout & Appearance</CardTitle>
+        <CardTitle>Layout &amp; Appearance</CardTitle>
         <CardDescription>
           Customize your site's logo, background, header, footer, navigation, and add tracking scripts.
         </CardDescription>
@@ -245,16 +245,16 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
               name="headerScripts"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Header Scripts</FormLabel>
+                  <FormLabel>Body Scripts (for analytics, etc.)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="<script>...</script>"
+                      placeholder="&lt;script&gt;...&lt;/script&gt;"
                       className="font-mono"
                       rows={5}
                       {...field}
                     />
                   </FormControl>
-                  <p className='text-sm text-muted-foreground'>Add scripts like Google Analytics here. They will be injected into the page body.</p>
+                  <p className='text-sm text-muted-foreground'>Add scripts like Google Analytics here. They will be injected into the start of the page body. AdSense script is now handled automatically.</p>
                   <FormMessage />
                 </FormItem>
               )}

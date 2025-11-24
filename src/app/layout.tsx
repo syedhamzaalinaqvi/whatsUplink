@@ -90,12 +90,13 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* AdSense script is handled via the next/script component below */}
+      </head>
+      <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         {/* AdSense script is now handled via the next/script component below */}
         {layoutSettings.headerScripts && (
            <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
         )}
-      </head>
-      <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8130991342525434"
