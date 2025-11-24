@@ -11,6 +11,7 @@ import { Header } from '@/components/layout/header';
 import { TopProgressBar } from '@/components/layout/top-progress-bar';
 import { Suspense } from 'react';
 import { Providers } from './providers';
+import Script from 'next/script';
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -88,11 +89,19 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
-        {/* Render custom scripts from admin settings. Placed in body to avoid hydration errors. */}
+      <head>
+        {/* AdSense script is now handled via the next/script component below */}
         {layoutSettings.headerScripts && (
            <div dangerouslySetInnerHTML={{ __html: layoutSettings.headerScripts }} />
         )}
+      </head>
+      <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8130991342525434"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <Suspense>
           <TopProgressBar />
         </Suspense>
