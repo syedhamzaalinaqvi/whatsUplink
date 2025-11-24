@@ -316,7 +316,6 @@ export async function seedInitialData() {
 // ------ Layout Settings Actions ------
 
 const defaultLayoutSettings: LayoutSettings = {
-    headerScripts: '<!-- Add analytics or other scripts here -->',
     logoUrl: '/whatsuplink_logo_and_favicon_without_background.png',
     navLinks: [
         { id: '1', label: 'Home', href: '/' },
@@ -356,7 +355,6 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
             const data = docSnap.data();
             // Merge with defaults to ensure all fields are present
             return {
-                headerScripts: data.headerScripts ?? defaultLayoutSettings.headerScripts,
                 logoUrl: data.logoUrl ?? defaultLayoutSettings.logoUrl,
                 navLinks: data.navLinks && data.navLinks.length > 0 ? data.navLinks : defaultLayoutSettings.navLinks,
                 footerContent: {
@@ -385,7 +383,6 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
 }
 
 const layoutSettingsSchema = z.object({
-  headerScripts: z.string().optional(),
   logoUrl: z.string().optional(),
   navLinks: z.string().transform(val => JSON.parse(val) as NavLink[]),
   footerHeading: z.string(),
@@ -400,7 +397,6 @@ const layoutSettingsSchema = z.object({
 
 export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
     const validatedFields = layoutSettingsSchema.safeParse({
-        headerScripts: formData.get('headerScripts'),
         logoUrl: formData.get('logoUrl'),
         navLinks: formData.get('navLinks'),
         footerHeading: formData.get('footerHeading'),
@@ -420,12 +416,11 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
 
     try {
         const { 
-            headerScripts, navLinks, footerHeading, footerParagraph, footerCopyright, 
+            navLinks, footerHeading, footerParagraph, footerCopyright, 
             logoUrl, bgImageEnabled, bgImageUrl, seoEnabled, seoHeading, seoContent 
         } = validatedFields.data;
         
         const settingsToSave: Partial<LayoutSettings> = {
-            headerScripts: headerScripts || '',
             logoUrl: logoUrl || '',
             navLinks: navLinks,
             footerContent: {

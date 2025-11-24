@@ -81,7 +81,6 @@ export type SeoContentSettings = {
 };
 
 export type LayoutSettings = {
-  headerScripts: string;
   logoUrl?: string;
   navLinks: NavLink[];
   footerContent: FooterContent;

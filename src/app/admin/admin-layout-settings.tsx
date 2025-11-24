@@ -25,7 +25,6 @@ import { Separator } from '../ui/separator';
 
 const layoutSettingsSchema = z.object({
   logoUrl: z.string().optional().or(z.literal('')),
-  headerScripts: z.string().optional(),
   navLinks: z.array(
     z.object({
       id: z.string(),
@@ -63,7 +62,6 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
   const form = useForm<FormValues>({
     resolver: zodResolver(layoutSettingsSchema),
     defaultValues: {
-      headerScripts: initialSettings.headerScripts || '',
       logoUrl: initialSettings.logoUrl || '',
       navLinks: initialSettings.navLinks.map(link => ({...link})), // Ensure mutable copy
       footerContent: { ...initialSettings.footerContent },
@@ -80,7 +78,6 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
   const onSubmit = (data: FormValues) => {
     startSaving(async () => {
         const formData = new FormData();
-        formData.append('headerScripts', data.headerScripts || '');
         formData.append('logoUrl', data.logoUrl || '');
         formData.append('navLinks', JSON.stringify(data.navLinks));
         formData.append('footerHeading', data.footerContent.heading);
@@ -111,7 +108,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
       <CardHeader>
         <CardTitle>Layout &amp; Appearance</CardTitle>
         <CardDescription>
-          Customize your site's logo, background, header, footer, navigation, and add tracking scripts.
+          Customize your site's logo, background, header, footer, and navigation.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -234,27 +231,6 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
                     <Input {...field} placeholder="/path-to-your-logo.png" />
                   </FormControl>
                   <p className='text-sm text-muted-foreground'>Manually enter the path to your logo file in the `public` folder. This will also be used as the site favicon.</p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Header Scripts */}
-            <FormField
-              control={form.control}
-              name="headerScripts"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Body Scripts (for analytics, etc.)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="&lt;script&gt;...&lt;/script&gt;"
-                      className="font-mono"
-                      rows={5}
-                      {...field}
-                    />
-                  </FormControl>
-                  <p className='text-sm text-muted-foreground'>Add scripts like Google Analytics here. They will be injected into the start of the page body. AdSense script is now handled automatically.</p>
                   <FormMessage />
                 </FormItem>
               )}
