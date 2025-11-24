@@ -72,7 +72,7 @@ export function GroupCard({ group, view, onTagClick, showClicks, showRatings }: 
         </Avatar>
         <h3 className="font-semibold text-sm line-clamp-2 mt-3">{group.title}</h3>
         
-        {showRatings && (
+        {showRatings && averageRating > 0 && (
             <div className="mt-2 flex items-center gap-1">
                 <StarRating rating={averageRating} size={16} readOnly />
                 <span className="text-xs text-muted-foreground ml-1">({group.ratingCount ?? 0})</span>
@@ -129,7 +129,7 @@ export function GroupCard({ group, view, onTagClick, showClicks, showRatings }: 
           <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-lg font-semibold">{group.title}</CardTitle>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                {showRatings && (
+                {showRatings && averageRating > 0 && (
                     <div className="flex items-center gap-1">
                         <StarRating rating={averageRating} size={16} readOnly />
                         <span className="text-xs text-muted-foreground">({group.ratingCount ?? 0})</span>

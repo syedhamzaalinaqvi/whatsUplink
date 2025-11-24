@@ -269,7 +269,7 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
                             </div>
                              <div className="flex-1 w-full flex items-center justify-center mt-4 sm:mt-0">
                                <StarRating 
-                                    rating={selectedRating || averageRating} 
+                                    rating={selectedRating} 
                                     onRatingChange={setSelectedRating}
                                     size={32}
                                     disabled={isRating || hasRated}
