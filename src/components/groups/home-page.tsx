@@ -18,6 +18,7 @@ import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { SeoContent } from '../layout/seo-content';
+import { Breadcrumbs, type BreadcrumbItem } from '../layout/breadcrumbs';
 
 type HomePageProps = {
   initialSettings: ModerationSettings & { layout: LayoutSettings };
@@ -25,6 +26,7 @@ type HomePageProps = {
   initialCategories: Category[];
   initialCountries: Country[];
   pageTitle?: string;
+  breadcrumbItems?: BreadcrumbItem[];
   seoTitle?: string;
   seoContent?: string;
 };
@@ -35,6 +37,7 @@ export function HomePage({
     initialCategories, 
     initialCountries,
     pageTitle,
+    breadcrumbItems,
     seoTitle,
     seoContent,
 }: HomePageProps) {
@@ -112,6 +115,7 @@ export function HomePage({
   
   return (
     <div className="flex min-h-screen w-full flex-col">
+      {breadcrumbItems && <Breadcrumbs items={breadcrumbItems} />}
       <main className="flex-1 pb-20 md:pb-0">
         <section className="bg-card/50 border-b border-primary/20">
             <div className="container py-12 md:py-16 text-center">

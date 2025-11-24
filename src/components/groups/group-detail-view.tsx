@@ -18,6 +18,7 @@ import {
   Repeat,
   Star,
   Loader2,
+  Home,
 } from 'lucide-react';
 import type { GroupLink, Category, Country, ModerationSettings } from '@/lib/data';
 import {
@@ -42,6 +43,7 @@ import { StarRating } from './star-rating';
 import { submitRating } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { getModerationSettings } from '@/lib/admin-settings';
+import { Breadcrumbs, type BreadcrumbItem } from '../layout/breadcrumbs';
 
 type GroupDetailViewProps = {
   group: GroupLink;
@@ -157,6 +159,12 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
 
   const averageRating = (group.ratingCount ?? 0) > 0 ? (group.totalRating ?? 0) / (group.ratingCount ?? 0) : 0;
   
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Home', href: '/' },
+    { label: categoryLabel, href: `/category/${group.category}` },
+    { label: group.title },
+  ];
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -189,21 +197,13 @@ export function GroupDetailView({ group: initialGroup, relatedGroups, categories
 
   return (
     <div className="flex min-h-screen w-full flex-col">
+      <Breadcrumbs items={breadcrumbItems} />
       <main className="flex-1">
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <div className="container py-8 md:py-12">
-          <div className="mb-8">
-            <Button asChild variant="outline">
-              <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to All Group Links
-              </Link>
-            </Button>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
               <Card className="overflow-hidden">

@@ -9,6 +9,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { mapDocToGroupLink } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import type { BreadcrumbItem } from '@/components/layout/breadcrumbs';
 
 type Props = {
   params: { tag: string };
@@ -87,6 +88,12 @@ export default async function TagPage({ params }: Props) {
   const tagTitle = tags.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(' & ');
   const combinedSettings = { ...settings, layout: layoutSettings };
 
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Home', href: '/' },
+    { label: 'Tags' },
+    { label: tagTitle },
+  ];
+
   // Dynamic SEO Content
   const seoTitle = `Best WhatsApp Group Links for ${tagTitle}`;
   const seoContent = `Explore our curated collection of active WhatsApp group links for interests in ${tagTitle}. WhatsUpLink is your top destination for discovering engaging communities. Whether you're searching for ${tagTitle} discussions, hobby groups, or more, find the most up-to-date and active links right here.`;
@@ -99,6 +106,7 @@ export default async function TagPage({ params }: Props) {
       initialCategories={categories}
       initialCountries={countries}
       pageTitle={`Groups Tagged '${tagTitle}'`}
+      breadcrumbItems={breadcrumbItems}
       seoTitle={seoTitle}
       seoContent={seoContent}
     />

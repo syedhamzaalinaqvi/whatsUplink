@@ -9,6 +9,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { mapDocToGroupLink } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import type { BreadcrumbItem } from '@/components/layout/breadcrumbs';
 
 type Props = {
   params: { category: string };
@@ -74,6 +75,11 @@ export default async function CategoryPage({ params }: Props) {
   const categoryLabel = categories.find(c => c.value === category)?.label || category;
   const combinedSettings = { ...settings, layout: layoutSettings };
 
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Home', href: '/' },
+    { label: categoryLabel }
+  ];
+
   // Dynamic SEO Content
   const seoTitle = `Explore the Best ${categoryLabel} WhatsApp Group Links`;
   const seoContent = `Dive into our extensive collection of active WhatsApp group links dedicated to ${categoryLabel}. WhatsUpLink is your number one source for discovering and joining the most engaging and active communities. Whether you're looking for ${categoryLabel} groups for discussion, sharing content, or connecting with like-minded people, you'll find the best active links right here. Our directory is constantly updated to ensure you get access to fresh and active WhatsApp groups in the ${categoryLabel} category.`;
@@ -86,6 +92,7 @@ export default async function CategoryPage({ params }: Props) {
       initialCategories={categories}
       initialCountries={countries}
       pageTitle={`Groups in '${categoryLabel}'`}
+      breadcrumbItems={breadcrumbItems}
       seoTitle={seoTitle}
       seoContent={seoContent}
     />

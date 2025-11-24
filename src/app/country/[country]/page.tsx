@@ -9,6 +9,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { mapDocToGroupLink } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import type { BreadcrumbItem } from '@/components/layout/breadcrumbs';
 
 type Props = {
   params: { country: string };
@@ -73,6 +74,11 @@ export default async function CountryPage({ params }: Props) {
   const countryLabel = countries.find(c => c.value === country)?.label || country;
   const combinedSettings = { ...settings, layout: layoutSettings };
 
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Home', href: '/' },
+    { label: countryLabel }
+  ];
+
   // Dynamic SEO Content
   const seoTitle = `Top Active WhatsApp Group Links in ${countryLabel}`;
   const seoContent = `Looking for active WhatsApp group links from ${countryLabel}? You've found the ultimate resource. WhatsUpLink offers the largest, most up-to-date list of active group links for ${countryLabel}. Whether you're searching for local community groups, business networking, or entertainment, our active WhatsApp link directory is your best bet. All links are verified to ensure you're joining active and relevant groups from ${countryLabel}. Explore the best active WhatsApp group links today!`;
@@ -84,6 +90,7 @@ export default async function CountryPage({ params }: Props) {
       initialCategories={categories}
       initialCountries={countries}
       pageTitle={`Groups in '${countryLabel}'`}
+      breadcrumbItems={breadcrumbItems}
       seoTitle={seoTitle}
       seoContent={seoContent}
     />
