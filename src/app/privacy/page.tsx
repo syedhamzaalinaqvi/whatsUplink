@@ -26,7 +26,7 @@ export default async function PrivacyPolicyPage() {
                 <strong>Newsletter Subscription:</strong> If you choose to subscribe to our newsletter, we collect your email address. This is used to send you updates and news related to our service.
               </li>
               <li>
-                <strong>Usage Data:</strong> We may automatically collect certain information when you access the Site, such as your IP address, browser type, operating system, access times, and the pages you have viewed directly before and after accessing the Site.
+                <strong>Usage Data:</strong> We may automatically collect certain info when you access the Site, such as your IP address, browser type, operating system, access times, and the pages you have viewed directly before and after accessing the Site.
               </li>
             </ul>
 
