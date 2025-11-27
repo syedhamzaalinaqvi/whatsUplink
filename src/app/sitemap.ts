@@ -13,6 +13,16 @@ function getDb() {
     return getFirestore(getApp());
 }
 
+function sanitizeTag(tag: string): string {
+    if (!tag) return '';
+    return tag
+        .trim()
+        // Remove any character that is not a letter, number, or space
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .slice(0, 30) // Truncate long tags
+        .trim();
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://whatsuplink.online';
 
@@ -68,7 +78,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   groupsSnapshot.docs.forEach(doc => {
       const tags = doc.data().tags;
       if (Array.isArray(tags)) {
-          tags.forEach(tag => allTags.add(tag));
+          tags.forEach(tag => {
+              const cleanTag = sanitizeTag(tag);
+              if (cleanTag) {
+                  allTags.add(cleanTag);
+              }
+          });
       }
   });
 

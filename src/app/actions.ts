@@ -219,6 +219,31 @@ export async function getGroupPreview(link: string): Promise<{
   }
 }
 
+function sanitizeAndLimitTags(tagsInput: string | undefined): string[] {
+    if (!tagsInput) return [];
+
+    const MAX_TAGS = 10;
+    const MAX_TAG_LENGTH = 30;
+
+    return tagsInput
+        .split(',')
+        .map(tag =>
+            tag
+                .trim()
+                // Remove any character that is not a letter, number, or space
+                .replace(/[^a-zA-Z0-9\s]/g, '')
+                // Truncate long tags
+                .slice(0, MAX_TAG_LENGTH)
+                .trim()
+        )
+        // Filter out any empty tags that might result from sanitization
+        .filter(tag => tag.length > 1)
+        // Remove duplicate tags
+        .filter((tag, index, self) => self.indexOf(tag) === index)
+        // Limit the total number of tags
+        .slice(0, MAX_TAGS);
+}
+
 export async function submitGroup(
   state: FormState,
   formData: FormData
@@ -238,7 +263,7 @@ export async function submitGroup(
 
   try {
     const db = getFirestoreInstance();
-    const tags = groupData.tags ? groupData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+    const tags = sanitizeAndLimitTags(groupData.tags);
     
     // Check for existing group link
     const groupsRef = collection(db, "groups");
