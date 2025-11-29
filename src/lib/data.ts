@@ -39,6 +39,7 @@ export type ModerationSettings = {
     cooldownUnit: 'hours' | 'days' | 'months';
     showClicks: boolean;
     groupsPerPage: number;
+    showFeatured: boolean;
     featuredGroupsDisplay: 'slider' | 'grid' | 'list';
     showNewsletter: boolean;
     showDynamicSeoContent: boolean;
@@ -82,6 +83,7 @@ export type SeoContentSettings = {
 
 export type LayoutSettings = {
   logoUrl?: string;
+  headerScripts?: string;
   navLinks: NavLink[];
   footerContent: FooterContent;
   backgroundSettings: BackgroundSettings;

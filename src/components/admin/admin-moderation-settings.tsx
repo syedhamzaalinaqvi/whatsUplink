@@ -23,6 +23,7 @@ const moderationSettingsSchema = z.object({
     cooldownValue: z.coerce.number().min(1, 'Must be at least 1'),
     cooldownUnit: z.enum(['hours', 'days', 'months']),
     groupsPerPage: z.coerce.number().min(1, 'Must be at least 1').max(100, 'Cannot be more than 100'),
+    showFeatured: z.boolean(),
     featuredGroupsDisplay: z.enum(['slider', 'grid', 'list']),
     showNewsletter: z.boolean(),
     showDynamicSeoContent: z.boolean(),
@@ -58,6 +59,7 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('cooldownValue', String(data.cooldownValue));
             formData.append('cooldownUnit', data.cooldownUnit);
             formData.append('groupsPerPage', String(data.groupsPerPage));
+            formData.append('showFeatured', data.showFeatured ? 'on' : 'off');
             formData.append('featuredGroupsDisplay', data.featuredGroupsDisplay);
             formData.append('showNewsletter', data.showNewsletter ? 'on' : 'off');
             formData.append('showDynamicSeoContent', data.showDynamicSeoContent ? 'on' : 'off');
@@ -180,43 +182,66 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="featuredGroupsDisplay"
-                                    render={({ field }) => (
-                                        <FormItem className="rounded-lg border p-4">
-                                            <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Featured Groups Display</FormLabel>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Choose how to display featured groups on the homepage.
-                                                </p>
-                                            </div>
-                                            <FormControl>
-                                                <ToggleGroup
-                                                    type="single"
-                                                    value={field.value}
-                                                    onValueChange={field.onChange}
-                                                    className="justify-start mt-2"
-                                                    defaultValue="slider"
-                                                >
-                                                    <ToggleGroupItem value="slider" aria-label="Slider view">
-                                                        <SlidersHorizontal className="h-4 w-4 mr-2" />
-                                                        Slider
-                                                    </ToggleGroupItem>
-                                                    <ToggleGroupItem value="grid" aria-label="Grid view">
-                                                        <LayoutGrid className="h-4 w-4 mr-2" />
-                                                        Grid
-                                                    </ToggleGroupItem>
-                                                    <ToggleGroupItem value="list" aria-label="List view">
-                                                        <List className="h-4 w-4 mr-2" />
-                                                        List
-                                                    </ToggleGroupItem>
-                                                </ToggleGroup>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                
+                                <div className="space-y-4 rounded-lg border p-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="showFeatured"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel htmlFor="show-featured-toggle" className="text-base flex items-center gap-2">
+                                                        Show Featured Section
+                                                    </FormLabel>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Enable or disable the featured section on the homepage.
+                                                    </p>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        id="show-featured-toggle"
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="featuredGroupsDisplay"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Display Style</FormLabel>
+                                                <FormControl>
+                                                    <ToggleGroup
+                                                        type="single"
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                        className="justify-start mt-2"
+                                                        defaultValue="slider"
+                                                        disabled={!form.watch('showFeatured')}
+                                                    >
+                                                        <ToggleGroupItem value="slider" aria-label="Slider view">
+                                                            <SlidersHorizontal className="h-4 w-4 mr-2" />
+                                                            Slider
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="grid" aria-label="Grid view">
+                                                            <LayoutGrid className="h-4 w-4 mr-2" />
+                                                            Grid
+                                                        </ToggleGroupItem>
+                                                        <ToggleGroupItem value="list" aria-label="List view">
+                                                            <List className="h-4 w-4 mr-2" />
+                                                            List
+                                                        </ToggleGroupItem>
+                                                    </ToggleGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
 
                             {/* Moderation Settings Column */}

@@ -16,6 +16,19 @@ function getFirestoreInstance() {
 }
 
 export async function getModerationSettings(): Promise<ModerationSettings> {
+    const defaultSettings: ModerationSettings = {
+        cooldownEnabled: true,
+        cooldownValue: 6,
+        cooldownUnit: 'hours',
+        showClicks: true,
+        groupsPerPage: 20,
+        showFeatured: true,
+        featuredGroupsDisplay: 'slider',
+        showNewsletter: false,
+        showDynamicSeoContent: true,
+        showRatings: true,
+    };
+
     try {
         const db = getFirestoreInstance();
         const settingsDocRef = doc(db, 'settings', 'moderation');
@@ -24,45 +37,17 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
             const data = docSnap.data();
             // Return existing data with defaults for any missing fields
             return {
-                cooldownEnabled: data.cooldownEnabled ?? true,
-                cooldownValue: data.cooldownValue ?? 6,
-                cooldownUnit: data.cooldownUnit ?? 'hours',
-                showClicks: data.showClicks ?? true,
-                groupsPerPage: data.groupsPerPage ?? 20,
-                featuredGroupsDisplay: data.featuredGroupsDisplay ?? 'slider',
-                showNewsletter: data.showNewsletter ?? false,
-                showDynamicSeoContent: data.showDynamicSeoContent ?? true,
-                showRatings: data.showRatings ?? true,
+                ...defaultSettings,
+                ...data,
             };
         } else {
             // If the document doesn't exist, create it with default values
-            const defaultSettings: ModerationSettings = {
-                cooldownEnabled: true,
-                cooldownValue: 6,
-                cooldownUnit: 'hours',
-                showClicks: true,
-                groupsPerPage: 20,
-                featuredGroupsDisplay: 'slider',
-                showNewsletter: false,
-                showDynamicSeoContent: true,
-                showRatings: true,
-            };
             await setDoc(settingsDocRef, defaultSettings);
             return defaultSettings;
         }
     } catch (error) {
         console.error('Error fetching moderation settings:', error);
+        // Return default settings if not found or on error
+        return defaultSettings;
     }
-    // Return default settings if not found or on error
-    return {
-        cooldownEnabled: true,
-        cooldownValue: 6,
-        cooldownUnit: 'hours',
-        showClicks: true,
-        groupsPerPage: 20,
-        featuredGroupsDisplay: 'slider',
-        showNewsletter: false,
-        showDynamicSeoContent: true,
-        showRatings: true,
-    };
 }

@@ -136,7 +136,7 @@ export function HomePage({
             </div>
         </section>
         
-        {featuredGroups.length > 0 && !isDynamicPage && (
+        {settings.showFeatured && featuredGroups.length > 0 && !isDynamicPage && (
           <section className="container py-8 md:py-12">
             <div className="mx-auto max-w-5xl">
               <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Featured Groups</h2>
