@@ -62,7 +62,7 @@ export default function BlogPostPage({ params }: Props) {
                 <time dateTime={post.date}>{format(new Date(post.date), 'MMMM d, yyyy')}</time>
             </div>
           </header>
-          <div dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} />
+          <div dangerouslySetInnerHTML={{ __html: post.content }} />
         </article>
       </main>
     </>
