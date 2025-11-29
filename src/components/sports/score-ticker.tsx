@@ -1,7 +1,7 @@
 
 import { getLiveScores, type Match } from '@/app/sports-actions';
 import Image from 'next/image';
-import { SoccerBall } from 'lucide-react';
+import { SoccerBall, Clock } from 'lucide-react';
 
 export async function ScoreTicker() {
   const matches = await getLiveScores();
@@ -11,7 +11,7 @@ export async function ScoreTicker() {
     return (
         <div className="bg-card/80 backdrop-blur-sm border-y">
              <div className="container py-2 text-center text-muted-foreground text-sm">
-                No live matches at the moment. Check back later!
+                No live or upcoming matches at the moment. Check back later!
             </div>
         </div>
     );
@@ -19,6 +19,11 @@ export async function ScoreTicker() {
 
   // Duplicate the array to create a seamless loop
   const duplicatedMatches = [...matches, ...matches];
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
 
   return (
     <div className="relative w-full bg-card/80 backdrop-blur-sm border-y overflow-hidden">
@@ -31,20 +36,25 @@ export async function ScoreTicker() {
               <Image src={match.teamALogo} alt={match.teamA} width={20} height={20} className="h-5 w-5 object-contain"/>
               <span className="text-sm font-medium">{match.teamA}</span>
               <span className="text-sm font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">
-                {match.scoreA} - {match.scoreB}
+                {match.status === 'NS' ? 'vs' : `${match.scoreA} - ${match.scoreB}`}
               </span>
               <span className="text-sm font-medium">{match.teamB}</span>
               <Image src={match.teamBLogo} alt={match.teamB} width={20} height={20} className="h-5 w-5 object-contain" />
             </div>
-             <div className="ml-4 text-xs font-mono text-destructive flex items-center gap-1.5">
+             <div className="ml-4 text-xs font-mono text-primary flex items-center gap-1.5">
                 {match.status === 'HT' ? (
-                    <span>HALF TIME</span>
+                    <span className='text-amber-500'>HALF TIME</span>
                 ) : match.status === 'FT' ? (
-                     <span>FULL TIME</span>
+                     <span className='text-green-500'>FULL TIME</span>
+                ) : match.status === 'NS' ? (
+                    <>
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTime(match.timestamp)}</span>
+                    </>
                 ) : (
                     <>
-                        <span>{match.elapsed}'</span>
-                        <SoccerBall className="h-3 w-3 animate-spin" />
+                        <span className='text-destructive'>{match.elapsed}'</span>
+                        <SoccerBall className="h-3 w-3 animate-spin text-destructive" />
                     </>
                 )}
             </div>
