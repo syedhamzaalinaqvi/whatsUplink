@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Plus, Trash2, GripVertical, Image as ImageIcon, FileText } from 'lucide-react';
+import { Loader2, Plus, Trash2, GripVertical, Image as ImageIcon, FileText, Search as SearchIcon } from 'lucide-react';
 import type { LayoutSettings, NavLink } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { saveLayoutSettings } from '@/app/admin/actions';
@@ -41,11 +41,16 @@ const layoutSettingsSchema = z.object({
     bgImageEnabled: z.boolean(),
     bgImageUrl: z.string().optional(),
   }),
-  seoContent: z.object({
+  homepageSeoContent: z.object({
     enabled: z.boolean(),
     heading: z.string().min(5, 'Heading must be at least 5 characters.'),
     content: z.string().min(20, 'Content must be at least 20 characters.'),
   }),
+  seoSettings: z.object({
+      siteTitle: z.string().min(5, "Site title must be at least 5 characters."),
+      metaDescription: z.string().min(20, "Meta description must be at least 20 characters."),
+      metaKeywords: z.string().optional(),
+  })
 });
 
 type FormValues = z.infer<typeof layoutSettingsSchema>;
@@ -66,11 +71,12 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
       navLinks: initialSettings.navLinks.map(link => ({...link})), // Ensure mutable copy
       footerContent: { ...initialSettings.footerContent },
       backgroundSettings: { ...initialSettings.backgroundSettings },
-      seoContent: { ...initialSettings.seoContent },
+      homepageSeoContent: { ...initialSettings.homepageSeoContent },
+      seoSettings: { ...initialSettings.seoSettings },
     },
   });
   
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "navLinks",
   });
@@ -85,9 +91,12 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
         formData.append('footerCopyright', data.footerContent.copyrightText);
         formData.append('bgImageEnabled', data.backgroundSettings.bgImageEnabled ? 'on' : 'off');
         formData.append('bgImageUrl', data.backgroundSettings.bgImageUrl || '');
-        formData.append('seoEnabled', data.seoContent.enabled ? 'on' : 'off');
-        formData.append('seoHeading', data.seoContent.heading);
-        formData.append('seoContent', data.seoContent.content);
+        formData.append('seoEnabled', data.homepageSeoContent.enabled ? 'on' : 'off');
+        formData.append('seoHeading', data.homepageSeoContent.heading);
+        formData.append('seoContent', data.homepageSeoContent.content);
+        formData.append('siteTitle', data.seoSettings.siteTitle);
+        formData.append('metaDescription', data.seoSettings.metaDescription);
+        formData.append('metaKeywords', data.seoSettings.metaKeywords || '');
 
         const result = await saveLayoutSettings(formData);
 
@@ -117,13 +126,62 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2"><FileText className='h-5 w-5'/> SEO Content</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2"><SearchIcon className='h-5 w-5'/> Homepage SEO</CardTitle>
+                    <CardDescription>Manage your homepage title, description, and keywords for search engines.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="seoSettings.siteTitle"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Site Title</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="WhatsUpLink: The Best Group Directory" />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="seoSettings.metaDescription"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Meta Description</FormLabel>
+                            <FormControl>
+                                <Textarea {...field} placeholder="Your one-stop directory for all WhatsApp groups..." rows={3} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="seoSettings.metaKeywords"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Meta Keywords</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="whatsapp groups, group links, community..." />
+                            </FormControl>
+                            <p className='text-sm text-muted-foreground'>Separate keywords with a comma.</p>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><FileText className='h-5 w-5'/> Homepage SEO Content</CardTitle>
                     <CardDescription>Manage the SEO content block on your homepage.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <FormField
                         control={form.control}
-                        name="seoContent.enabled"
+                        name="homepageSeoContent.enabled"
                         render={({ field }) => (
                             <FormItem className="flex items-center justify-between rounded-lg border p-4">
                                 <div className="space-y-0.5">
@@ -142,11 +200,11 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
                             </FormItem>
                         )}
                     />
-                    {form.watch('seoContent.enabled') && (
+                    {form.watch('homepageSeoContent.enabled') && (
                         <div className='space-y-4'>
                             <FormField
                                 control={form.control}
-                                name="seoContent.heading"
+                                name="homepageSeoContent.heading"
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>SEO Heading</FormLabel>
@@ -159,7 +217,7 @@ export function AdminLayoutSettings({ initialSettings, onSettingsChange }: Admin
                             />
                              <FormField
                                 control={form.control}
-                                name="seoContent.content"
+                                name="homepageSeoContent.content"
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>SEO Content</FormLabel>

@@ -334,7 +334,7 @@ const defaultLayoutSettings: LayoutSettings = {
         bgImageEnabled: true,
         bgImageUrl: '/whatsapp_background_official_image.png',
     },
-    seoContent: {
+    homepageSeoContent: {
         enabled: true,
         heading: 'Your Ultimate Hub for Active WhatsApp Group Links',
         content: `Welcome to WhatsUpLink, the largest and most up-to-date directory of active WhatsApp group links on the internet. If you're searching for the best WhatsApp groups to join, you've come to the right place. Our platform is dedicated to providing a comprehensive collection of genuine and active group links, making it easy for you to discover communities that match your interests. Whether you are looking for USA WhatsApp group links, entertainment groups, or specific hobby communities, our active directory is your number one resource.
@@ -342,6 +342,11 @@ const defaultLayoutSettings: LayoutSettings = {
 We continuously update our database to ensure you find only the most relevant and active WhatsApp links. Forget dead links and inactive groups; we focus on quality. You can easily find active groups for everything from gaming, like PUBG and Freefire, to professional networking, family groups, and even adult WhatsApp group links. Every link is a gateway to a new community.
 
 Our mission is to be the best source for discovering and sharing WhatsApp group links. Join thousands of users who trust WhatsUpLink to find active and engaging WhatsApp groups. Start exploring our vast collection of active links today and connect with people from all over the world. Submit your own WhatsApp group link to grow your community and become part of our ever-expanding network of active groups.`
+    },
+    seoSettings: {
+        siteTitle: "WhatsUpLink: Join & Share WhatsApp Group Links",
+        metaDescription: "The ultimate directory for WhatsApp group links. Discover and join groups for family, friends, USA communities, entertainment, PUBG, Freefire, adult topics, and more. Share your own WhatsApp group link today!",
+        metaKeywords: "whatsapp group links, whatsapp groups, usa whatsapp group, family whatsapp group link, adult whatsapp group links, pubg whatsapp group, freefire whatsapp groups links, entertainment whatsapp group"
     }
 };
 
@@ -355,8 +360,8 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
             const data = docSnap.data();
             // Merge with defaults to ensure all fields are present
             return {
-                logoUrl: data.logoUrl ?? defaultLayoutSettings.logoUrl,
-                navLinks: data.navLinks && data.navLinks.length > 0 ? data.navLinks : defaultLayoutSettings.navLinks,
+                ...defaultLayoutSettings,
+                ...data,
                 footerContent: {
                     ...defaultLayoutSettings.footerContent,
                     ...data.footerContent,
@@ -365,10 +370,14 @@ export async function getLayoutSettings(): Promise<LayoutSettings> {
                     ...defaultLayoutSettings.backgroundSettings,
                     ...data.backgroundSettings,
                 },
-                seoContent: {
-                    ...defaultLayoutSettings.seoContent,
-                    ...data.seoContent,
+                homepageSeoContent: {
+                    ...defaultLayoutSettings.homepageSeoContent,
+                    ...data.homepageSeoContent,
                 },
+                seoSettings: {
+                    ...defaultLayoutSettings.seoSettings,
+                    ...data.seoSettings,
+                }
             };
         } else {
             // Document doesn't exist, create it with defaults
@@ -393,6 +402,9 @@ const layoutSettingsSchema = z.object({
   seoEnabled: z.enum(['on', 'off']).transform(val => val === 'on'),
   seoHeading: z.string(),
   seoContent: z.string(),
+  siteTitle: z.string().min(5, "Site title must be at least 5 characters."),
+  metaDescription: z.string().min(20, "Meta description must be at least 20 characters."),
+  metaKeywords: z.string().optional(),
 });
 
 export async function saveLayoutSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -407,6 +419,9 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
         seoEnabled: formData.get('seoEnabled'),
         seoHeading: formData.get('seoHeading'),
         seoContent: formData.get('seoContent'),
+        siteTitle: formData.get('siteTitle'),
+        metaDescription: formData.get('metaDescription'),
+        metaKeywords: formData.get('metaKeywords'),
     });
 
     if (!validatedFields.success) {
@@ -417,7 +432,8 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
     try {
         const { 
             navLinks, footerHeading, footerParagraph, footerCopyright, 
-            logoUrl, bgImageEnabled, bgImageUrl, seoEnabled, seoHeading, seoContent 
+            logoUrl, bgImageEnabled, bgImageUrl, seoEnabled, seoHeading, seoContent,
+            siteTitle, metaDescription, metaKeywords
         } = validatedFields.data;
         
         const settingsToSave: Partial<LayoutSettings> = {
@@ -432,10 +448,15 @@ export async function saveLayoutSettings(formData: FormData): Promise<{ success:
                 bgImageEnabled,
                 bgImageUrl: bgImageUrl || '',
             },
-            seoContent: {
+            homepageSeoContent: {
                 enabled: seoEnabled,
                 heading: seoHeading,
                 content: seoContent,
+            },
+            seoSettings: {
+                siteTitle,
+                metaDescription,
+                metaKeywords: metaKeywords || '',
             }
         };
 

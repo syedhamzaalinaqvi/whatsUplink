@@ -21,10 +21,11 @@ const inter = Inter({
 
 export async function generateMetadata(): Promise<Metadata> {
   const layoutSettings = await getLayoutSettings();
-  const logoUrl = layoutSettings.logoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
+  const { seoSettings, logoUrl: configLogoUrl } = layoutSettings;
+  const logoUrl = configLogoUrl || '/whatsuplink_logo_and_favicon_without_background.png';
 
-  const title = "WhatsUpLink: Join & Share WhatsApp Group Links";
-  const description = "The ultimate directory for WhatsApp group links. Discover and join groups for family, friends, USA communities, entertainment, PUBG, Freefire, adult topics, and more. Share your own WhatsApp group link today!";
+  const title = seoSettings.siteTitle;
+  const description = seoSettings.metaDescription;
 
   return {
     metadataBase: new URL('https://whatsuplink.online'),
@@ -42,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       images: [logoUrl],
     },
-    keywords: ['whatsapp group links', 'whatsapp groups', 'usa whatsapp group', 'family whatsapp group link', 'adult whatsapp group links', 'pubg whatsapp group', 'freefire whatsapp groups links', 'entertainment whatsapp group'],
+    keywords: seoSettings.metaKeywords,
     icons: {
       icon: '/favicon.ico', // Standard favicon path
       apple: '/apple-touch-icon.png', // Standard Apple touch icon path

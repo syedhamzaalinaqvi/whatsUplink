@@ -75,10 +75,16 @@ export type BackgroundSettings = {
   bgImageUrl: string;
 };
 
-export type SeoContentSettings = {
+export type HomepageSeoContentSettings = {
     enabled: boolean;
     heading: string;
     content: string;
+};
+
+export type SeoSettings = {
+    siteTitle: string;
+    metaDescription: string;
+    metaKeywords: string;
 };
 
 export type LayoutSettings = {
@@ -87,7 +93,8 @@ export type LayoutSettings = {
   navLinks: NavLink[];
   footerContent: FooterContent;
   backgroundSettings: BackgroundSettings;
-  seoContent: SeoContentSettings;
+  homepageSeoContent: HomepageSeoContentSettings;
+  seoSettings: SeoSettings;
 };
 
 const formatTimestamp = (timestamp: any): string | null => {
