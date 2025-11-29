@@ -10,6 +10,7 @@ export type TickerItem = {
 };
 
 export type Match = {
+  id: string;
   teamA: string;
   teamALogo: string;
   teamB: string;
@@ -29,39 +30,41 @@ export type NewsArticle = {
   source: string;
 };
 
-const getTechNews = async (): Promise<NewsArticle[]> => {
-    const apiKey = process.env.RAPIDAPI_KEY;
+const getNews = async (): Promise<NewsArticle[]> => {
+    const apiKey = process.env.NEWS_API_KEY;
     if (!apiKey) {
-      console.error('RapidAPI key is not configured for tech news.');
+      console.error('NewsAPI.org key is not configured.');
       return [];
     }
 
+    // Fetching from a few reliable tech sources to ensure content is always available.
+    const sources = 'techcrunch,the-verge,wired,ars-technica';
+    const url = `https://newsapi.org/v2/top-headlines?sources=${sources}&apiKey=${apiKey}`;
+
     try {
-        const response = await fetch('https://tech-news3.p.rapidapi.com/venturebeat', {
-            headers: {
-                'x-rapidapi-host': 'tech-news3.p.rapidapi.com',
-                'x-rapidapi-key': apiKey,
-            },
+        const response = await fetch(url, {
+            // NewsAPI doesn't require extra headers, just the key in the URL.
         });
 
         if (!response.ok) {
-            console.error(`Tech news API request failed with status: ${response.status}`);
+            const errorBody = await response.json();
+            console.error(`NewsAPI request failed with status: ${response.status}`, errorBody.message);
             return [];
         }
 
         const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!data.articles || data.articles.length === 0) {
             return [];
         }
 
-        return data.slice(0, 15).map((item: any) => ({
-            title: item.title,
-            url: item.url,
-            source: 'VentureBeat',
+        return data.articles.slice(0, 15).map((article: any) => ({
+            title: article.title,
+            url: article.url,
+            source: article.source.name,
         }));
 
     } catch (error) {
-        console.error('Error fetching tech news:', error);
+        console.error('Error fetching news from NewsAPI.org:', error);
         return [];
     }
 }
@@ -97,7 +100,7 @@ const getSportsFixtures = async (): Promise<Match[]> => {
             }
             
             return data.response.map((item: any) => ({
-                id: item.fixture.id,
+                id: String(item.fixture.id),
                 teamA: item.teams.home.name,
                 teamALogo: item.teams.home.logo,
                 teamB: item.teams.away.name,
@@ -149,7 +152,7 @@ export const getTickerData = unstable_cache(
         }));
     }
     
-    const newsData = await getTechNews();
+    const newsData = await getNews();
     if (newsData.length > 0) {
         return newsData.map((article, index) => ({
             id: `news-${index}`,
@@ -163,3 +166,4 @@ export const getTickerData = unstable_cache(
   ['ticker-data'], // cache key
   { revalidate: 600 } // revalidate every 10 minutes
 );
+
