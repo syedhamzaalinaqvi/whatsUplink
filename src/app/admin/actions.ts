@@ -319,6 +319,7 @@ const defaultLayoutSettings: LayoutSettings = {
     logoUrl: '/whatsuplink_logo_and_favicon_without_background.png',
     navLinks: [
         { id: '1', label: 'Home', href: '/' },
+        { id: '7', label: 'Blog', href: '/blog' },
         { id: '2', label: 'Submit Group', href: '/submit' },
         { id: '3', label: 'About', href: '/about' },
         { id: '4', label: 'Contact', href: '/contact' },
