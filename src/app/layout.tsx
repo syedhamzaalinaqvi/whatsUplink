@@ -98,6 +98,20 @@ export default async function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        <style>
+          {`
+            @keyframes marquee {
+              from { transform: translateX(0); }
+              to { transform: translateX(-50%); }
+            }
+            .animate-marquee {
+              animation: marquee 40s linear infinite;
+            }
+            .animate-marquee:hover {
+              animation-play-state: paused;
+            }
+          `}
+        </style>
       </head>
       <body className={`${inter.variable} font-body antialiased`} style={bodyStyle}>
         <Suspense>

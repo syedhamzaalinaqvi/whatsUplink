@@ -7,6 +7,8 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { mapDocToGroupLink } from '@/lib/data';
+import { ScoreTicker } from '@/components/sports/score-ticker';
+import { Suspense } from 'react';
 
 // Helper function to initialize Firebase on the server
 function getFirestoreInstance() {
@@ -43,11 +45,13 @@ export default async function Home() {
   // Pass the server-fetched data to the client component.
   // The client component will handle filtering and displaying the data.
   return (
-    <HomePage 
-      initialSettings={combinedSettings}
-      allGroups={allGroups}
-      initialCategories={categories}
-      initialCountries={countries}
-    />
+    <>
+      <HomePage 
+        initialSettings={combinedSettings}
+        allGroups={allGroups}
+        initialCategories={categories}
+        initialCountries={countries}
+      />
+    </>
   );
 }

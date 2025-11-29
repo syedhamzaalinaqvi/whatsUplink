@@ -19,6 +19,7 @@ import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { SeoContent } from '../layout/seo-content';
 import { Breadcrumbs, type BreadcrumbItem } from '../layout/breadcrumbs';
+import { ScoreTicker } from '../sports/score-ticker';
 
 type HomePageProps = {
   initialSettings: ModerationSettings & { layout: LayoutSettings };
@@ -48,6 +49,7 @@ export function HomePage({
   const searchParams = useSearchParams();
 
   const isSubmitPage = pathname === '/submit';
+  const isHomePage = pathname === '/';
 
   // This function now simply updates the URL to open the dialog,
   // which is managed by the Header component.
@@ -135,6 +137,12 @@ export function HomePage({
                 </div>
             </div>
         </section>
+
+        {isHomePage && (
+          <Suspense fallback={<div className="h-10 bg-muted" />}>
+            <ScoreTicker />
+          </Suspense>
+        )}
         
         {settings.showFeatured && featuredGroups.length > 0 && !isDynamicPage && (
           <section className="container py-8 md:py-12">
@@ -159,10 +167,10 @@ export function HomePage({
         </Suspense>
 
         {/* Show static SEO content on homepage, or dynamic SEO content on category/country pages */}
-        {!isDynamicPage && settings.layout.seoContent.enabled && (
+        {!isDynamicPage && settings.layout.seoSettings.enabled && (
             <SeoContent 
-                heading={settings.layout.seoContent.heading}
-                content={settings.layout.seoContent.content}
+                heading={settings.layout.seoSettings.heading}
+                content={settings.layout.seoSettings.content}
             />
         )}
         {isDynamicPage && settings.showDynamicSeoContent && seoTitle && seoContent && (
