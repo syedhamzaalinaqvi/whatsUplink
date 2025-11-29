@@ -51,7 +51,11 @@ export default async function Home() {
         allGroups={allGroups}
         initialCategories={categories}
         initialCountries={countries}
-      />
+      >
+        <Suspense fallback={<div className="h-10 bg-muted" />}>
+            <ScoreTicker />
+        </Suspense>
+      </HomePage>
     </>
   );
 }

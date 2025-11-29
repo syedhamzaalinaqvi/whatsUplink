@@ -30,6 +30,7 @@ type HomePageProps = {
   breadcrumbItems?: BreadcrumbItem[];
   seoTitle?: string;
   seoContent?: string;
+  children?: React.ReactNode;
 };
 
 export function HomePage({ 
@@ -41,6 +42,7 @@ export function HomePage({
     breadcrumbItems,
     seoTitle,
     seoContent,
+    children,
 }: HomePageProps) {
   const [settings] = useState(initialSettings);
   const [initialSearchTag, setInitialSearchTag] = useState('');
@@ -138,11 +140,7 @@ export function HomePage({
             </div>
         </section>
 
-        {isHomePage && (
-          <Suspense fallback={<div className="h-10 bg-muted" />}>
-            <ScoreTicker />
-          </Suspense>
-        )}
+        {isHomePage && children}
         
         {settings.showFeatured && featuredGroups.length > 0 && !isDynamicPage && (
           <section className="container py-8 md:py-12">
@@ -167,10 +165,10 @@ export function HomePage({
         </Suspense>
 
         {/* Show static SEO content on homepage, or dynamic SEO content on category/country pages */}
-        {!isDynamicPage && settings.layout.seoSettings.enabled && (
+        {!isDynamicPage && settings.layout.homepageSeoContent.enabled && (
             <SeoContent 
-                heading={settings.layout.seoSettings.heading}
-                content={settings.layout.seoSettings.content}
+                heading={settings.layout.homepageSeoContent.heading}
+                content={settings.layout.homepageSeoContent.content}
             />
         )}
         {isDynamicPage && settings.showDynamicSeoContent && seoTitle && seoContent && (
