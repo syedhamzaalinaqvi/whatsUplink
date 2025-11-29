@@ -44,6 +44,8 @@ export type ModerationSettings = {
     showNewsletter: boolean;
     showDynamicSeoContent: boolean;
     showRatings: boolean;
+    showTicker: boolean;
+    tickerSpeed: number;
 };
 
 export type Category = {

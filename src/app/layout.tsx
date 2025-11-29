@@ -80,7 +80,10 @@ export default async function RootLayout({
     getCountries(),
   ]);
   
-  const bodyStyle: React.CSSProperties = {};
+  const bodyStyle: React.CSSProperties = {
+    '--ticker-speed': `${moderationSettings.tickerSpeed ?? 40}s`
+  } as React.CSSProperties;
+
   if (layoutSettings.backgroundSettings.bgImageEnabled && layoutSettings.backgroundSettings.bgImageUrl) {
     bodyStyle['--background-image' as any] = `url(${layoutSettings.backgroundSettings.bgImageUrl})`;
   } else {
@@ -105,7 +108,7 @@ export default async function RootLayout({
               to { transform: translateX(-50%); }
             }
             .animate-marquee {
-              animation: marquee 40s linear infinite;
+              animation: marquee var(--ticker-speed, 40s) linear infinite;
             }
             .animate-marquee:hover {
               animation-play-state: paused;

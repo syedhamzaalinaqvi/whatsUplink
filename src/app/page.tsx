@@ -46,9 +46,11 @@ export default async function Home() {
   // The client component will handle filtering and displaying the data.
   return (
     <>
-       <Suspense fallback={<div className="h-10 bg-muted border-y" />}>
-          <Ticker />
-      </Suspense>
+       {settings.showTicker && (
+        <Suspense fallback={<div className="h-12 bg-muted border-y" />}>
+            <Ticker />
+        </Suspense>
+       )}
       <HomePage 
         initialSettings={combinedSettings}
         allGroups={allGroups}

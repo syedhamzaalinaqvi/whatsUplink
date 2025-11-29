@@ -28,6 +28,8 @@ const moderationSettingsSchema = z.object({
     showDynamicSeoContent: z.enum(['on', 'off']).transform(val => val === 'on'),
     showRatings: z.enum(['on', 'off']).transform(val => val === 'on'),
     showClicks: z.enum(['on', 'off']).transform(val => val === 'on'),
+    showTicker: z.enum(['on', 'off']).transform(val => val === 'on'),
+    tickerSpeed: z.coerce.number().min(5).max(100),
 });
 
 export async function saveModerationSettings(formData: FormData): Promise<{ success: boolean; message: string }> {
@@ -42,6 +44,8 @@ export async function saveModerationSettings(formData: FormData): Promise<{ succ
         showDynamicSeoContent: formData.get('showDynamicSeoContent'),
         showRatings: formData.get('showRatings'),
         showClicks: formData.get('showClicks'),
+        showTicker: formData.get('showTicker'),
+        tickerSpeed: formData.get('tickerSpeed'),
     });
     
     if (!validatedFields.success) {

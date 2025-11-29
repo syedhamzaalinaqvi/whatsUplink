@@ -27,6 +27,8 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
         showNewsletter: false,
         showDynamicSeoContent: true,
         showRatings: true,
+        showTicker: true,
+        tickerSpeed: 40,
     };
 
     try {

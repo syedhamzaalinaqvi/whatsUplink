@@ -13,9 +13,10 @@ import { Switch } from '../ui/switch';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
-import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText, Star, Eye } from 'lucide-react';
+import { LayoutGrid, List, Loader2, SlidersHorizontal, FileText, Star, Eye, Zap } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Slider } from '../ui/slider';
 
 const moderationSettingsSchema = z.object({
     showClicks: z.boolean(),
@@ -28,6 +29,8 @@ const moderationSettingsSchema = z.object({
     showNewsletter: z.boolean(),
     showDynamicSeoContent: z.boolean(),
     showRatings: z.boolean(),
+    showTicker: z.boolean(),
+    tickerSpeed: z.number().min(5).max(100),
 });
 
 type ModerationFormValues = z.infer<typeof moderationSettingsSchema>;
@@ -65,6 +68,8 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
             formData.append('showDynamicSeoContent', data.showDynamicSeoContent ? 'on' : 'off');
             formData.append('showRatings', data.showRatings ? 'on' : 'off');
             formData.append('showClicks', data.showClicks ? 'on' : 'off');
+            formData.append('showTicker', data.showTicker ? 'on' : 'off');
+            formData.append('tickerSpeed', String(data.tickerSpeed));
             
             const result = await saveModerationSettings(formData);
 
@@ -331,6 +336,59 @@ export function AdminModerationSettings({ initialSettings, onSettingsChange }: A
                                         </FormItem>
                                     )}
                                 />
+                                 <Card>
+                                    <CardHeader className='pb-4'>
+                                        <CardTitle className='text-lg flex items-center gap-2'><Zap className='h-5 w-5'/> Ticker Settings</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className='space-y-6'>
+                                        <FormField
+                                            control={form.control}
+                                            name="showTicker"
+                                            render={({ field }) => (
+                                                <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                                                    <div className="space-y-0.5">
+                                                        <FormLabel htmlFor="show-ticker-toggle" className="text-base">Show Ticker</FormLabel>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Enable the sports/news ticker on the homepage.
+                                                        </p>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id="show-ticker-toggle"
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                         <FormField
+                                            control={form.control}
+                                            name="tickerSpeed"
+                                            render={({ field }) => (
+                                                <FormItem className="rounded-lg border p-4">
+                                                    <div className='flex justify-between items-center'>
+                                                        <FormLabel className="text-base">Ticker Speed</FormLabel>
+                                                        <span className="text-sm font-mono text-muted-foreground">{field.value}s</span>
+                                                    </div>
+                                                     <p className="text-sm text-muted-foreground pb-2">
+                                                        Animation duration. Higher is slower.
+                                                    </p>
+                                                    <FormControl>
+                                                        <Slider
+                                                            min={5}
+                                                            max={100}
+                                                            step={1}
+                                                            value={[field.value]}
+                                                            onValueChange={(value) => field.onChange(value[0])}
+                                                            disabled={!form.watch('showTicker')}
+                                                        />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </CardContent>
+                                </Card>
                             </div>
                         </div>
 
