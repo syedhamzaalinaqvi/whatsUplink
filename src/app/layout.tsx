@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL('https://whatsuplink.online'),
     title: {
       default: title,
-      template: '%s | WhatsUpLink',
+      template: '%s - Whatsuplink',
     },
     description: description,
     openGraph: {

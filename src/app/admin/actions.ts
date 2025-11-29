@@ -344,7 +344,7 @@ We continuously update our database to ensure you find only the most relevant an
 Our mission is to be the best source for discovering and sharing WhatsApp group links. Join thousands of users who trust WhatsUpLink to find active and engaging WhatsApp groups. Start exploring our vast collection of active links today and connect with people from all over the world. Submit your own WhatsApp group link to grow your community and become part of our ever-expanding network of active groups.`
     },
     seoSettings: {
-        siteTitle: "WhatsUpLink: Join & Share WhatsApp Group Links",
+        siteTitle: "Join active whatsapp group links | submit your group - Whatuplink",
         metaDescription: "The ultimate directory for WhatsApp group links. Discover and join groups for family, friends, USA communities, entertainment, PUBG, Freefire, adult topics, and more. Share your own WhatsApp group link today!",
         metaKeywords: "whatsapp group links, whatsapp groups, usa whatsapp group, family whatsapp group link, adult whatsapp group links, pubg whatsapp group, freefire whatsapp groups links, entertainment whatsapp group"
     }
