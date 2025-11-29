@@ -7,7 +7,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 import { mapDocToGroupLink } from '@/lib/data';
-import { ScoreTicker } from '@/components/sports/score-ticker';
+import { Ticker } from '@/components/sports/ticker';
 import { Suspense } from 'react';
 
 // Helper function to initialize Firebase on the server
@@ -46,16 +46,15 @@ export default async function Home() {
   // The client component will handle filtering and displaying the data.
   return (
     <>
+       <Suspense fallback={<div className="h-10 bg-muted border-y" />}>
+          <Ticker />
+      </Suspense>
       <HomePage 
         initialSettings={combinedSettings}
         allGroups={allGroups}
         initialCategories={categories}
         initialCountries={countries}
-      >
-        <Suspense fallback={<div className="h-10 bg-muted" />}>
-            <ScoreTicker />
-        </Suspense>
-      </HomePage>
+      />
     </>
   );
 }
